@@ -66,6 +66,36 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
+# 🎯 Roadmap
+
+* [x] Authentication System
+* [x] Role-Based Authorization
+* [x] Nutrition Management
+* [x] Workout Management
+* [x] Water Tracking
+* [x] BMI/BMR Calculator
+* [x] Admin Dashboard
+* [x] Expert Dashboard
+* [ ] AI Nutrition Assistant
+* [ ] AI Workout Generator
+* [ ] Mobile Application
+* [ ] Push Notifications
+* [ ] Wearable Device Integration
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository.
+2. Create a new feature branch.
+3. Commit your changes.
+4. Push to your branch.
+5. Open a Pull Request.
+
+---
+
 # 🏗️ Tech Stack
 
 ## Frontend
@@ -106,6 +136,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 # 📂 Project Structure
 
+```text
 VitalisProject/
 │
 ├── backend/
@@ -135,178 +166,6 @@ VitalisProject/
 ├── .gitignore
 └── README.md
 
----
-
-# 🚀 Getting Started
-
-## 1️⃣ Clone the Repository
-
-git clone https://github.com/EfeAskin/VitalisProject.git
-
-cd VitalisProject
-
----
-
-## 2️⃣ Backend Setup
-
-Create a virtual environment
-
-python -m venv .venv
-
-Activate
-
-### Windows
-
-.venv\Scripts\activate
-
-### Linux / macOS
-
-source .venv/bin/activate
-
-
-Install dependencies
-
-pip install -r requirements.txt
-
-
----
-
-## 3️⃣ Configure Environment Variables
-
-Create a `.env` file in the project root.
-
----
-
-## 4️⃣ Frontend Setup
-
-Install Node packages
-
-npm install
-
----
-
-# ▶️ Running the Project
-
-Open **two separate terminals**.
-
----
-
-## Backend
-
-.venv\Scripts\activate
-
-uvicorn backend.main:app --reload
-
-FastAPI Documentation
-
-http://127.0.0.1:8000/docs
-
-
----
-
-## Frontend
-
-npm run dev
-
-
-Application
-
-
-http://localhost:3000
-
----
-
-# 🗄️ Database
-
-Vitalis currently supports PostgreSQL databases.
-
-Supported providers:
-
-* ✅ PostgreSQL Local
-* ✅ Neon PostgreSQL Cloud
-
-Database connection is managed through:
-
-psycopg2
-
-
-using the following environment variable:
-
----
-
-# 🔐 Environment Variables
-
-| Variable     | Description               |
-| ------------ | ------------------------- |
-| DATABASE_URL | PostgreSQL Connection URL |
-
-
----
-
-# 📈 Architecture
-
-                    ┌─────────────────────┐
-                    │      Next.js        │
-                    │     Frontend UI     │
-                    └──────────┬──────────┘
-                               │ REST API
-                               ▼
-                    ┌─────────────────────┐
-                    │      FastAPI        │
-                    │      Backend        │
-                    └──────────┬──────────┘
-                               │ psycopg2
-                               ▼
-                    ┌─────────────────────┐
-                    │ PostgreSQL / NeonDB │
-                    └─────────────────────┘
-
----
-
-# 📖 API Documentation
-
-Swagger UI
-
-http://127.0.0.1:8000/docs
-
-
-ReDoc
-
-
-http://127.0.0.1:8000/redoc
-
----
-
-# 🎯 Roadmap
-
-* [x] Authentication System
-* [x] Role-Based Authorization
-* [x] Nutrition Management
-* [x] Workout Management
-* [x] Water Tracking
-* [x] BMI/BMR Calculator
-* [x] Admin Dashboard
-* [x] Expert Dashboard
-* [ ] AI Nutrition Assistant
-* [ ] AI Workout Generator
-* [ ] Mobile Application
-* [ ] Push Notifications
-* [ ] Wearable Device Integration
-
----
-
-# 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repository.
-2. Create a new feature branch.
-3. Commit your changes.
-4. Push to your branch.
-5. Open a Pull Request.
-
----
-
 # 📜 License
 
 This project is developed for educational, research and portfolio purposes.
@@ -334,4 +193,3 @@ https://github.com/EfeAskin
 Made with ❤️ using **Next.js**, **FastAPI**, and **PostgreSQL**
 
 </div>
-
