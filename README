@@ -1,4 +1,3 @@
-<div align="center">
 
 # 🏋️ Vitalis Project
 
@@ -24,9 +23,6 @@
 
 Designed with scalability, maintainability and performance in mind, Vitalis combines a modern React-based frontend with a high-performance FastAPI backend and PostgreSQL cloud infrastructure.
 
----
-
-</div>
 
 
 ### ✨ Features
