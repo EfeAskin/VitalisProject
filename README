@@ -1,14 +1,26 @@
+<div align="center">
+
 # 🏋️ Vitalis Project
 
 ### *Modern Fitness, Nutrition & Expert Management Platform*
 
-![Next.js](https://shields.io) ![FastAPI](https://shields.io) ![PostgreSQL](https://shields.io) ![Neon](https://shields.io) ![TailwindCSS](https://shields.io) ![React](https://shields.io)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![FastAPI](https://shields.io)](https://tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black)](https://neon.tech)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
 
-![GitHub stars](https://shields.io) ![GitHub forks](https://shields.io) ![GitHub issues](https://shields.io)
+[![GitHub Stars](https://shields.io)](https://github.com)
+[![GitHub Forks](https://shields.io)](https://github.com)
+[![GitHub Issues](https://shields.io)](https://github.com)
+[![GitHub License](https://shields.io)](https://github.com)
 
 **Vitalis Project** is a comprehensive fitness and nutrition management platform that enables users to monitor their health, nutrition, workout routines and body metrics while collaborating with certified Personal Trainers and Dietitians through a modern web application.
 
 Designed with scalability, maintainability and performance in mind, Vitalis combines a modern React-based frontend with a high-performance FastAPI backend and PostgreSQL cloud infrastructure.
+
+</div>
 
 ---
 
@@ -50,31 +62,31 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 | Technology | Purpose |
 |------------|----------|
-| Next.js (App Router) | Modern React Framework |
-| React | Component-based UI |
-| Tailwind CSS | Responsive Styling |
-| TypeScript / JavaScript | Frontend Development |
-| Lucide React | Icon Library |
-| Recharts | Interactive Charts |
+| [Next.js (App Router)](https://nextjs.org) | Modern React Framework |
+| [React](https://react.dev) | Component-based UI |
+| [Tailwind CSS](https://tailwindcss.com) | Responsive Styling |
+| [TypeScript](https://typescriptlang.org) / JavaScript | Frontend Development |
+| [Lucide React](https://lucide.dev) | Icon Library |
+| [Recharts](https://recharts.org) | Interactive Charts |
 
 ### Backend
 
 | Technology | Purpose |
 |------------|----------|
-| FastAPI | REST API |
-| Uvicorn | ASGI Server |
-| Psycopg2 | PostgreSQL Driver |
-| Pydantic | Data Validation |
-| Python | Backend Language |
+| [FastAPI](https://tiangolo.com) | REST API |
+| [Uvicorn](https://uvicorn.org) | ASGI Server |
+| [Psycopg2](https://psycopg.org) | PostgreSQL Driver |
+| [Pydantic](https://pydantic.dev) | Data Validation |
+| [Python](https://python.org) | Backend Language |
 
 ### Database & Infrastructure
 
 | Technology | Purpose |
 |------------|----------|
-| PostgreSQL | Relational Database |
-| Neon Database | Cloud PostgreSQL |
-| Git | Version Control |
-| GitHub | Source Code Hosting |
+| [PostgreSQL](https://postgresql.org) | Relational Database |
+| [Neon Database](https://neon.tech) | Cloud PostgreSQL |
+| [Git](https://git-scm.com) | Version Control |
+| [GitHub](https://github.com/) | Source Code Hosting |
 
 ---
 
@@ -117,7 +129,7 @@ VitalisProject/
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com
+git clone https://github.com/EfeAskin/VitalisProject.git
 cd VitalisProject
 ```
 
@@ -164,7 +176,7 @@ Open **two separate terminals**.
 .venv\Scripts\activate
 uvicorn backend.main:app --reload
 ```
-- FastAPI Documentation: [http://127.0.0](http://127.0.0)
+- FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ### Frontend Terminal
 ```bash
@@ -216,8 +228,8 @@ Database connection is managed through `psycopg2` using the following environmen
 
 ## 📖 API Documentation
 
-- **Swagger UI:** [http://127.0.0](http://127.0.0)
-- **ReDoc:** [http://127.0.0](http://127.0.0)
+- **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
@@ -263,10 +275,14 @@ This project is developed for educational, research and portfolio purposes.
 *Computer Engineering Student*  
 *Backend Developer | Full Stack Developer*  
 
-🔗 [GitHub Profile](https://github.com)
+🔗 [GitHub Profile](https://github.com/EfeAskin)
 
 ---
+
+<div align="center">
 
 ### ⭐ If you like this project, don't forget to leave a star!
 
 Made with ❤️ using **Next.js**, **FastAPI**, and **PostgreSQL**
+
+</div>
