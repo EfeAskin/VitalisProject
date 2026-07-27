@@ -6,7 +6,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" />
-  /badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://shields.io" />
   <img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black" />
   <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
@@ -14,8 +14,7 @@
 </p>
 
 <p align="center">
-  style=flat-square" />
-  ars/EfeAskin/VitalisProject?style=flat-square" />
+  <img src="https://shields.io" />
   <img src="https://img.shields.io/github/forks/EfeAskin/VitalisProject?style=flat-square" />
   <img src="https://img.shields.io/github/issues/EfeAskin/VitalisProject?style=flat-square" />
 </p>
@@ -24,14 +23,13 @@
 
 Designed with scalability, maintainability and performance in mind, Vitalis combines a modern React-based frontend with a high-performance FastAPI backend and PostgreSQL cloud infrastructure.
 
----
-
 </div>
 
-### ✨ Features
+---
+
+## ✨ Features
 
 ### 👤 User Features
-
 - 📊 Dashboard with personalized statistics
 - 🥗 Diet program management
 - 💪 Workout planning & tracking
@@ -43,10 +41,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 - 👥 Expert subscription system
 - 💬 Communication with Personal Trainers & Dietitians
 
----
-
 ### 🩺 Expert Panel
-
 - Manage clients
 - Create custom workout plans
 - Create personalized diet plans
@@ -54,10 +49,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 - View health statistics
 - Subscription management
 
----
-
 ### 🛡️ Admin Panel
-
 - User management
 - Expert approval system
 - Content moderation
@@ -67,7 +59,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-### 🏗️ Tech Stack
+## 🏗️ Tech Stack
 
 ### Frontend
 
@@ -80,8 +72,6 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 | Lucide React | Icon Library |
 | Recharts | Interactive Charts |
 
----
-
 ### Backend
 
 | Technology | Purpose |
@@ -91,8 +81,6 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 | Psycopg2 | PostgreSQL Driver |
 | Pydantic | Data Validation |
 | Python | Backend Language |
-
----
 
 ### Database & Infrastructure
 
@@ -105,7 +93,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-### 📂 Project Structure
+## 📂 Project Structure
 
 ```text
 VitalisProject/
@@ -140,112 +128,76 @@ VitalisProject/
 
 ---
 
-### 🚀 Getting Started
+## 🚀 Getting Started
 
 ### 1️⃣ Clone the Repository
-
 ```bash
 git clone https://github.com/EfeAskin/VitalisProject.git
 cd VitalisProject
 ```
 
----
-
 ### 2️⃣ Backend Setup
-
-Create a virtual environment
-
+Create a virtual environment:
 ```bash
 python -m venv .venv
 ```
 
-Activate
+Activate the environment:
 
-### Windows
-
+**Windows:**
 ```bash
 .venv\Scripts\activate
 ```
 
-### Linux / macOS
-
+**Linux / macOS:**
 ```bash
 source .venv/bin/activate
 ```
 
-Install dependencies
-
+Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
 ### 3️⃣ Configure Environment Variables
-
-Create a `.env` file in the project root.
-
----
+Create a `.env` file in the project root directory.
 
 ### 4️⃣ Frontend Setup
-
-Install Node packages
-
+Install Node packages:
 ```bash
 npm install
 ```
 
 ---
 
-### ▶️ Running the Project
+## ▶️ Running the Project
 
 Open **two separate terminals**.
 
----
-
-### Backend
-
+### Backend Terminal
 ```bash
 .venv\Scripts\activate
 uvicorn backend.main:app --reload
 ```
+- FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-FastAPI Documentation
-
-http://127.0.0.1:8000/docs
-
----
-
-### Frontend
-
+### Frontend Terminal
 ```bash
 npm run dev
 ```
-
-Application
-
-http://localhost:3000
+- Application URL: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-### 🗄️ Database
+## 🗄️ Database
 
 Vitalis currently supports PostgreSQL databases.
 
 Supported providers:
-
 * ✅ PostgreSQL Local
 * ✅ Neon PostgreSQL Cloud
 
-Database connection is managed through:
-
-```python
-psycopg2
-```
-
-using the following environment variable:
-
----
+Database connection is managed through `psycopg2` using the following environment variable:
 
 ### 🔐 Environment Variables
 
@@ -255,7 +207,7 @@ using the following environment variable:
 
 ---
 
-### 📈 Architecture
+## 📈 Architecture
 
 ```text
                     ┌─────────────────────┐
@@ -277,19 +229,14 @@ using the following environment variable:
 
 ---
 
-### 📖 API Documentation
+## 📖 API Documentation
 
-Swagger UI
-
-http://127.0.0.1:8000/docs
-
-ReDoc
-
-http://127.0.0.1:8000/redoc
+- **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-### 🎯 Roadmap
+## 🎯 Roadmap
 
 - [x] Authentication System
 - [x] Role-Based Authorization
@@ -307,7 +254,7 @@ http://127.0.0.1:8000/redoc
 
 ---
 
-### 🤝 Contributing
+## 🤝 Contributing
 
 Contributions are welcome!
 
@@ -319,23 +266,19 @@ Contributions are welcome!
 
 ---
 
-### 📜 License
+## 📜 License
 
 This project is developed for educational, research and portfolio purposes.
 
 ---
 
-### 👨‍💻 Developer
+## 👨‍💻 Developer
 
-**Kamil Efe Aşkın**
+**Kamil Efe Aşkın**  
+*Computer Engineering Student*  
+*Backend Developer | Full Stack Developer*  
 
-Computer Engineering Student
-
-Backend Developer | Full Stack Developer
-
-GitHub
-
-https://github.com/EfeAskin
+🔗 [GitHub Profile](https://github.com/EfeAskin)
 
 ---
 
