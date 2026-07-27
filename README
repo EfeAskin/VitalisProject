@@ -1,29 +1,14 @@
-<div align="center">
-
 # 🏋️ Vitalis Project
 
 ### *Modern Fitness, Nutrition & Expert Management Platform*
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" />
-  <img src="https://shields.io" />
-  <img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black" />
-  <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
-</p>
+![Next.js](https://shields.io) ![FastAPI](https://shields.io) ![PostgreSQL](https://shields.io) ![Neon](https://shields.io) ![TailwindCSS](https://shields.io) ![React](https://shields.io)
 
-<p align="center">
-  <img src="https://shields.io" />
-  <img src="https://img.shields.io/github/forks/EfeAskin/VitalisProject?style=flat-square" />
-  <img src="https://img.shields.io/github/issues/EfeAskin/VitalisProject?style=flat-square" />
-</p>
+![GitHub stars](https://shields.io) ![GitHub forks](https://shields.io) ![GitHub issues](https://shields.io)
 
 **Vitalis Project** is a comprehensive fitness and nutrition management platform that enables users to monitor their health, nutrition, workout routines and body metrics while collaborating with certified Personal Trainers and Dietitians through a modern web application.
 
 Designed with scalability, maintainability and performance in mind, Vitalis combines a modern React-based frontend with a high-performance FastAPI backend and PostgreSQL cloud infrastructure.
-
-</div>
 
 ---
 
@@ -132,7 +117,7 @@ VitalisProject/
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/EfeAskin/VitalisProject.git
+git clone https://github.com
 cd VitalisProject
 ```
 
@@ -179,7 +164,7 @@ Open **two separate terminals**.
 .venv\Scripts\activate
 uvicorn backend.main:app --reload
 ```
-- FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- FastAPI Documentation: [http://127.0.0](http://127.0.0)
 
 ### Frontend Terminal
 ```bash
@@ -231,8 +216,8 @@ Database connection is managed through `psycopg2` using the following environmen
 
 ## 📖 API Documentation
 
-- **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+- **Swagger UI:** [http://127.0.0](http://127.0.0)
+- **ReDoc:** [http://127.0.0](http://127.0.0)
 
 ---
 
@@ -278,14 +263,10 @@ This project is developed for educational, research and portfolio purposes.
 *Computer Engineering Student*  
 *Backend Developer | Full Stack Developer*  
 
-🔗 [GitHub Profile](https://github.com/EfeAskin)
+🔗 [GitHub Profile](https://github.com)
 
 ---
-
-<div align="center">
 
 ### ⭐ If you like this project, don't forget to leave a star!
 
 Made with ❤️ using **Next.js**, **FastAPI**, and **PostgreSQL**
-
-</div>
