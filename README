@@ -4,17 +4,22 @@
 
 ### *Modern Fitness, Nutrition & Expert Management Platform*
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![FastAPI](https://shields.io)](https://tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black)](https://neon.tech)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
+<!-- TEKNOLOJİ ROZETLERİ -->
+<a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
+<a href="https://tiangolo.com"><img src="https://shields.io" alt="FastAPI" /></a>
+<a href="https://postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+<a href="https://neon.tech"><img src="https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black" alt="Neon" /></a>
+<a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS" /></a>
+<a href="https://react.dev"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
 
-[![GitHub Stars](https://shields.io)](https://github.com)
-[![GitHub Forks](https://shields.io)](https://github.com)
-[![GitHub Issues](https://shields.io)](https://github.com)
-[![GitHub License](https://shields.io)](https://github.com)
+<br/>
+
+<!-- GITHUB İSTATİSTİK ROZETLERİ -->
+<a href="https://github.com"><img src="https://shields.io" alt="GitHub Stars" /></a>
+<a href="https://github.com"><img src="https://shields.io" alt="GitHub Forks" /></a>
+<a href="https://github.com"><img src="https://shields.io" alt="GitHub Issues" /></a>
+
+<br/><br/>
 
 **Vitalis Project** is a comprehensive fitness and nutrition management platform that enables users to monitor their health, nutrition, workout routines and body metrics while collaborating with certified Personal Trainers and Dietitians through a modern web application.
 
@@ -24,9 +29,10 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## ✨ Features
+### ✨ Features
 
 ### 👤 User Features
+
 - 📊 Dashboard with personalized statistics
 - 🥗 Diet program management
 - 💪 Workout planning & tracking
@@ -38,7 +44,10 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 - 👥 Expert subscription system
 - 💬 Communication with Personal Trainers & Dietitians
 
+---
+
 ### 🩺 Expert Panel
+
 - Manage clients
 - Create custom workout plans
 - Create personalized diet plans
@@ -46,7 +55,10 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 - View health statistics
 - Subscription management
 
+---
+
 ### 🛡️ Admin Panel
+
 - User management
 - Expert approval system
 - Content moderation
@@ -56,7 +68,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## 🏗️ Tech Stack
+### 🏗️ Tech Stack
 
 ### Frontend
 
@@ -69,6 +81,8 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 | [Lucide React](https://lucide.dev) | Icon Library |
 | [Recharts](https://recharts.org) | Interactive Charts |
 
+---
+
 ### Backend
 
 | Technology | Purpose |
@@ -78,6 +92,8 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 | [Psycopg2](https://psycopg.org) | PostgreSQL Driver |
 | [Pydantic](https://pydantic.dev) | Data Validation |
 | [Python](https://python.org) | Backend Language |
+
+---
 
 ### Database & Infrastructure
 
@@ -90,7 +106,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## 📂 Project Structure
+### 📂 Project Structure
 
 ```text
 VitalisProject/
@@ -125,76 +141,108 @@ VitalisProject/
 
 ---
 
-## 🚀 Getting Started
+### 🚀 Getting Started
 
 ### 1️⃣ Clone the Repository
+
 ```bash
 git clone https://github.com/EfeAskin/VitalisProject.git
 cd VitalisProject
 ```
 
+---
+
 ### 2️⃣ Backend Setup
-Create a virtual environment:
+
+Create a virtual environment
+
 ```bash
 python -m venv .venv
 ```
 
-Activate the environment:
+Activate
 
-**Windows:**
+### Windows
+
 ```bash
 .venv\Scripts\activate
 ```
 
-**Linux / macOS:**
+### Linux / macOS
+
 ```bash
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ### 3️⃣ Configure Environment Variables
-Create a `.env` file in the project root directory.
+
+Create a `.env` file in the project root.
+
+---
 
 ### 4️⃣ Frontend Setup
-Install Node packages:
+
+Install Node packages
+
 ```bash
 npm install
 ```
 
 ---
 
-## ▶️ Running the Project
+### ▶️ Running the Project
 
 Open **two separate terminals**.
 
-### Backend Terminal
+---
+
+### Backend
+
 ```bash
 .venv\Scripts\activate
 uvicorn backend.main:app --reload
 ```
-- FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### Frontend Terminal
-```bash
-npm run dev
-```
-- Application URL: [http://localhost:3000](http://localhost:3000)
+FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 ---
 
-## 🗄️ Database
+### Frontend
+
+```bash
+npm run dev
+```
+
+Application: [http://localhost:3000](http://localhost:3000)
+
+---
+
+### 🗄️ Database
 
 Vitalis currently supports PostgreSQL databases.
 
 Supported providers:
+
 * ✅ PostgreSQL Local
 * ✅ Neon PostgreSQL Cloud
 
-Database connection is managed through `psycopg2` using the following environment variable:
+Database connection is managed through:
+
+```python
+psycopg2
+```
+
+using the following environment variable:
+
+---
 
 ### 🔐 Environment Variables
 
@@ -204,7 +252,7 @@ Database connection is managed through `psycopg2` using the following environmen
 
 ---
 
-## 📈 Architecture
+### 📈 Architecture
 
 ```text
                     ┌─────────────────────┐
@@ -226,14 +274,15 @@ Database connection is managed through `psycopg2` using the following environmen
 
 ---
 
-## 📖 API Documentation
+### 📖 API Documentation
 
-- **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
 
 ---
 
-## 🎯 Roadmap
+### 🎯 Roadmap
 
 - [x] Authentication System
 - [x] Role-Based Authorization
@@ -251,7 +300,7 @@ Database connection is managed through `psycopg2` using the following environmen
 
 ---
 
-## 🤝 Contributing
+### 🤝 Contributing
 
 Contributions are welcome!
 
@@ -263,13 +312,13 @@ Contributions are welcome!
 
 ---
 
-## 📜 License
+### 📜 License
 
 This project is developed for educational, research and portfolio purposes.
 
 ---
 
-## 👨‍💻 Developer
+### 👨‍💻 Developer
 
 **Kamil Efe Aşkın**  
 *Computer Engineering Student*  
