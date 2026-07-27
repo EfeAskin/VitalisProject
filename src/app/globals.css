@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Premium kaydırma çubuğu (Scrollbar) tasarımı */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  transition: all 0.2s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00A859;
+}
+
+/* ⭐ Tüm siteyi otomatik olarak %122 - %125 ölçeğinde büyüten global kural */
+html {
+  zoom: 1.16;
+}
+
+body {
+  background-color: #F8FAF8;
+  color: #1e293b;
+  font-family: inherit;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}

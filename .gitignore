@@ -1,0 +1,24 @@
+# Environment variables (Gizli veritabanı bilgileri vb.)
+.env
+
+# Next.js build dosyaları
+.next/
+out/
+
+# Node bağımlılıkları (Çok büyük boyutludur, yüklenmemelidir)
+node_modules/
+
+# Python sanal ortam dosyaları
+.venv/
+venv/
+ENV/
+env/
+
+# Python derleme ve önbellek dosyaları
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE ve Sistem dosyaları
+.vscode/
+.DS_Store
