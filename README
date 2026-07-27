@@ -4,30 +4,30 @@
 
 ### *Modern Fitness, Nutrition & Expert Management Platform*
 
-<!-- TEKNOLOJİ ROZETLERİ -->
-<a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" alt="Next.js" /></a>
-<a href="https://tiangolo.com"><img src="https://shields.io" alt="FastAPI" /></a>
-<a href="https://postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
-<a href="https://neon.tech"><img src="https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black" alt="Neon" /></a>
-<a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="TailwindCSS" /></a>
-<a href="https://react.dev"><img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
+<p align="center">
+  ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
+  ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+  ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+  ![Neon](https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black)
+  ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+  ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+</p>
 
-<br/>
-
-<!-- GITHUB İSTATİSTİK ROZETLERİ -->
-<a href="https://github.com"><img src="https://shields.io" alt="GitHub Stars" /></a>
-<a href="https://github.com"><img src="https://shields.io" alt="GitHub Forks" /></a>
-<a href="https://github.com"><img src="https://shields.io" alt="GitHub Issues" /></a>
-
-<br/><br/>
+<p align="center">
+  ![License](https://img.shields.io/github/license/EfeAskin/VitalisProject?style=flat-square)
+  ![Stars](https://img.shields.io/github/stars/EfeAskin/VitalisProject?style=flat-square)
+  ![Forks](https://img.shields.io/github/forks/EfeAskin/VitalisProject?style=flat-square)
+  ![Issues](https://img.shields.io/github/issues/EfeAskin/VitalisProject?style=flat-square)
+</p>
 
 **Vitalis Project** is a comprehensive fitness and nutrition management platform that enables users to monitor their health, nutrition, workout routines and body metrics while collaborating with certified Personal Trainers and Dietitians through a modern web application.
 
 Designed with scalability, maintainability and performance in mind, Vitalis combines a modern React-based frontend with a high-performance FastAPI backend and PostgreSQL cloud infrastructure.
 
+---
+
 </div>
 
----
 
 ### ✨ Features
 
@@ -74,12 +74,12 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 | Technology | Purpose |
 |------------|----------|
-| [Next.js (App Router)](https://nextjs.org) | Modern React Framework |
-| [React](https://react.dev) | Component-based UI |
-| [Tailwind CSS](https://tailwindcss.com) | Responsive Styling |
-| [TypeScript](https://typescriptlang.org) / JavaScript | Frontend Development |
-| [Lucide React](https://lucide.dev) | Icon Library |
-| [Recharts](https://recharts.org) | Interactive Charts |
+| Next.js (App Router) | Modern React Framework |
+| React | Component-based UI |
+| Tailwind CSS | Responsive Styling |
+| TypeScript / JavaScript | Frontend Development |
+| Lucide React | Icon Library |
+| Recharts | Interactive Charts |
 
 ---
 
@@ -87,11 +87,11 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 | Technology | Purpose |
 |------------|----------|
-| [FastAPI](https://tiangolo.com) | REST API |
-| [Uvicorn](https://uvicorn.org) | ASGI Server |
-| [Psycopg2](https://psycopg.org) | PostgreSQL Driver |
-| [Pydantic](https://pydantic.dev) | Data Validation |
-| [Python](https://python.org) | Backend Language |
+| FastAPI | REST API |
+| Uvicorn | ASGI Server |
+| Psycopg2 | PostgreSQL Driver |
+| Pydantic | Data Validation |
+| Python | Backend Language |
 
 ---
 
@@ -99,10 +99,10 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 | Technology | Purpose |
 |------------|----------|
-| [PostgreSQL](https://postgresql.org) | Relational Database |
-| [Neon Database](https://neon.tech) | Cloud PostgreSQL |
-| [Git](https://git-scm.com) | Version Control |
-| [GitHub](https://github.com/) | Source Code Hosting |
+| PostgreSQL | Relational Database |
+| Neon Database | Cloud PostgreSQL |
+| Git | Version Control |
+| GitHub | Source Code Hosting |
 
 ---
 
@@ -211,7 +211,9 @@ Open **two separate terminals**.
 uvicorn backend.main:app --reload
 ```
 
-FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+FastAPI Documentation
+
+http://127.0.0.1:8000/docs
 
 ---
 
@@ -221,7 +223,9 @@ FastAPI Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 npm run dev
 ```
 
-Application: [http://localhost:3000](http://localhost:3000)
+Application
+
+http://localhost:3000
 
 ---
 
@@ -276,9 +280,13 @@ using the following environment variable:
 
 ### 📖 API Documentation
 
-Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Swagger UI
 
-ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+http://127.0.0.1:8000/docs
+
+ReDoc
+
+http://127.0.0.1:8000/redoc
 
 ---
 
@@ -320,11 +328,15 @@ This project is developed for educational, research and portfolio purposes.
 
 ### 👨‍💻 Developer
 
-**Kamil Efe Aşkın**  
-*Computer Engineering Student*  
-*Backend Developer | Full Stack Developer*  
+**Kamil Efe Aşkın**
 
-🔗 [GitHub Profile](https://github.com/EfeAskin)
+Computer Engineering Student
+
+Backend Developer | Full Stack Developer
+
+GitHub
+
+https://github.com/EfeAskin
 
 ---
 
