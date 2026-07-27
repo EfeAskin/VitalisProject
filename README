@@ -27,9 +27,9 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 </div>
 
-# ✨ Features
+### ✨ Features
 
-## 👤 User Features
+### 👤 User Features
 
 - 📊 Dashboard with personalized statistics
 - 🥗 Diet program management
@@ -44,7 +44,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## 🩺 Expert Panel
+### 🩺 Expert Panel
 
 - Manage clients
 - Create custom workout plans
@@ -55,7 +55,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## 🛡️ Admin Panel
+### 🛡️ Admin Panel
 
 - User management
 - Expert approval system
@@ -66,9 +66,9 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-# 🏗️ Tech Stack
+### 🏗️ Tech Stack
 
-## Frontend
+### Frontend
 
 | Technology | Purpose |
 |------------|---------|
@@ -81,7 +81,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## Backend
+### Backend
 
 | Technology | Purpose |
 |------------|---------|
@@ -93,7 +93,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-## Database & Infrastructure
+### Database & Infrastructure
 
 | Technology | Purpose |
 |------------|---------|
@@ -104,7 +104,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ---
 
-# 📂 Project Structure
+### 📂 Project Structure
 
 VitalisProject/
 │
@@ -137,9 +137,9 @@ VitalisProject/
 
 ---
 
-# 🚀 Getting Started
+### 🚀 Getting Started
 
-## 1️⃣ Clone the Repository
+### 1️⃣ Clone the Repository
 
 git clone https://github.com/EfeAskin/VitalisProject.git
 
@@ -147,7 +147,7 @@ cd VitalisProject
 
 ---
 
-## 2️⃣ Backend Setup
+### 2️⃣ Backend Setup
 
 Create a virtual environment
 
@@ -171,13 +171,13 @@ pip install -r requirements.txt
 
 ---
 
-## 3️⃣ Configure Environment Variables
+### 3️⃣ Configure Environment Variables
 
 Create a `.env` file in the project root.
 
 ---
 
-## 4️⃣ Frontend Setup
+### 4️⃣ Frontend Setup
 
 Install Node packages
 
@@ -185,13 +185,13 @@ npm install
 
 ---
 
-# ▶️ Running the Project
+### ▶️ Running the Project
 
 Open **two separate terminals**.
 
 ---
 
-## Backend
+### Backend
 
 .venv\Scripts\activate
 
@@ -204,7 +204,7 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Frontend
+### Frontend
 
 npm run dev
 
@@ -216,7 +216,7 @@ http://localhost:3000
 
 ---
 
-# 🗄️ Database
+### 🗄️ Database
 
 Vitalis currently supports PostgreSQL databases.
 
@@ -234,7 +234,7 @@ using the following environment variable:
 
 ---
 
-# 🔐 Environment Variables
+### 🔐 Environment Variables
 
 | Variable     | Description               |
 | ------------ | ------------------------- |
@@ -243,7 +243,7 @@ using the following environment variable:
 
 ---
 
-# 📈 Architecture
+### 📈 Architecture
 
                     ┌─────────────────────┐
                     │      Next.js        │
@@ -263,7 +263,7 @@ using the following environment variable:
 
 ---
 
-# 📖 API Documentation
+### 📖 API Documentation
 
 Swagger UI
 
@@ -277,7 +277,7 @@ http://127.0.0.1:8000/redoc
 
 ---
 
-# 🎯 Roadmap
+### 🎯 Roadmap
 
 * [x] Authentication System
 * [x] Role-Based Authorization
@@ -295,7 +295,7 @@ http://127.0.0.1:8000/redoc
 
 ---
 
-# 🤝 Contributing
+### 🤝 Contributing
 
 Contributions are welcome!
 
@@ -307,13 +307,13 @@ Contributions are welcome!
 
 ---
 
-# 📜 License
+### 📜 License
 
 This project is developed for educational, research and portfolio purposes.
 
 ---
 
-# 👨‍💻 Developer
+### 👨‍💻 Developer
 
 **Kamil Efe Aşkın**
 
@@ -334,4 +334,3 @@ https://github.com/EfeAskin
 Made with ❤️ using **Next.js**, **FastAPI**, and **PostgreSQL**
 
 </div>
-
