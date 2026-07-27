@@ -1,11 +1,12 @@
 <div align="center">
 
 # 🏋️ Vitalis Project
+
 ### *Modern Fitness, Nutrition & Expert Management Platform*
 
 <p align="center">
   <img src="https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js" />
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  /badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Neon-00E599?style=for-the-badge&logo=neon&logoColor=black" />
   <img src="https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" />
@@ -13,8 +14,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/EfeAskin/VitalisProject?style=flat-square" />
-  <img src="https://img.shields.io/github/stars/EfeAskin/VitalisProject?style=flat-square" />
+  style=flat-square" />
+  ars/EfeAskin/VitalisProject?style=flat-square" />
   <img src="https://img.shields.io/github/forks/EfeAskin/VitalisProject?style=flat-square" />
   <img src="https://img.shields.io/github/issues/EfeAskin/VitalisProject?style=flat-square" />
 </p>
@@ -71,7 +72,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 ### Frontend
 
 | Technology | Purpose |
-|------------|---------|
+|------------|----------|
 | Next.js (App Router) | Modern React Framework |
 | React | Component-based UI |
 | Tailwind CSS | Responsive Styling |
@@ -84,7 +85,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 ### Backend
 
 | Technology | Purpose |
-|------------|---------|
+|------------|----------|
 | FastAPI | REST API |
 | Uvicorn | ASGI Server |
 | Psycopg2 | PostgreSQL Driver |
@@ -96,7 +97,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 ### Database & Infrastructure
 
 | Technology | Purpose |
-|------------|---------|
+|------------|----------|
 | PostgreSQL | Relational Database |
 | Neon Database | Cloud PostgreSQL |
 | Git | Version Control |
@@ -106,6 +107,7 @@ Designed with scalability, maintainability and performance in mind, Vitalis comb
 
 ### 📂 Project Structure
 
+```text
 VitalisProject/
 │
 ├── backend/
@@ -134,6 +136,7 @@ VitalisProject/
 ├── .env
 ├── .gitignore
 └── README.md
+```
 
 ---
 
@@ -141,9 +144,10 @@ VitalisProject/
 
 ### 1️⃣ Clone the Repository
 
+```bash
 git clone https://github.com/EfeAskin/VitalisProject.git
-
 cd VitalisProject
+```
 
 ---
 
@@ -151,23 +155,29 @@ cd VitalisProject
 
 Create a virtual environment
 
+```bash
 python -m venv .venv
+```
 
 Activate
 
 ### Windows
 
+```bash
 .venv\Scripts\activate
+```
 
 ### Linux / macOS
 
+```bash
 source .venv/bin/activate
-
+```
 
 Install dependencies
 
+```bash
 pip install -r requirements.txt
-
+```
 
 ---
 
@@ -181,7 +191,9 @@ Create a `.env` file in the project root.
 
 Install Node packages
 
+```bash
 npm install
+```
 
 ---
 
@@ -193,24 +205,24 @@ Open **two separate terminals**.
 
 ### Backend
 
+```bash
 .venv\Scripts\activate
-
 uvicorn backend.main:app --reload
+```
 
 FastAPI Documentation
 
 http://127.0.0.1:8000/docs
 
-
 ---
 
 ### Frontend
 
+```bash
 npm run dev
-
+```
 
 Application
-
 
 http://localhost:3000
 
@@ -227,8 +239,9 @@ Supported providers:
 
 Database connection is managed through:
 
+```python
 psycopg2
-
+```
 
 using the following environment variable:
 
@@ -236,15 +249,15 @@ using the following environment variable:
 
 ### 🔐 Environment Variables
 
-| Variable     | Description               |
-| ------------ | ------------------------- |
+| Variable | Description |
+|-----------|-------------|
 | DATABASE_URL | PostgreSQL Connection URL |
-
 
 ---
 
 ### 📈 Architecture
 
+```text
                     ┌─────────────────────┐
                     │      Next.js        │
                     │     Frontend UI     │
@@ -260,6 +273,7 @@ using the following environment variable:
                     ┌─────────────────────┐
                     │ PostgreSQL / NeonDB │
                     └─────────────────────┘
+```
 
 ---
 
@@ -269,9 +283,7 @@ Swagger UI
 
 http://127.0.0.1:8000/docs
 
-
 ReDoc
-
 
 http://127.0.0.1:8000/redoc
 
@@ -279,19 +291,19 @@ http://127.0.0.1:8000/redoc
 
 ### 🎯 Roadmap
 
-* [x] Authentication System
-* [x] Role-Based Authorization
-* [x] Nutrition Management
-* [x] Workout Management
-* [x] Water Tracking
-* [x] BMI/BMR Calculator
-* [x] Admin Dashboard
-* [x] Expert Dashboard
-* [ ] AI Nutrition Assistant
-* [ ] AI Workout Generator
-* [ ] Mobile Application
-* [ ] Push Notifications
-* [ ] Wearable Device Integration
+- [x] Authentication System
+- [x] Role-Based Authorization
+- [x] Nutrition Management
+- [x] Workout Management
+- [x] Water Tracking
+- [x] BMI/BMR Calculator
+- [x] Admin Dashboard
+- [x] Expert Dashboard
+- [ ] AI Nutrition Assistant
+- [ ] AI Workout Generator
+- [ ] Mobile Application
+- [ ] Push Notifications
+- [ ] Wearable Device Integration
 
 ---
 
