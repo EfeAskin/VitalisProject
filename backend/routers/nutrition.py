@@ -5,6 +5,7 @@ import os
 import socket
 import psycopg2
 import psycopg2.extras
+import traceback
 
 router = APIRouter(
     prefix="/api/nutrition",
@@ -300,16 +301,22 @@ def create_meal_log(meal: ManualMealCreate):
             "message": "Öğün veritabanına başarıyla kaydedildi.",
             "logged_item": payload_dict
         }
-    except HTTPException:
-        if conn:
-            try: conn.rollback(); conn.close()
-            except: pass
-        raise
     except Exception as e:
+
+        import traceback
+        traceback.print_exc()
+
         if conn:
-            try: conn.rollback(); conn.close()
-            except: pass
-        raise HTTPException(status_code=500, detail=str(e))
+            try:
+                conn.rollback()
+                conn.close()
+            except:
+                pass
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 
 @router.put("/meal/{meal_id}")
 def update_meal_log(meal_id: int, meal: ManualMealUpdate):

@@ -56,6 +56,34 @@ class SyncHistory:
         self.success = success
 
         logger.info("SYNC HISTORY tamamlandı.")
+        
+    # ==========================================================
+    # SUMMARY
+    # ==========================================================
+
+    def add_summary(self, summary):
+
+        """
+        DataComparator.summary() çıktısını history'e ekler.
+        """
+
+        self.insert_count += summary.get(
+            "insert",
+            0
+        )
+
+        self.update_count += summary.get(
+            "update",
+            0
+        )
+
+        logger.info(
+
+            f"History -> "
+            f"INSERT={self.insert_count} | "
+            f"UPDATE={self.update_count}"
+
+        )
 
     # ==========================================================
     # ERROR
