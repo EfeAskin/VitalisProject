@@ -34,51 +34,56 @@ export default function NavbarExpert() {
   useEffect(() => {
     async function fetchUserData() {
       try {
-        const res = await fetch('/api/auth/me');
+        const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+        
+        const headers = {
+          "Content-Type": "application/json"
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch('/api/auth/me', {
+          method: 'GET',
+          headers: headers,
+          credentials: 'include'
+        });
+
         if (res.ok) {
           const data = await res.json();
           setUserData({
-            firstName: data.first_name || "Ömer",
-            lastName: data.last_name || "Faruk",
-            role: data.role || "trainer"
+            firstName: data.first_name,
+            lastName: data.last_name,
+            role: data.role,
+            profilePhoto: data.profile_photo
           });
         } else {
-          setUserData({
-            firstName: "Ömer",
-            lastName: "Faruk",
-            role: "trainer"
-          });
+          console.warn("Auth me başarısız oldu:", res.status);
         }
       } catch (error) {
-        setUserData({
-          firstName: "Ömer",
-          lastName: "Faruk",
-          role: "trainer"
-        });
+        console.error("Kullanıcı verisi çekilemedi:", error);
       }
     }
+
     fetchUserData();
   }, []);
 
-  // --- GÜVENLİ ÇIKIŞ FONKSİYONU (HttpOnly Cookie İmha & Ana Dizin Yönlendirmesi) ---
+  // --- GÜVENLİ ÇIKIŞ FONKSİYONU ---
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      // Sunucu tarafında HttpOnly çerezi imha eden güvenli uç nokta
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (err) {
       console.error("Çıkış isteği sırasında hata:", err);
     }
 
-    // İstemci tarafındaki oturum kalıntılarını temizle
     localStorage.removeItem("role");
     localStorage.removeItem("user_id");
-
-    // Rol seçme/giriş ekranına (app/page.js) güvenli yönlendirme
     router.push("/");
   };
 
-  // İsmin baş harflerini dinamik hesaplama (Örn: ÖF)
+  // İsmin baş harflerini dinamik hesaplama
   const getInitials = () => {
     const first = userData.firstName ? userData.firstName[0] : "";
     const last = userData.lastName ? userData.lastName[0] : "";
@@ -87,10 +92,12 @@ export default function NavbarExpert() {
 
   const isDashboardActive = pathname === "/expert/dashboard";
   const isProgramsActive = pathname.startsWith("/expert/programs");
-  const isClientsActive = pathname.startsWith("/expert/clients");
+  const isClientsActive = pathname.startsWith("/expert/clientfile") || pathname.startsWith("/expert/clients");
   const isMarketplaceActive = pathname.startsWith("/expert/marketplace");
+  const isContactActive = pathname.startsWith("/expert/iletisim");
+  const isProfileActive = pathname.startsWith("/expert/profile");
 
-  // Rol bazlı dinamik rozet ve başlıklar
+  // Rol bazlı dinamik rozet
   const renderRoleBadge = () => {
     if (userData.role === 'trainer') {
       return (
@@ -140,7 +147,7 @@ export default function NavbarExpert() {
             {renderRoleBadge()}
           </div>
 
-          {/* Masaüstü Orta Bölüm: Dinamik Menüler */}
+          {/* Masaüstü Orta Bölüm */}
           <div className="hidden lg:flex space-x-8 items-center h-full">
             <Link
               href="/expert/dashboard"
@@ -201,7 +208,7 @@ export default function NavbarExpert() {
               onMouseLeave={() => setActiveDropdown(null)}
             >
               <Link
-                href="/expert/clients"
+                href="/expert/clientfile"
                 className={`flex items-center gap-1 text-sm font-semibold transition-colors py-2 ${
                   isClientsActive ? "text-[#EA580C]" : "text-slate-600 hover:text-slate-900"
                 }`}
@@ -211,10 +218,10 @@ export default function NavbarExpert() {
               {activeDropdown === 'clients' && (
                 <div className="absolute top-full left-0 pt-2 w-56 z-50">
                   <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link href="/expert/clients" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
+                    <Link href="/expert/clientfile" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
                       {userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}
                     </Link>
-                    <Link href="/expert/clients?tab=requests" className="block px-4 py-2.5 text-xs text-[#EA580C] font-medium hover:bg-slate-50 transition-colors">
+                    <Link href="/expert/clientfile?tab=requests" className="block px-4 py-2.5 text-xs text-[#EA580C] font-medium hover:bg-slate-50 transition-colors">
                       Yeni Danışan İstekleri
                     </Link>
                   </div>
@@ -256,17 +263,25 @@ export default function NavbarExpert() {
               onMouseEnter={() => setActiveDropdown('contact')}
               onMouseLeave={() => setActiveDropdown(null)}
             >
-              <button className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors py-2">
+              <Link 
+                href="/expert/iletisim" 
+                className={`flex items-center gap-1 text-sm font-semibold transition-colors py-2 ${
+                  isContactActive ? "text-[#EA580C]" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
                 <span>İletişim & Randevu</span> <ChevronDown size={14} />
-              </button>
+              </Link>
               {activeDropdown === 'contact' && (
-                <div className="absolute top-full left-0 pt-2 w-52 z-50">
-                  <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link href="#" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
+                <div className="absolute top-full left-0 pt-2 w-56 z-50">
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-1 duration-150 overflow-hidden">
+                    <Link href="/expert/iletisim?tab=appointments" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
                       Randevularım
                     </Link>
-                    <Link href="#" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                      Canlı Mesajlar
+                    <Link href="/expert/iletisim?tab=messages" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      Mesajlar (AI & Danışan)
+                    </Link>
+                    <Link href="/expert/iletisim?tab=support" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      Canlı Destek
                     </Link>
                   </div>
                 </div>
@@ -274,7 +289,7 @@ export default function NavbarExpert() {
             </div>
           </div>
 
-          {/* Masaüstü Sağ Bölüm: Dinamik Profil & Bildirim */}
+          {/* Masaüstü Sağ Bölüm */}
           <div className="hidden lg:flex items-center space-x-4">
             <button className="p-2.5 bg-slate-50 rounded-full text-slate-500 hover:text-[#EA580C] relative transition-all">
               <Bell size={18} />
@@ -285,7 +300,7 @@ export default function NavbarExpert() {
               onMouseEnter={() => setActiveDropdown('profile')}
               onMouseLeave={() => setActiveDropdown(null)}
             >
-              <button className="flex items-center gap-3 border border-slate-200/60 rounded-full pl-2 pr-4 py-1.5 bg-slate-50 hover:bg-slate-100 transition-all">
+              <button className={`flex items-center gap-3 border rounded-full pl-2 pr-4 py-1.5 transition-all ${isProfileActive ? 'border-[#EA580C] bg-orange-50/30' : 'border-slate-200/60 bg-slate-50 hover:bg-slate-100'}`}>
                 <div className="w-8 h-8 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-xs shadow-sm">
                   {getInitials()}
                 </div>
@@ -297,11 +312,20 @@ export default function NavbarExpert() {
               {activeDropdown === 'profile' && (
                 <div className="absolute top-full right-0 pt-2 w-60 z-50">
                   <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50"><Settings size={14} /> Profil & Sertifikalar</Link>
-                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50"><BarChart3 size={14} /> Danışan Analitikleri</Link>
-                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50"><CreditCard size={14} /> Kazançlar & Uzman Paketleri</Link>
+                    <Link 
+                      href="/expert/profile" 
+                      onClick={() => setActiveDropdown(null)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50"
+                    >
+                      <Settings size={14} /> Profil & Sertifikalar
+                    </Link>
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50">
+                      <BarChart3 size={14} /> Danışan Analitikleri
+                    </Link>
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50">
+                      <CreditCard size={14} /> Kazançlar & Uzman Paketleri
+                    </Link>
                     <hr className="my-1 border-slate-100" />
-                    {/* GÜVENLİ ÇIKIŞ */}
                     <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 text-left">
                       <LogOut size={14} /> Güvenli Çıkış
                     </button>
@@ -331,7 +355,7 @@ export default function NavbarExpert() {
             Dashboard
           </Link>
 
-          {/* Program Yönetimi Alt Kategorileri */}
+          {/* Program Yönetimi */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Program Yönetimi</p>
             {userData.role === 'trainer' ? (
@@ -347,34 +371,40 @@ export default function NavbarExpert() {
             )}
           </div>
 
-          {/* Danışanlarım Alt Kategorileri */}
+          {/* Danışanlarım */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Danışanlarım</p>
-            <Link href="/expert/clients" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+            <Link href="/expert/clientfile" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
               {userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}
             </Link>
-            <Link href="/expert/clients?tab=requests" className="block text-xs text-[#EA580C] font-medium" onClick={() => setMobileMenuOpen(false)}>Yeni Danışan İstekleri</Link>
+            <Link href="/expert/clientfile?tab=requests" className="block text-xs text-[#EA580C] font-medium" onClick={() => setMobileMenuOpen(false)}>Yeni Danışan İstekleri</Link>
           </div>
 
-          {/* Uzman Vitrini Alt Kategorileri */}
+          {/* Uzman Vitrini */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Uzman Vitrini</p>
             <Link href="/expert/marketplace" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Eşleşme Havuzu</Link>
             <Link href="/expert/marketplace" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Rozet & Skor Durumu</Link>
           </div>
 
-          {/* İletişim & Randevu Alt Kategorileri */}
+          {/* İletişim & Randevu */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">İletişim & Randevu</p>
-            <Link href="#" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Randevularım</Link>
-            <Link href="#" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Canlı Mesajlar</Link>
+            <Link href="/expert/iletisim?tab=appointments" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Randevularım</Link>
+            <Link href="/expert/iletisim?tab=messages" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Mesajlar (AI & Danışan)</Link>
+            <Link href="/expert/iletisim?tab=support" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Canlı Destek</Link>
           </div>
 
-          {/* Profil & Çıkış */}
+          {/* Profil & Çıkış (Mobil) */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2 pt-1 border-t border-slate-100">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Profil ({userData.firstName})</p>
-            <Link href="#" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Profil & Sertifikalar</Link>
-            {/* GÜVENLİ ÇIKIŞ (Mobil) */}
+            <Link 
+              href="/expert/profile" 
+              className="block text-xs text-slate-600 hover:text-[#EA580C]" 
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Profil & Sertifikalar
+            </Link>
             <button onClick={handleLogout} className="block text-xs text-red-600 font-medium text-left pt-1">
               Güvenli Çıkış
             </button>
