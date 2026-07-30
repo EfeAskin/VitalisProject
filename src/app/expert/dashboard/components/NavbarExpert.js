@@ -14,7 +14,18 @@ import {
   LogOut,
   Dumbbell,
   Apple,
-  Sparkles
+  Sparkles,
+  Store,
+  Award,
+  Trophy,
+  FileText,
+  Database,
+  Utensils,
+  Users,
+  UserPlus,
+  Calendar,
+  MessageSquare,
+  Headphones
 } from 'lucide-react';
 
 export default function NavbarExpert() {
@@ -175,24 +186,28 @@ export default function NavbarExpert() {
                 <span>Program Yönetimi</span> <ChevronDown size={14} />
               </Link>
               {activeDropdown === 'program' && (
-                <div className="absolute top-full left-0 pt-2 w-52 z-50">
+                <div className="absolute top-full left-0 pt-2 w-60 z-50">
                   <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
                     {userData.role === 'trainer' ? (
                       <>
-                        <Link href="/expert/programs?tab=workout-templates" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                          Antrenman Şablonları (PT)
+                        <Link href="/expert/programs?tab=workout-templates" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                          <FileText size={15} className="text-slate-400" />
+                          <span>Antrenman Şablonları (PT)</span>
                         </Link>
-                        <Link href="/expert/programs?tab=exercise-library" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                          Egzersiz Veritabanı
+                        <Link href="/expert/programs?tab=exercise-library" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                          <Database size={15} className="text-slate-400" />
+                          <span>Egzersiz Veritabanı</span>
                         </Link>
                       </>
                     ) : (
                       <>
-                        <Link href="/expert/programs?tab=diet-templates" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                          Beslenme & Diyet Planları
+                        <Link href="/expert/programs?tab=diet-templates" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                          <Utensils size={15} className="text-slate-400" />
+                          <span>Beslenme & Diyet Planları</span>
                         </Link>
-                        <Link href="/expert/programs?tab=food-database" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                          Besin & Kalori Veritabanı
+                        <Link href="/expert/programs?tab=food-database" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                          <Database size={15} className="text-slate-400" />
+                          <span>Besin & Kalori Veritabanı</span>
                         </Link>
                       </>
                     )}
@@ -216,13 +231,15 @@ export default function NavbarExpert() {
                 <span>Danışanlarım</span> <ChevronDown size={14} />
               </Link>
               {activeDropdown === 'clients' && (
-                <div className="absolute top-full left-0 pt-2 w-56 z-50">
+                <div className="absolute top-full left-0 pt-2 w-64 z-50">
                   <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link href="/expert/clientfile" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                      {userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}
+                    <Link href="/expert/clientfile" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      <Users size={15} className="text-slate-400" />
+                      <span>{userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}</span>
                     </Link>
-                    <Link href="/expert/clientfile?tab=requests" className="block px-4 py-2.5 text-xs text-[#EA580C] font-medium hover:bg-slate-50 transition-colors">
-                      Yeni Danışan İstekleri
+                    <Link href="/expert/clientfile?tab=requests" className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-[#EA580C] font-medium hover:bg-slate-50 transition-colors">
+                      <UserPlus size={15} className="text-[#EA580C]" />
+                      <span>Yeni Danışan İstekleri</span>
                     </Link>
                   </div>
                 </div>
@@ -244,14 +261,51 @@ export default function NavbarExpert() {
                 <span>Uzman Vitrini</span> <ChevronDown size={14} />
               </Link>
               {activeDropdown === 'market' && (
-                <div className="absolute top-full left-0 pt-2 w-48 z-50">
-                  <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
-                    <Link href="/expert/marketplace" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                      Eşleşme Havuzu
+                <div className="absolute top-full left-0 pt-2 w-60 z-50">
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-900/10 p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                    
+                    {/* Sekme 1: Vitrin & İlan Panom */}
+                    <Link 
+                      href="/expert/marketplace?tab=showcase" 
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
+                    >
+                      <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-orange-100 group-hover:text-[#EA580C] text-slate-500 transition-colors">
+                        <Store size={15} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold">Vitrin & İlan Panom</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Abonelik & profil yönetimi</span>
+                      </div>
                     </Link>
-                    <Link href="/expert/marketplace" className="block px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 transition-colors">
-                      Rozet & Skor Durumu
+
+                    {/* Sekme 2: Rozetlerim & Puanım */}
+                    <Link 
+                      href="/expert/marketplace?tab=badges" 
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
+                    >
+                      <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-orange-100 group-hover:text-[#EA580C] text-slate-500 transition-colors">
+                        <Award size={15} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold">Rozetlerim & Puanım</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Kişisel başarılar & seviye</span>
+                      </div>
                     </Link>
+
+                    {/* Sekme 3: Liderlik Tablosu */}
+                    <Link 
+                      href="/expert/marketplace?tab=leaderboard" 
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
+                    >
+                      <div className="p-2 rounded-lg bg-slate-50 group-hover:bg-orange-100 group-hover:text-[#EA580C] text-slate-500 transition-colors">
+                        <Trophy size={15} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold">Liderlik Tablosu</span>
+                        <span className="text-[10px] text-slate-400 font-normal">Uzman sıralaması & rekabet</span>
+                      </div>
+                    </Link>
+
                   </div>
                 </div>
               )}
@@ -272,16 +326,19 @@ export default function NavbarExpert() {
                 <span>İletişim & Randevu</span> <ChevronDown size={14} />
               </Link>
               {activeDropdown === 'contact' && (
-                <div className="absolute top-full left-0 pt-2 w-56 z-50">
+                <div className="absolute top-full left-0 pt-2 w-60 z-50">
                   <div className="bg-white border border-slate-100 rounded-2xl shadow-2xl py-2 animate-in fade-in slide-in-from-top-1 duration-150 overflow-hidden">
-                    <Link href="/expert/iletisim?tab=appointments" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
-                      Randevularım
+                    <Link href="/expert/iletisim?tab=appointments" className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      <Calendar size={15} className="text-slate-400" />
+                      <span>Randevularım</span>
                     </Link>
-                    <Link href="/expert/iletisim?tab=messages" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
-                      Mesajlar (AI & Danışan)
+                    <Link href="/expert/iletisim?tab=messages" className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      <MessageSquare size={15} className="text-slate-400" />
+                      <span>Mesajlar (AI & Danışan)</span>
                     </Link>
-                    <Link href="/expert/iletisim?tab=support" className="block px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
-                      Canlı Destek
+                    <Link href="/expert/iletisim?tab=support" className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#EA580C] transition-colors">
+                      <Headphones size={15} className="text-slate-400" />
+                      <span>Canlı Destek</span>
                     </Link>
                   </div>
                 </div>
@@ -360,13 +417,25 @@ export default function NavbarExpert() {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Program Yönetimi</p>
             {userData.role === 'trainer' ? (
               <>
-                <Link href="/expert/programs?tab=workout-templates" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Antrenman Şablonları (PT)</Link>
-                <Link href="/expert/programs?tab=exercise-library" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Egzersiz Veritabanı</Link>
+                <Link href="/expert/programs?tab=workout-templates" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+                  <FileText size={14} className="text-slate-400" />
+                  <span>Antrenman Şablonları (PT)</span>
+                </Link>
+                <Link href="/expert/programs?tab=exercise-library" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+                  <Database size={14} className="text-slate-400" />
+                  <span>Egzersiz Veritabanı</span>
+                </Link>
               </>
             ) : (
               <>
-                <Link href="/expert/programs?tab=diet-templates" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Beslenme & Diyet Planları</Link>
-                <Link href="/expert/programs?tab=food-database" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Besin & Kalori Veritabanı</Link>
+                <Link href="/expert/programs?tab=diet-templates" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+                  <Utensils size={14} className="text-slate-400" />
+                  <span>Beslenme & Diyet Planları</span>
+                </Link>
+                <Link href="/expert/programs?tab=food-database" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+                  <Database size={14} className="text-slate-400" />
+                  <span>Besin & Kalori Veritabanı</span>
+                </Link>
               </>
             )}
           </div>
@@ -374,25 +443,66 @@ export default function NavbarExpert() {
           {/* Danışanlarım */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Danışanlarım</p>
-            <Link href="/expert/clientfile" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
-              {userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}
+            <Link href="/expert/clientfile" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+              <Users size={14} className="text-slate-400" />
+              <span>{userData.role === 'trainer' ? "PT Danışan Listesi & Gelişim" : "Diyetisyen Danışan Listesi & Kalori"}</span>
             </Link>
-            <Link href="/expert/clientfile?tab=requests" className="block text-xs text-[#EA580C] font-medium" onClick={() => setMobileMenuOpen(false)}>Yeni Danışan İstekleri</Link>
+            <Link href="/expert/clientfile?tab=requests" className="flex items-center gap-2 text-xs text-[#EA580C] font-medium" onClick={() => setMobileMenuOpen(false)}>
+              <UserPlus size={14} className="text-[#EA580C]" />
+              <span>Yeni Danışan İstekleri</span>
+            </Link>
           </div>
 
           {/* Uzman Vitrini */}
-          <div className="border-l-2 border-slate-100 pl-3 space-y-2">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Uzman Vitrini</p>
-            <Link href="/expert/marketplace" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Eşleşme Havuzu</Link>
-            <Link href="/expert/marketplace" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Rozet & Skor Durumu</Link>
+          <div className="border-l-2 border-slate-100 pl-3 space-y-3 my-2">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Uzman Vitrini</p>
+            
+            {/* Sekme 1 */}
+            <Link 
+              href="/expert/marketplace?tab=showcase" 
+              className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Store size={14} className="text-slate-400" />
+              <span>Vitrin & İlan Panom</span>
+            </Link>
+            
+            {/* Sekme 2 */}
+            <Link 
+              href="/expert/marketplace?tab=badges" 
+              className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Award size={14} className="text-slate-400" />
+              <span>Rozetlerim & Puanım</span>
+            </Link>
+            
+            {/* Sekme 3 */}
+            <Link 
+              href="/expert/marketplace?tab=leaderboard" 
+              className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Trophy size={14} className="text-slate-400" />
+              <span>Liderlik Tablosu</span>
+            </Link>
           </div>
 
           {/* İletişim & Randevu */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">İletişim & Randevu</p>
-            <Link href="/expert/iletisim?tab=appointments" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Randevularım</Link>
-            <Link href="/expert/iletisim?tab=messages" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Mesajlar (AI & Danışan)</Link>
-            <Link href="/expert/iletisim?tab=support" className="block text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>Canlı Destek</Link>
+            <Link href="/expert/iletisim?tab=appointments" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+              <Calendar size={14} className="text-slate-400" />
+              <span>Randevularım</span>
+            </Link>
+            <Link href="/expert/iletisim?tab=messages" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+              <MessageSquare size={14} className="text-slate-400" />
+              <span>Mesajlar (AI & Danışan)</span>
+            </Link>
+            <Link href="/expert/iletisim?tab=support" className="flex items-center gap-2 text-xs text-slate-600 hover:text-[#EA580C]" onClick={() => setMobileMenuOpen(false)}>
+              <Headphones size={14} className="text-slate-400" />
+              <span>Canlı Destek</span>
+            </Link>
           </div>
 
           {/* Profil & Çıkış (Mobil) */}

@@ -34,7 +34,7 @@ export default function AuthPortal() {
       <div 
         className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 scale-105"
         style={{ 
-          backgroundImage: `url('https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1600')` 
+          backgroundImage: `url('/fotos/background.png')`, 
         }}
       />
 
