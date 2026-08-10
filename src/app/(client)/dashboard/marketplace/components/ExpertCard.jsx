@@ -1,27 +1,27 @@
 "use client";
 import React from 'react';
-import { Star, Award, Calendar, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { Star, Award, Calendar, CheckCircle2, ArrowUpRight, Layers } from 'lucide-react';
 
-export default function ExpertCard({ expert, onBook }) {
+export default function ExpertCard({ expert, onInspect }) {
   const {
     name,
     title,
-    category, // 'trainer' | 'dietitian'
+    category,
     avatarUrl,
     rating,
     reviewCount,
     experienceYears,
-    monthlyPrice,
-    weeklyPrice,
+    minPrice,
     specialties,
-    verified
+    verified,
+    listings
   } = expert;
 
   return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-200/70 hover:border-[#C5A880]/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative">
+    <div className="bg-white rounded-3xl p-5 border border-slate-200/70 hover:border-[#C5A880]/60 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative">
       
-      {/* Üst Rozet & Görsel */}
       <div>
+        {/* Üst Rozet & Profil */}
         <div className="flex items-start gap-4 mb-4">
           <div className="relative">
             <img 
@@ -38,7 +38,7 @@ export default function ExpertCard({ expert, onBook }) {
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
                 category === 'trainer' 
                   ? 'bg-emerald-50 text-[#0A3A25] border border-emerald-100' 
                   : 'bg-amber-50 text-[#8C724D] border border-amber-100'
@@ -60,41 +60,43 @@ export default function ExpertCard({ expert, onBook }) {
           </div>
         </div>
 
-        {/* Tecrübe ve İstatistik Detayları */}
-        <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-xl bg-[#F8FAF8] border border-slate-100 text-[11px]">
-          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+        {/* İstatistik Detayları */}
+        <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-2xl bg-[#F8FAF8] border border-slate-100 text-[11px]">
+          <div className="flex items-center gap-1.5 text-slate-600 font-medium truncate">
             <Award size={13} className="text-[#C5A880]" />
-            <span>{experienceYears} Yıl Tecrübe</span>
+            <span>{experienceYears || 5} Yıl Tecrübe</span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-600 font-medium">
-            <Calendar size={13} className="text-[#10B981]" />
-            <span>Aktif Danışan</span>
+          <div className="flex items-center gap-1.5 text-slate-600 font-medium truncate">
+            <Layers size={13} className="text-[#10B981]" />
+            <span>{listings?.length || 0} Aktif Paket</span>
           </div>
         </div>
 
         {/* Uzmanlık Etiketleri */}
         <div className="flex flex-wrap gap-1.5 mb-4">
           {specialties?.slice(0, 3).map((tag, idx) => (
-            <span key={idx} className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+            <span key={idx} className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md">
               #{tag}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Fiyat ve Randevu Butonu */}
+      {/* Fiyat ve İncele Butonu */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
         <div>
-          <span className="text-[9px] text-slate-400 block font-bold uppercase">Danışmanlık</span>
+          <span className="text-[9px] text-slate-400 block font-bold uppercase">Başlangıç</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-base font-black text-slate-900">₺{monthlyPrice?.toLocaleString('tr-TR')}</span>
-            <span className="text-[10px] font-semibold text-slate-400">/ Ay</span>
+            <span className="text-base font-black text-slate-900">
+              {minPrice > 0 ? `₺${minPrice.toLocaleString('tr-TR')}` : 'Teklif Alın'}
+            </span>
+            {minPrice > 0 && <span className="text-[10px] font-semibold text-slate-400">'den başlayan</span>}
           </div>
         </div>
 
         <button 
-          onClick={() => onBook && onBook(expert)}
-          className="bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1 border border-[#C5A880]/15"
+          onClick={() => onInspect && onInspect(expert)}
+          className="bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white text-xs font-extrabold px-4 py-2.5 rounded-2xl transition-all shadow-sm flex items-center gap-1.5 border border-[#C5A880]/15"
         >
           <span>İncele</span>
           <ArrowUpRight size={14} className="text-[#C5A880]" />

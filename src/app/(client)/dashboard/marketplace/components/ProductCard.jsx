@@ -6,23 +6,20 @@ export default function ProductCard({ product }) {
   const {
     title,
     brand,
-    category,
     imageUrl,
     rating,
-    reviewCount,
     price,
     oldPrice,
     externalUrl,
-    inStock,
     isPopular
   } = product;
 
   return (
-    <div className="bg-white rounded-2xl p-4 border border-slate-200/70 hover:border-[#10B981]/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative">
+    <div className="bg-white rounded-3xl p-4 border border-slate-200/70 hover:border-[#10B981]/50 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group relative">
       
-      {/* Ürün Görseli & Etiketler */}
       <div>
-        <div className="relative w-full h-44 rounded-xl bg-slate-50 overflow-hidden mb-3 border border-slate-100 flex items-center justify-center p-3">
+        {/* Ürün Görseli */}
+        <div className="relative w-full h-44 rounded-2xl bg-slate-50 overflow-hidden mb-3 border border-slate-100 flex items-center justify-center p-3">
           <img 
             src={imageUrl || "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&q=80&w=300"} 
             alt={title}
@@ -50,7 +47,7 @@ export default function ProductCard({ product }) {
         </h4>
       </div>
 
-      {/* Fiyat ve E-Ticaret Aksiyonu */}
+      {/* Fiyat ve Satın Al */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
         <div>
           {oldPrice && (
@@ -59,7 +56,7 @@ export default function ProductCard({ product }) {
             </span>
           )}
           <span className="text-base font-black text-slate-900">
-            ₺{price.toLocaleString('tr-TR')}
+            ₺{price?.toLocaleString('tr-TR')}
           </span>
         </div>
 
@@ -67,7 +64,7 @@ export default function ProductCard({ product }) {
           href={externalUrl || "#"} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-slate-900 hover:bg-[#0A3A25] active:scale-95 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+          className="bg-slate-900 hover:bg-[#0A3A25] active:scale-95 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-2xl transition-all shadow-sm flex items-center gap-1.5"
         >
           <ShoppingBag size={13} className="text-[#C5A880]" />
           <span>Satın Al</span>

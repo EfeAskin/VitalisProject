@@ -1,6 +1,6 @@
 "use client";
-// src/app/expert/marketplace/components/ShowcasePanel.jsx
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import {
   Star,
   Eye,
@@ -16,40 +16,116 @@ import {
   Trophy,
   ChevronRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 const EMPTY_LISTING = { title: "", price: "", period: "Aylık", description: "" };
 
-export default function ShowcasePanel({ onNavigate }) {
-  const [isAccepting, setIsAccepting] = useState(true);
-  const [bio, setBio] = useState(
-    "10 yıllık deneyimle hipertrofi ve güç antrenmanlarında uzmanlaşmış, veriye dayalı koçluk sunuyorum."
-  );
-  const [specialties, setSpecialties] = useState(["Hipertrofi", "Güç Antrenmanı", "Online Koçluk"]);
-  const [newSpecialty, setNewSpecialty] = useState("");
+const STAT_ICONS = {
+  views: Eye,
+  requests: MessageSquare,
+  conversion: TrendingUp,
+};
 
-  const [listings, setListings] = useState([
-    { id: 1, title: "Online Aylık Koçluk", price: "1.500", period: "Aylık", description: "Haftalık program güncellemesi, sınırsız mesajlaşma.", active: true },
-    { id: 2, title: "Kişiye Özel Tek Seferlik Program", price: "800", period: "Tek Seferlik", description: "4 haftalık detaylı antrenman programı.", active: true },
-    { id: 3, title: "Yüz Yüze Seans Paketi (8 Seans)", price: "6.400", period: "Paket", description: "Stüdyoda birebir antrenman.", active: false },
-  ]);
+export default function ShowcasePanel({ onNavigate }) {
+  const [loading, setLoading] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Profile States
+  const [fullName, setFullName] = useState("");
+  const [title, setTitle] = useState("");
+  const [bio, setBio] = useState("");
+  const [specialties, setSpecialties] = useState([]);
+  const [newSpecialty, setNewSpecialty] = useState("");
+  const [isAccepting, setIsAccepting] = useState(true);
+  const [rating, setRating] = useState(5.0);
+  const [reviewCount, setReviewCount] = useState(0);
+
+  // Stats State
+  const [stats, setStats] = useState([]);
+
+  // Listings States
+  const [listings, setListings] = useState([]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_LISTING);
 
-  const stats = [
-    { label: "Profil Görüntülenme", value: "1.284", icon: Eye },
-    { label: "Gelen Talep", value: "37", icon: MessageSquare },
-    { label: "Dönüşüm Oranı", value: "%12.4", icon: TrendingUp },
-  ];
+  useEffect(() => {
+    fetchMarketplaceData();
+  }, []);
 
-  const addSpecialty = () => {
-    const val = newSpecialty.trim();
-    if (val && !specialties.includes(val)) setSpecialties([...specialties, val]);
-    setNewSpecialty("");
+  const fetchMarketplaceData = async () => {
+    setLoading(true);
+    try {
+      const [profileRes, listingsRes] = await Promise.all([
+        fetch("http://localhost:8000/api/expert/marketplace/profile"),
+        fetch("http://localhost:8000/api/expert/marketplace/listings"),
+      ]);
+
+      if (profileRes.ok) {
+        const data = await profileRes.json();
+        setFullName(data.profile.full_name || "Uzman");
+        setTitle(data.profile.title || "Personal Trainer");
+        setBio(data.profile.bio || "");
+        setSpecialties(data.profile.specialties || []);
+        setIsAccepting(data.profile.is_accepting_clients);
+        setRating(data.profile.rating || 5.0);
+        setReviewCount(data.profile.review_count || 0);
+        setStats(data.stats || []);
+      }
+
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        setListings(listingsData);
+      }
+    } catch (err) {
+      console.error("Veri çekme hatası:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeSpecialty = (s) => setSpecialties(specialties.filter((x) => x !== s));
+  const handleSaveProfile = async (updatedBio, updatedSpecialties, updatedAccepting) => {
+    setSavingProfile(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/expert/marketplace/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bio: updatedBio !== undefined ? updatedBio : bio,
+          specialties: updatedSpecialties !== undefined ? updatedSpecialties : specialties,
+          is_accepting_clients: updatedAccepting !== undefined ? updatedAccepting : isAccepting,
+        }),
+      });
+      if (!res.ok) throw new Error("Profil güncellenemedi");
+    } catch (err) {
+      console.error("Profil kaydetme hatası:", err);
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const toggleAccepting = async () => {
+    const nextVal = !isAccepting;
+    setIsAccepting(nextVal);
+    await handleSaveProfile(bio, specialties, nextVal);
+  };
+
+  const addSpecialty = async () => {
+    const val = newSpecialty.trim();
+    if (val && !specialties.includes(val)) {
+      const nextList = [...specialties, val];
+      setSpecialties(nextList);
+      setNewSpecialty("");
+      await handleSaveProfile(bio, nextList, isAccepting);
+    }
+  };
+
+  const removeSpecialty = async (s) => {
+    const nextList = specialties.filter((x) => x !== s);
+    setSpecialties(nextList);
+    await handleSaveProfile(bio, nextList, isAccepting);
+  };
 
   const openNewForm = () => {
     setForm(EMPTY_LISTING);
@@ -58,7 +134,12 @@ export default function ShowcasePanel({ onNavigate }) {
   };
 
   const openEditForm = (listing) => {
-    setForm(listing);
+    setForm({
+      title: listing.title,
+      price: listing.price,
+      period: listing.period,
+      description: listing.description || "",
+    });
     setEditingId(listing.id);
     setFormOpen(true);
   };
@@ -69,26 +150,99 @@ export default function ShowcasePanel({ onNavigate }) {
     setForm(EMPTY_LISTING);
   };
 
-  const saveListing = () => {
-    if (!form.title.trim() || !form.price.trim()) return;
-    if (editingId) {
-      setListings(listings.map((l) => (l.id === editingId ? { ...l, ...form } : l)));
-    } else {
-      setListings([{ id: Date.now(), active: true, ...form }, ...listings]);
+  const saveListing = async () => {
+    if (!form.title.trim() || !form.price.toString().trim()) return;
+
+    try {
+      const numericPrice = parseFloat(form.price.toString().replace(".", "").replace(",", "."));
+
+      if (editingId) {
+        const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: form.title,
+            price: numericPrice,
+            period: form.period,
+            description: form.description,
+          }),
+        });
+        if (res.ok) {
+          const updated = await res.json();
+          setListings(listings.map((l) => (l.id === editingId ? updated : l)));
+        }
+      } else {
+        const res = await fetch("http://localhost:8000/api/expert/marketplace/listings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: form.title,
+            price: numericPrice,
+            period: form.period,
+            description: form.description,
+          }),
+        });
+        if (res.ok) {
+          const created = await res.json();
+          setListings([created, ...listings]);
+        }
+      }
+      closeForm();
+    } catch (err) {
+      console.error("İlan kaydetme hatası:", err);
     }
-    closeForm();
   };
 
-  const toggleListingActive = (id) => {
-    setListings(listings.map((l) => (l.id === id ? { ...l, active: !l.active } : l)));
-  };
-
-  const deleteListing = (id) => {
-    if (confirm("Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?")) {
-      setListings(listings.filter((l) => l.id !== id));
-      if (editingId === id) closeForm();
+  const toggleListingActive = async (id, currentActive) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: !currentActive }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setListings(listings.map((l) => (l.id === id ? updated : l)));
+      }
+    } catch (err) {
+      console.error("Durum değiştirme hatası:", err);
     }
   };
+
+  const deleteListing = async (id) => {
+    if (!confirm("Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?")) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setListings(listings.filter((l) => l.id !== id));
+        if (editingId === id) closeForm();
+      }
+    } catch (err) {
+      console.error("Silme hatası:", err);
+    }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "ÖG";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-slate-400 gap-2">
+        <Loader2 className="animate-spin" size={20} />
+        <span>Vitrin bilgileri yükleniyor...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_1.4fr] gap-5">
@@ -104,19 +258,23 @@ export default function ShowcasePanel({ onNavigate }) {
 
           <div className="bg-gradient-to-b from-[#182134] to-[#0B1120] border border-slate-800 rounded-xl p-5 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-[#EA580C] flex items-center justify-center text-white font-black text-xl shadow-[0_0_20px_rgba(234,88,12,0.4)] mb-3">
-              ÖG
+              {getInitials(fullName)}
             </div>
-            <h3 className="text-white font-extrabold text-base">Ömer Faruk Gürün</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">Personal Trainer</span>
+            <h3 className="text-white font-extrabold text-base">{fullName}</h3>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-1">{title}</span>
 
             <div className="flex items-center gap-1 mt-2">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} size={13} className="fill-[#EA580C] text-[#EA580C]" />
               ))}
-              <span className="text-xs text-slate-400 ml-1">4.9 (86)</span>
+              <span className="text-xs text-slate-400 ml-1">
+                {rating} ({reviewCount})
+              </span>
             </div>
 
-            <p className="text-xs text-slate-400 mt-3 leading-relaxed">{bio}</p>
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              {bio || "Henüz bir tanıtım yazısı eklenmedi."}
+            </p>
 
             <div className="flex flex-wrap justify-center gap-1.5 mt-4">
               {specialties.map((s) => (
@@ -136,12 +294,15 @@ export default function ShowcasePanel({ onNavigate }) {
               <Power size={15} className={isAccepting ? "text-emerald-400" : "text-slate-500"} />
               <div>
                 <p className="text-xs font-bold text-white">Yeni Danışan Kabulü</p>
-                <p className="text-[10px] text-slate-500">{isAccepting ? "Aktif — havuzda görünüyorsun" : "Pasif — gizli moddasın"}</p>
+                <p className="text-[10px] text-slate-500">
+                  {isAccepting ? "Aktif — havuzda görünüyorsun" : "Pasif — gizli moddasın"}
+                </p>
               </div>
             </div>
             <button
               type="button"
-              onClick={() => setIsAccepting(!isAccepting)}
+              onClick={toggleAccepting}
+              disabled={savingProfile}
               className={`w-11 h-6 rounded-full flex items-center px-0.5 transition-colors ${
                 isAccepting ? "bg-emerald-500/80 justify-end" : "bg-slate-700 justify-start"
               }`}
@@ -159,12 +320,16 @@ export default function ShowcasePanel({ onNavigate }) {
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
+              onBlur={() => handleSaveProfile(bio, specialties, isAccepting)}
               rows={3}
+              placeholder="Kendinizden ve sunduğunuz koçluk hizmetinden bahsedin..."
               className="w-full bg-[#182134] border border-slate-700 text-white text-xs rounded-lg p-3 focus:border-[#EA580C] outline-none resize-none placeholder:text-slate-600"
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Uzmanlık Etiketleri</label>
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
+              Uzmanlık Etiketleri
+            </label>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {specialties.map((s) => (
                 <span
@@ -224,15 +389,18 @@ export default function ShowcasePanel({ onNavigate }) {
       <div className="space-y-5">
         {/* İstatistik Şeridi */}
         <div className="grid grid-cols-3 gap-3">
-          {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="bg-[#111827] border border-slate-800 rounded-xl p-4 shadow-lg">
-              <div className="flex items-center gap-2 text-slate-500 mb-2">
-                <Icon size={14} className="text-[#EA580C]" />
-                <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
+          {stats.map(({ label, value, key }) => {
+            const Icon = STAT_ICONS[key] || Eye;
+            return (
+              <div key={label} className="bg-[#111827] border border-slate-800 rounded-xl p-4 shadow-lg">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                  <Icon size={14} className="text-[#EA580C]" />
+                  <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
+                </div>
+                <p className="text-lg font-black text-white">{value}</p>
               </div>
-              <p className="text-lg font-black text-white">{value}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* İlan Yönetimi */}
@@ -290,7 +458,10 @@ export default function ShowcasePanel({ onNavigate }) {
                 className="w-full bg-[#0B1120] border border-slate-700 text-white text-xs rounded-lg p-2.5 focus:border-[#EA580C] outline-none resize-none placeholder:text-slate-600"
               />
               <div className="flex justify-end gap-2">
-                <button onClick={closeForm} className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors">
+                <button
+                  onClick={closeForm}
+                  className="px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-white transition-colors"
+                >
                   İptal
                 </button>
                 <button
@@ -305,7 +476,9 @@ export default function ShowcasePanel({ onNavigate }) {
 
           <div className="space-y-3">
             {listings.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-8">Henüz ilanın yok. Yukarıdan yeni bir ilan oluştur.</p>
+              <p className="text-xs text-slate-500 text-center py-8">
+                Henüz ilanın yok. Yukarıdan yeni bir ilan oluştur.
+              </p>
             ) : (
               listings.map((listing) => (
                 <div
@@ -331,7 +504,7 @@ export default function ShowcasePanel({ onNavigate }) {
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
                     <button
-                      onClick={() => toggleListingActive(listing.id)}
+                      onClick={() => toggleListingActive(listing.id, listing.active)}
                       className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-colors ${
                         listing.active
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"

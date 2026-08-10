@@ -36,17 +36,30 @@ export default function NavbarExpert() {
 
   // Neon DB'den dinamik olarak çekilecek kullanıcı bilgileri
   const [userData, setUserData] = useState({
-    firstName: "Yükleniyor...",
+    firstName: "",
     lastName: "",
-    role: "trainer" // 'trainer' veya 'dietitian'
+    role: "trainer", // 'trainer' veya 'dietitian'
+    profilePhoto: ""
   });
 
   // Veritabanından oturum açan uzman bilgilerini çekme
   useEffect(() => {
     async function fetchUserData() {
+      const cachedFirst = localStorage.getItem("first_name") || localStorage.getItem("firstName");
+      const cachedLast = localStorage.getItem("last_name") || localStorage.getItem("lastName") || "";
+      const cachedPhoto = localStorage.getItem("profile_photo") || localStorage.getItem("profilePhoto") || "";
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+
+      if (cachedFirst) {
+        setUserData({
+          firstName: cachedFirst,
+          lastName: cachedLast,
+          role: localStorage.getItem("role") || "trainer",
+          profilePhoto: cachedPhoto
+        });
+      }
+
       try {
-        const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-        
         const headers = {
           "Content-Type": "application/json"
         };
@@ -63,12 +76,35 @@ export default function NavbarExpert() {
 
         if (res.ok) {
           const data = await res.json();
-          setUserData({
-            firstName: data.first_name,
-            lastName: data.last_name,
-            role: data.role,
-            profilePhoto: data.profile_photo
-          });
+          const userObj = data.user || data;
+
+          const firstName = userObj.first_name || userObj.firstName || "";
+          const lastName = userObj.last_name || userObj.lastName || "";
+          
+          const profilePhoto = 
+            userObj.profile_photo || 
+            userObj.profilePhoto || 
+            userObj.profileImage || 
+            userObj.avatar || 
+            userObj.image || 
+            "";
+
+          if (firstName) {
+            setUserData({
+              firstName: firstName,
+              lastName: lastName,
+              role: userObj.role || "trainer",
+              profilePhoto: profilePhoto
+            });
+
+            localStorage.setItem("first_name", firstName);
+            localStorage.setItem("last_name", lastName);
+            if (profilePhoto) {
+              localStorage.setItem("profile_photo", profilePhoto);
+            } else {
+              localStorage.removeItem("profile_photo");
+            }
+          }
         } else {
           console.warn("Auth me başarısız oldu:", res.status);
         }
@@ -80,25 +116,37 @@ export default function NavbarExpert() {
     fetchUserData();
   }, []);
 
-  // --- GÜVENLİ ÇIKIŞ FONKSİYONU ---
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (err) {
       console.error("Çıkış isteği sırasında hata:", err);
     }
 
-    localStorage.removeItem("role");
-    localStorage.removeItem("user_id");
+    localStorage.clear();
     router.push("/");
   };
 
-  // İsmin baş harflerini dinamik hesaplama
   const getInitials = () => {
-    const first = userData.firstName ? userData.firstName[0] : "";
-    const last = userData.lastName ? userData.lastName[0] : "";
-    return (first + last).toUpperCase();
+    if (!userData.firstName) return "E";
+
+    const cleanFirst = userData.firstName.trim();
+    const cleanLast = userData.lastName ? userData.lastName.trim() : "";
+
+    const firstInitial = cleanFirst.charAt(0);
+    let lastInitial = "";
+
+    if (cleanLast) {
+      lastInitial = cleanLast.charAt(0);
+    } else {
+      const parts = cleanFirst.split(/\s+/);
+      if (parts.length > 1) {
+        lastInitial = parts[1].charAt(0);
+      }
+    }
+
+    return (firstInitial + lastInitial).toUpperCase();
   };
 
   const isDashboardActive = pathname === "/expert/dashboard";
@@ -108,7 +156,6 @@ export default function NavbarExpert() {
   const isContactActive = pathname.startsWith("/expert/iletisim");
   const isProfileActive = pathname.startsWith("/expert/profile");
 
-  // Rol bazlı dinamik rozet
   const renderRoleBadge = () => {
     if (userData.role === 'trainer') {
       return (
@@ -263,8 +310,6 @@ export default function NavbarExpert() {
               {activeDropdown === 'market' && (
                 <div className="absolute top-full left-0 pt-2 w-60 z-50">
                   <div className="bg-white border border-slate-100 rounded-2xl shadow-xl shadow-slate-900/10 p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-                    
-                    {/* Sekme 1: Vitrin & İlan Panom */}
                     <Link 
                       href="/expert/marketplace?tab=showcase" 
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
@@ -278,7 +323,6 @@ export default function NavbarExpert() {
                       </div>
                     </Link>
 
-                    {/* Sekme 2: Rozetlerim & Puanım */}
                     <Link 
                       href="/expert/marketplace?tab=badges" 
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
@@ -292,7 +336,6 @@ export default function NavbarExpert() {
                       </div>
                     </Link>
 
-                    {/* Sekme 3: Liderlik Tablosu */}
                     <Link 
                       href="/expert/marketplace?tab=leaderboard" 
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-[#EA580C] hover:bg-orange-50/60 transition-all group"
@@ -305,7 +348,6 @@ export default function NavbarExpert() {
                         <span className="text-[10px] text-slate-400 font-normal">Uzman sıralaması & rekabet</span>
                       </div>
                     </Link>
-
                   </div>
                 </div>
               )}
@@ -357,33 +399,54 @@ export default function NavbarExpert() {
               onMouseEnter={() => setActiveDropdown('profile')}
               onMouseLeave={() => setActiveDropdown(null)}
             >
-              <button className={`flex items-center gap-3 border rounded-full pl-2 pr-4 py-1.5 transition-all ${isProfileActive ? 'border-[#EA580C] bg-orange-50/30' : 'border-slate-200/60 bg-slate-50 hover:bg-slate-100'}`}>
-                <div className="w-8 h-8 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                  {getInitials()}
+              {/* Profil Butonu (Fotoğraf + Ad Soyad) */}
+              <button className={`flex items-center gap-2.5 border rounded-full pl-1.5 pr-3 py-1.5 transition-all ${isProfileActive ? 'border-[#EA580C] bg-orange-50/30' : 'border-slate-200/60 bg-slate-50 hover:bg-slate-100'}`}>
+                <div className="w-8 h-8 rounded-full bg-[#EA580C] text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden shrink-0">
+                  {userData.profilePhoto ? (
+                    <img 
+                      src={userData.profilePhoto} 
+                      alt={`${userData.firstName} ${userData.lastName}`} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    getInitials()
+                  )}
                 </div>
-                <span className="text-xs font-semibold text-slate-700">
-                  {userData.firstName} {userData.lastName}
+                {/* Ad & Soyad Görünür Alanı */}
+                <span className="text-xs font-bold text-slate-800 max-w-[130px] truncate">
+                  {userData.firstName ? `${userData.firstName} ${userData.lastName}`.trim() : "Uzman"}
                 </span>
-                <ChevronDown size={14} className="text-slate-400" />
+                <ChevronDown size={14} className="text-slate-400 shrink-0" />
               </button>
+              
               {activeDropdown === 'profile' && (
-                <div className="absolute top-full right-0 pt-2 w-60 z-50">
+                <div className="absolute top-full right-0 pt-2 w-64 z-50">
                   <div className="bg-white border border-slate-100 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {/* Menü İçi İsim & Rol Kartı */}
+                    <div className="px-4 py-2 border-b border-slate-100 mb-1">
+                      <p className="text-xs font-bold text-slate-900 truncate">
+                        {userData.firstName ? `${userData.firstName} ${userData.lastName}`.trim() : "Uzman Hesabı"}
+                      </p>
+                      <p className="text-[11px] text-slate-400 capitalize font-medium">
+                        {userData.role === 'trainer' ? 'Kişisel Antrenör' : 'Diyetisyen'}
+                      </p>
+                    </div>
+
                     <Link 
                       href="/expert/profile" 
                       onClick={() => setActiveDropdown(null)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C]"
                     >
                       <Settings size={14} /> Profil & Sertifikalar
                     </Link>
-                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50">
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C]">
                       <BarChart3 size={14} /> Danışan Analitikleri
                     </Link>
-                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50">
+                    <Link href="#" className="flex items-center gap-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-[#EA580C]">
                       <CreditCard size={14} /> Kazançlar & Uzman Paketleri
                     </Link>
                     <hr className="my-1 border-slate-100" />
-                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 text-left">
+                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 text-left font-medium">
                       <LogOut size={14} /> Güvenli Çıkış
                     </button>
                   </div>
@@ -457,7 +520,6 @@ export default function NavbarExpert() {
           <div className="border-l-2 border-slate-100 pl-3 space-y-3 my-2">
             <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Uzman Vitrini</p>
             
-            {/* Sekme 1 */}
             <Link 
               href="/expert/marketplace?tab=showcase" 
               className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
@@ -467,7 +529,6 @@ export default function NavbarExpert() {
               <span>Vitrin & İlan Panom</span>
             </Link>
             
-            {/* Sekme 2 */}
             <Link 
               href="/expert/marketplace?tab=badges" 
               className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
@@ -477,7 +538,6 @@ export default function NavbarExpert() {
               <span>Rozetlerim & Puanım</span>
             </Link>
             
-            {/* Sekme 3 */}
             <Link 
               href="/expert/marketplace?tab=leaderboard" 
               className="flex items-center gap-2.5 text-xs font-medium text-slate-600 hover:text-[#EA580C] transition-colors" 
@@ -507,7 +567,9 @@ export default function NavbarExpert() {
 
           {/* Profil & Çıkış (Mobil) */}
           <div className="border-l-2 border-slate-100 pl-3 space-y-2 pt-1 border-t border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Profil ({userData.firstName})</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Profil ({userData.firstName ? `${userData.firstName} ${userData.lastName}`.trim() : "Uzman"})
+            </p>
             <Link 
               href="/expert/profile" 
               className="block text-xs text-slate-600 hover:text-[#EA580C]" 

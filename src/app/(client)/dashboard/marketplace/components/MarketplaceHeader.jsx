@@ -1,6 +1,6 @@
 "use client";
 import React from 'react';
-import { Search, Sparkles, SlidersHorizontal, UserCheck, Stethoscope, Dumbbell } from 'lucide-react';
+import { Search, Sparkles, SlidersHorizontal, Stethoscope, Dumbbell, PackageCheck } from 'lucide-react';
 
 export default function MarketplaceHeader({ 
   activeTab, 
@@ -13,12 +13,12 @@ export default function MarketplaceHeader({
   return (
     <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200/60 mb-8 space-y-6">
       
-      {/* Üst Başlık & Slogan */}
+      {/* Üst Başlık */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 bg-[#0A3A25]/5 border border-[#0A3A25]/10 px-3 py-1 rounded-full mb-2">
             <Sparkles size={12} className="text-[#C5A880] fill-[#C5A880]" />
-            <span className="text-[10px] font-extrabold text-[#0A3A25] uppercase tracking-wider">Vitalis Premium Market</span>
+            <span className="text-[10px] font-black text-[#0A3A25] uppercase tracking-wider">Vitalis Premium Market</span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Marketplace & Uzman Keşfi</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
@@ -26,7 +26,7 @@ export default function MarketplaceHeader({
           </p>
         </div>
 
-        {/* Sıralama Seçeneği */}
+        {/* Sıralama */}
         <div className="flex items-center gap-2">
           <SlidersHorizontal size={14} className="text-slate-400" />
           <select 
@@ -42,11 +42,11 @@ export default function MarketplaceHeader({
         </div>
       </div>
 
-      {/* Kategori Switcher (Tab Bar) */}
+      {/* Tab Switcher */}
       <div className="flex flex-wrap bg-slate-100/80 p-1.5 rounded-2xl gap-1">
         <button 
           onClick={() => setActiveTab('all')}
-          className={`flex-1 min-w-[100px] py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[100px] py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'all' 
               ? 'bg-[#0A3A25] text-white shadow-md' 
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -58,7 +58,7 @@ export default function MarketplaceHeader({
 
         <button 
           onClick={() => setActiveTab('trainer')}
-          className={`flex-1 min-w-[120px] py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'trainer' 
               ? 'bg-[#0A3A25] text-white shadow-md' 
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -70,7 +70,7 @@ export default function MarketplaceHeader({
 
         <button 
           onClick={() => setActiveTab('dietitian')}
-          className={`flex-1 min-w-[120px] py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'dietitian' 
               ? 'bg-[#0A3A25] text-white shadow-md' 
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -82,13 +82,13 @@ export default function MarketplaceHeader({
 
         <button 
           onClick={() => setActiveTab('supplement')}
-          className={`flex-1 min-w-[150px] py-2.5 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[150px] py-2.5 px-3 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'supplement' 
               ? 'bg-[#0A3A25] text-white shadow-md' 
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
           }`}
         >
-          <UserCheck size={13} className={activeTab === 'supplement' ? 'text-[#10B981]' : ''} />
+          <PackageCheck size={13} className={activeTab === 'supplement' ? 'text-[#10B981]' : ''} />
           <span>Supplement & Ekipman</span>
         </button>
       </div>
