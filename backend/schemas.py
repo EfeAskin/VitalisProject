@@ -16,12 +16,14 @@ class User(BaseModel):
     gender: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
+    target_weight: Optional[float] = None
     activity_level: Optional[str] = None
     goal: Optional[str] = None
     profile_photo: Optional[str] = None
     role: Optional[str] = "client"
     target_kcal: Optional[int] = 2250
     created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -35,6 +37,7 @@ class UserProfileUpdate(BaseModel):
     gender: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
+    target_weight: Optional[float] = None
     activity_level: Optional[str] = None
     goal: Optional[str] = None
     profile_photo: Optional[str] = None
@@ -178,22 +181,69 @@ class ClientMealLogCreate(BaseModel):
 
 
 # ==========================================
-# 9. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA
+# 9. SPECIALIST_PROFILES TABLE SCHEMA (YENİ EKLENDİ)
 # ==========================================
-class SpecialistSubscription(BaseModel):
+class SpecialistProfile(BaseModel):
     id: Optional[int] = None
-    client_id: Optional[int] = None
-    specialist_id: Optional[int] = None
-    specialist_type: str  
-    status: Optional[str] = "active"
-    subscribed_at: Optional[datetime] = None
+    user_id: int
+    title: Optional[str] = "Uzman Koç"
+    bio: Optional[str] = ""
+    specialties: Optional[List[str]] = []
+    is_accepting_clients: Optional[bool] = True
+    rating: Optional[float] = 5.0
+    review_count: Optional[int] = 0
+    profile_views: Optional[int] = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 
 # ==========================================
-# 10. NUTRITION_PROGRAMS TABLE SCHEMA
+# 10. MARKETPLACE_LISTINGS TABLE SCHEMA (YENİ EKLENDİ)
+# ==========================================
+class MarketplaceListing(BaseModel):
+    id: Optional[int] = None
+    specialist_id: int
+    title: str
+    price: float
+    period: str = "Aylık"
+    description: Optional[str] = ""
+    is_active: Optional[bool] = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 11. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA (GÜNCELLENDİ)
+# ==========================================
+class SpecialistSubscription(BaseModel):
+    id: Optional[int] = None
+    client_id: Optional[int] = None
+    specialist_id: Optional[int] = None
+    client_user_id: Optional[int] = None
+    specialist_user_id: Optional[int] = None
+    specialist_type: Optional[str] = "trainer"
+    package_name: Optional[str] = None
+    status: Optional[str] = "pending"
+    goal: Optional[str] = None
+    program_name: Optional[str] = "Henüz Program Atanmadı"
+    request_message: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 12. NUTRITION_PROGRAMS TABLE SCHEMA
 # ==========================================
 class NutritionProgram(BaseModel):
     id: Optional[int] = None
@@ -207,7 +257,7 @@ class NutritionProgram(BaseModel):
 
 
 # ==========================================
-# 11. WORKOUT_PROGRAMS TABLE SCHEMA
+# 13. WORKOUT_PROGRAMS TABLE SCHEMA
 # ==========================================
 class WorkoutProgram(BaseModel):
     id: Optional[int] = None
@@ -221,7 +271,7 @@ class WorkoutProgram(BaseModel):
 
 
 # ==========================================
-# 12. SHARED DASHBOARD INTEGRATION SCHEMA
+# 14. SHARED DASHBOARD INTEGRATION SCHEMA
 # ==========================================
 class SharedClientDashboard(BaseModel):
     client_info: User
@@ -236,3 +286,111 @@ class SharedClientDashboard(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ==========================================
+# 15. EXPERT_NOTES TABLE SCHEMA
+# ==========================================
+class ExpertNote(BaseModel):
+    id: Optional[int] = None
+    specialist_id: int
+    client_id: int
+    note_text: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ExpertNoteCreate(BaseModel):
+    specialist_id: int
+    note_text: str
+
+
+# ==========================================
+# 16. CLIENT_DAILY_LOGS TABLE SCHEMA
+# ==========================================
+class ClientDailyLog(BaseModel):
+    id: Optional[int] = None
+    client_id: int
+    log_date: date
+    weight: Optional[float] = None
+    workout_done: Optional[bool] = False
+    diet_done: Optional[bool] = False
+    calories_consumed: Optional[int] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 17. EXPERT ACTION & RESPONSE SCHEMAS
+# ==========================================
+class SubscriptionActionRequest(BaseModel):
+    request_id: int
+    action: str  # 'accept' veya 'reject'
+    package_days: Optional[int] = 90
+
+
+class ClientSummaryForExpert(BaseModel):
+    subscription_id: int
+    id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    avatar: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[float] = None
+    current_weight: Optional[float] = None
+    daily_calories: Optional[int] = None
+    package_name: str
+    goal: Optional[str] = None
+    program_name: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    status: str
+
+
+class PendingRequestForExpert(BaseModel):
+    request_id: int
+    client_id: int
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    avatar: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    requested_package: str
+    goal: Optional[str] = None
+    message: Optional[str] = None
+    request_date: datetime
+
+
+class MarketplaceProfileUpdate(BaseModel):
+    bio: Optional[str] = None
+    specialties: Optional[List[str]] = None
+    is_accepting_clients: Optional[bool] = None
+
+
+class MarketplaceListingCreate(BaseModel):
+    title: str
+    price: float
+    period: str
+    description: Optional[str] = ""
+
+
+class MarketplaceListingUpdate(BaseModel):
+    title: Optional[str] = None
+    price: Optional[float] = None
+    period: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None

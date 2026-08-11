@@ -6,6 +6,10 @@ from fastapi.staticfiles import StaticFiles
 # Geliştirdiğimiz tüm router'ları eksiksiz içeri aktarıyoruz
 from backend.routers import auth, shared, user, footer, dietitian, meals, clientprofile, body_analysis, nutrition
 from backend.routers.water import router as water_router
+from backend.routers import expertprofile
+from backend.routers import expertclient
+from backend.routers import expertmarketplace
+from backend.routers import clientmarketplace
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -77,6 +81,13 @@ app.include_router(nutrition.router)
 # 🌐 Footer ve Genel Bilgilendirme Servisleri
 app.include_router(footer.router)
 
+app.include_router(expertprofile.router)
+
+app.include_router(expertclient.router) # <-- YENİ EKLENDİ
+
+app.include_router(expertmarketplace.router)
+
+app.include_router(clientmarketplace.router)
 
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA

@@ -20,7 +20,6 @@ import {
   Activity,
   FileText
 } from "lucide-react";
-import NavbarExpert from "./components/NavbarExpert";
 
 export default function ExpertDashboard() {
   // Simüle edilmiş Uzman / PT Verileri
@@ -57,9 +56,7 @@ export default function ExpertDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16">
-      
-      {/* 🟢 DİNAMİK UZMAN NAVBAR BİLEŞENİ */}
-      <NavbarExpert expertData={expertData} />
+    
 
       {/* ANA İÇERİK ALANI */}
       <main className="max-w-7xl mx-auto px-6 mt-8 space-y-8">

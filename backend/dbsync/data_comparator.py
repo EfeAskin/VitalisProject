@@ -135,6 +135,11 @@ class DataComparator:
 
             if source_row[column] != target_row.get(column):
 
+                print("\n-------------------------")
+                print(table, column)
+                print("SOURCE:", repr(source_row[column]), type(source_row[column]))
+                print("TARGET:", repr(target_row.get(column)), type(target_row.get(column)))
+
                 differences[column] = {
 
                     "source": source_row[column],

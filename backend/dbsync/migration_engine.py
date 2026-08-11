@@ -59,7 +59,9 @@ class MigrationEngine:
 
             for change in self.changes:
 
-                logger.info(f"Migration Action -> {change['action']}")
+                logger.info(
+                    f"Migration Action -> {change['action']}"
+                )
 
                 self.execute_change(
                     cursor,
@@ -141,23 +143,35 @@ class MigrationEngine:
     # CREATE TABLE
     # =====================================================
 
-    def create_table(self, change):
+    def create_table(
+        self,
+        cursor,
+        change
+    ):
 
         table = change["table"]
 
         if table not in self.source_schema:
 
-            logger.error(f"{table} source schema içinde bulunamadı.")
+            logger.error(
+                f"{table} source schema içinde bulunamadı."
+            )
             return
 
         ddl = self.source_schema[table]["create_table"]
 
-        logger.info(f"CREATE TABLE -> {table}")
+        logger.info(
+            f"CREATE TABLE -> {table}"
+        )
 
         self.run_sql(ddl)
 
-        # Tablo oluşturulduktan sonra indexleri de oluştur
-        for index_sql in self.source_schema[table].get("indexes", []):
+        for index_sql in self.source_schema[
+            table
+        ].get(
+            "indexes",
+            []
+        ):
 
             self.run_sql(index_sql)
 
@@ -165,11 +179,17 @@ class MigrationEngine:
     # DROP TABLE
     # =====================================================
 
-    def drop_table(self, change):
+    def drop_table(
+        self,
+        cursor,
+        change
+    ):
 
         table = change["table"]
 
-        logger.warning(f"DROP TABLE -> {table}")
+        logger.warning(
+            f"DROP TABLE -> {table}"
+        )
 
         query = sql.SQL(
             "DROP TABLE IF EXISTS {} CASCADE;"
@@ -185,7 +205,11 @@ class MigrationEngine:
     # ADD COLUMN
     # =====================================================
 
-    def add_column(self, change):
+    def add_column(
+        self,
+        cursor,
+        change
+    ):
 
         table = change["table"]
 
@@ -193,15 +217,19 @@ class MigrationEngine:
 
         definition = change["definition"]
 
+        logger.info(
+            f"ADD COLUMN -> {table}.{column}"
+        )
+
+        # -------------------------------------------------
+        # Önce kolonu NULL olarak ekle
+        # -------------------------------------------------
+
         sql_parts = [
 
             definition["data_type"]
 
         ]
-
-        if not definition["nullable"]:
-
-            sql_parts.append("NOT NULL")
 
         if definition["default"] is not None:
 
@@ -211,19 +239,11 @@ class MigrationEngine:
 
         column_definition = " ".join(sql_parts)
 
-        logger.info(
-
-            f"ADD COLUMN -> {table}.{column}"
-
-        )
-
         query = sql.SQL(
-
             """
             ALTER TABLE {}
             ADD COLUMN {} {};
             """
-
         ).format(
 
             sql.Identifier(table),
@@ -236,71 +256,37 @@ class MigrationEngine:
 
         self.run_sql(query)
 
-# =====================================================
-# MODIFY COLUMN
-# =====================================================
+        # -------------------------------------------------
+        # Eğer DEFAULT varsa mevcut NULL kayıtları doldur
+        # -------------------------------------------------
 
-def modify_column(self, change):
-
-    table = change["table"]
-
-    column = change["column"]
-
-    local = change["local"]
-
-    neon = change["neon"]
-
-    logger.info(
-        f"MODIFY COLUMN -> {table}.{column}"
-    )
-
-    # -------------------------------------------------
-    # DATA TYPE
-    # -------------------------------------------------
-
-    if local["data_type"] != neon["data_type"]:
-
-        query = sql.SQL(
-            """
-            ALTER TABLE {}
-            ALTER COLUMN {}
-            TYPE {};
-            """
-        ).format(
-
-            sql.Identifier(table),
-
-            sql.Identifier(column),
-
-            sql.SQL(local["data_type"])
-
-        )
-
-        self.run_sql(query)
-
-    # -------------------------------------------------
-    # NULLABLE
-    # -------------------------------------------------
-
-    if local["nullable"] != neon["nullable"]:
-
-        if local["nullable"]:
+        if definition["default"] is not None:
 
             query = sql.SQL(
                 """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                DROP NOT NULL;
+                UPDATE {}
+                SET {} = {}
+                WHERE {} IS NULL;
                 """
             ).format(
 
                 sql.Identifier(table),
 
+                sql.Identifier(column),
+
+                sql.SQL(str(definition["default"])),
+
                 sql.Identifier(column)
 
             )
 
-        else:
+            self.run_sql(query)
+
+        # -------------------------------------------------
+        # En son NOT NULL uygula
+        # -------------------------------------------------
+
+        if not definition["nullable"]:
 
             query = sql.SQL(
                 """
@@ -316,135 +302,31 @@ def modify_column(self, change):
 
             )
 
-        self.run_sql(query)
+            try:
 
-    # -------------------------------------------------
-    # DEFAULT
-    # -------------------------------------------------
+                self.run_sql(query)
 
-    if local["default"] != neon["default"]:
+            except Exception:
 
-        if local["default"] is None:
+                logger.warning(
+                    f"{table}.{column} için NOT NULL uygulanamadı. "
+                    "Mevcut satırlarda NULL değerler bulundu."
+                )
 
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                DROP DEFAULT;
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column)
-
-            )
-
-        else:
-
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                SET DEFAULT {};
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column),
-
-                sql.SQL(local["default"])
-
-            )
-
-        self.run_sql(query)
-
-        # -----------------------------
-        # NULLABLE
-        # -----------------------------
-
-        if local["nullable"]:
-
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                DROP NOT NULL;
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column)
-
-            )
-
-        else:
-
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                SET NOT NULL;
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column)
-
-            )
-
-        self.run_sql(query)
-
-        # -----------------------------
-        # DEFAULT
-        # -----------------------------
-
-        if local["default"] is None:
-
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                DROP DEFAULT;
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column)
-
-            )
-
-        else:
-
-            query = sql.SQL(
-                """
-                ALTER TABLE {}
-                ALTER COLUMN {}
-                SET DEFAULT {};
-                """
-            ).format(
-
-                sql.Identifier(table),
-
-                sql.Identifier(column),
-
-                sql.SQL(local["default"])
-
-            )
-
-        self.run_sql(query)
+                raise
 
     # =====================================================
     # DROP COLUMN
     # =====================================================
 
-    def drop_column(self, change):
+    def drop_column(
+        self,
+        cursor,
+        change
+    ):
 
         table = change["table"]
+
         column = change["column"]
 
         logger.warning(
@@ -470,11 +352,27 @@ def modify_column(self, change):
     # CREATE INDEX
     # =====================================================
 
-    def create_index(self, change):
+    def create_index(
+        self,
+        cursor,
+        change
+    ):
 
         index_sql = change["sql"]
 
         logger.info("CREATE INDEX")
+
+        if isinstance(index_sql, str):
+
+            index_sql = index_sql.replace(
+                "CREATE INDEX",
+                "CREATE INDEX IF NOT EXISTS"
+            )
+
+            index_sql = index_sql.replace(
+                "CREATE UNIQUE INDEX",
+                "CREATE UNIQUE INDEX IF NOT EXISTS"
+            )
 
         self.run_sql(index_sql)
 
@@ -482,7 +380,11 @@ def modify_column(self, change):
     # DROP INDEX
     # =====================================================
 
-    def drop_index(self, change):
+    def drop_index(
+        self,
+        cursor,
+        change
+    ):
 
         index = change["index"]
 
@@ -532,7 +434,28 @@ def modify_column(self, change):
 
             logger.info("SQL çalıştırıldı.")
 
+            return True
+
         except Exception as e:
+
+            error = str(e).lower()
+
+            if (
+                "already exists" in error
+                or "duplicate column" in error
+                or "duplicate object" in error
+                or "duplicate_table" in error
+                or "duplicatecolumn" in error
+            ):
+
+                logger.warning(
+                    f"SQL atlandı (zaten mevcut): {e}"
+                )
+
+                # transaction temizlenmeli
+                self.target_conn.rollback()
+
+                return False
 
             logger.error(
                 f"Migration başarısız : {e}"
@@ -546,7 +469,7 @@ def modify_column(self, change):
 
                 cursor.close()
 
-        # =====================================================
+    # =====================================================
     # TRANSACTION HELPERS
     # =====================================================
 

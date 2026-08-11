@@ -1,33 +1,36 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Sparkles, Plus, X, ChevronRight, Search, Sliders, Utensils, Trash2, ListOrdered } from 'lucide-react';
+import { Sparkles, X, Search, Sliders, Utensils, Trash2, ListOrdered, Pencil, Check } from 'lucide-react';
 
-const FOOD_DATABASE = [
-  { id: 1, name: "Izgara Tavuk Göğsü", portion: "100g", kcal: 165, protein: 31, carb: 0, fat: 3.6 },
-  { id: 2, name: "Pirinç Pilavı (Lapa)", portion: "100g", kcal: 130, protein: 2.7, carb: 28, fat: 0.3 },
-  { id: 3, name: "Haşlanmış Yumurta", portion: "1 Adet (M)", kcal: 78, protein: 6.3, carb: 0.6, fat: 5.3 },
-  { id: 4, name: "Yulaf Ezmesi", portion: "50g", kcal: 185, protein: 6.5, carb: 33, fat: 3.5 },
-  { id: 5, name: "Süzme Peynir", portion: "50g", kcal: 50, protein: 6, carb: 2, fat: 2 },
-  { id: 6, name: "Muz", portion: "1 Adet (Orta)", kcal: 105, protein: 1.3, carb: 27, fat: 0.3 },
-  { id: 7, name: "Ton Balığı (Konserve)", portion: "100g", kcal: 116, protein: 26, carb: 0, fat: 1 },
-  { id: 8, name: "Tam Buğday Ekmeği", portion: "1 Dilim (30g)", kcal: 69, protein: 3.6, carb: 12, fat: 0.9 },
-  { id: 9, name: "Fıstık Ezmesi", portion: "1 Yemek Kaşığı (20g)", kcal: 118, protein: 5, carb: 4, fat: 10 },
-  { id: 10, name: "Protein Tozu (Whey)", portion: "1 Ölçek (30g)", kcal: 120, protein: 24, carb: 2, fat: 1.5 },
-];
+export default function NutritionTracker({ userId }) {
+  // Eğer prop olarak userId gelmezse localStorage'dan veya oturum state'inden dinamik alalım
+  const [currentUserId, setCurrentUserId] = useState(userId);
 
-export default function NutritionTracker({ userId = 3 }) {
+  useEffect(() => {
+    if (!userId) {
+      const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('current_user_id');
+      if (storedUserId) {
+        setCurrentUserId(Number(storedUserId));
+      }
+    } else {
+      setCurrentUserId(Number(userId));
+    }
+  }, [userId]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMealsModalOpen, setIsMealsModalOpen] = useState(false); // Bugün yenenler listesi modalı
+  const [isMealsModalOpen, setIsMealsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('ai');
   
-  const [targetKcal, setTargetKcal] = useState(0);
+  const [targetKcal, setTargetKcal] = useState(2000);
+  const [totalConsumedKcal, setTotalConsumedKcal] = useState(0);
   const [macroData, setMacroData] = useState([
     { name: 'Protein', value: 0, color: '#10B981' },
     { name: 'Karbonhidrat', value: 0, color: '#3B82F6' },
     { name: 'Yağ', value: 0, color: '#F97316' },
   ]);
   const [loggedMeals, setLoggedMeals] = useState([]);
+  const [availableFoods, setAvailableFoods] = useState([]);
 
   const [aiInput, setAiInput] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -37,24 +40,41 @@ export default function NutritionTracker({ userId = 3 }) {
   const [portionAmount, setPortionAmount] = useState(1);
   const [manualData, setManualData] = useState({ kcal: '', protein: '', carb: '', fat: '' });
 
+  // Edit states
+  const [editingMealId, setEditingMealId] = useState(null);
+  const [editForm, setEditForm] = useState({ food_name: '', kcal: '', protein: '', carb: '', fat: '' });
+
   const fetchNutritionData = async () => {
+    if (!currentUserId) return;
     try {
-      const targetRes = await fetch(`http://localhost:8000/api/nutrition/target/${userId}`);
-      const targetData = await targetRes.json();
-      if (targetData && targetData.target_kcal) {
-        setTargetKcal(targetData.target_kcal);
+      const targetRes = await fetch(`http://localhost:8000/api/nutrition/target/${currentUserId}`);
+      if (targetRes.ok) {
+        const targetData = await targetRes.json();
+        if (targetData && targetData.target_kcal) {
+          setTargetKcal(targetData.target_kcal);
+        }
       }
 
-      const summaryRes = await fetch(`http://localhost:8000/api/nutrition/summary/${userId}`);
-      const summaryData = await summaryRes.json();
-      
-      if (summaryData && summaryData.success) {
-        setLoggedMeals(summaryData.logged_meals || []);
-        setMacroData([
-          { name: 'Protein', value: summaryData.total_protein || 0, color: '#10B981' },
-          { name: 'Karbonhidrat', value: summaryData.total_carbs || 0, color: '#3B82F6' },
-          { name: 'Yağ', value: summaryData.total_fat || 0, color: '#F97316' },
-        ]);
+      const summaryRes = await fetch(`http://localhost:8000/api/nutrition/summary/${currentUserId}`);
+      if (summaryRes.ok) {
+        const summaryData = await summaryRes.json();
+        if (summaryData && summaryData.success) {
+          setLoggedMeals(summaryData.logged_meals || []);
+          setTotalConsumedKcal(summaryData.total_consumed_kcal || 0);
+          setMacroData([
+            { name: 'Protein', value: summaryData.total_protein || 0, color: '#10B981' },
+            { name: 'Karbonhidrat', value: summaryData.total_carbs || 0, color: '#3B82F6' },
+            { name: 'Yağ', value: summaryData.total_fat || 0, color: '#F97316' },
+          ]);
+        }
+      }
+
+      const foodsRes = await fetch(`http://localhost:8000/api/nutrition/foods`);
+      if (foodsRes.ok) {
+        const foodsData = await foodsRes.json();
+        if (foodsData && foodsData.success) {
+          setAvailableFoods(foodsData.foods || []);
+        }
       }
     } catch (error) {
       console.error("Veritabanı verileri yüklenirken hata oluştu:", error);
@@ -62,25 +82,21 @@ export default function NutritionTracker({ userId = 3 }) {
   };
 
   useEffect(() => {
-    fetchNutritionData();
-  }, [userId]);
-
-  const totalConsumedKcal = macroData.reduce((acc, curr) => {
-    if (curr.name === 'Protein') return acc + (curr.value * 4);
-    if (curr.name === 'Karbonhidrat') return acc + (curr.value * 4);
-    return acc + (curr.value * 9);
-  }, 0);
+    if (currentUserId) {
+      fetchNutritionData();
+    }
+  }, [currentUserId]);
 
   const handleAiAnalysis = async (e) => {
     e.preventDefault();
-    if (!aiInput.trim()) return;
+    if (!aiInput.trim() || !currentUserId) return;
 
     setIsAnalyzing(true);
     try {
       const response = await fetch('http://localhost:8000/api/nutrition/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: aiInput, user_id: userId })
+        body: JSON.stringify({ query: aiInput, user_id: currentUserId })
       });
       
       if (response.ok) {
@@ -96,12 +112,12 @@ export default function NutritionTracker({ userId = 3 }) {
   };
 
   const handleAddSearchFood = async () => {
-    if (!selectedFood) return;
+    if (!selectedFood || !currentUserId) return;
 
     const multiplier = parseFloat(portionAmount) || 1;
     const mealPayload = {
-      user_id: userId,
-      food_name: selectedFood.name,
+      user_id: currentUserId,
+      food_name: selectedFood.food_name,
       kcal: Math.round(selectedFood.kcal * multiplier),
       protein: Math.round(selectedFood.protein * multiplier * 10) / 10,
       carb: Math.round(selectedFood.carb * multiplier * 10) / 10,
@@ -130,6 +146,8 @@ export default function NutritionTracker({ userId = 3 }) {
 
   const handleManualSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUserId) return;
+
     const p = parseFloat(manualData.protein) || 0;
     const c = parseFloat(manualData.carb) || 0;
     const f = parseFloat(manualData.fat) || 0;
@@ -138,7 +156,7 @@ export default function NutritionTracker({ userId = 3 }) {
     if (k <= 0 && p <= 0 && c <= 0 && f <= 0) return;
 
     const mealPayload = {
-      user_id: userId,
+      user_id: currentUserId,
       food_name: "Manuel Giriş",
       kcal: k,
       protein: p,
@@ -164,10 +182,9 @@ export default function NutritionTracker({ userId = 3 }) {
     setIsModalOpen(false);
   };
 
-  // 📌 Öğün Silme Fonksiyonu
   const handleDeleteMeal = async (mealId) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/nutrition/meal/${mealId}`, {
+      const res = await fetch(`http://localhost:8000/api/nutrition/meal/${mealId}?user_id=${currentUserId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
@@ -178,8 +195,42 @@ export default function NutritionTracker({ userId = 3 }) {
     }
   };
 
-  const filteredFoods = FOOD_DATABASE.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleStartEdit = (meal) => {
+    setEditingMealId(meal.id);
+    setEditForm({
+      food_name: meal.meal_text || '',
+      kcal: meal.kcal || 0,
+      protein: meal.protein || 0,
+      carb: meal.carbs || 0,
+      fat: meal.fat || 0
+    });
+  };
+
+  const handleSaveEdit = async (mealId) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/nutrition/meal/${mealId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUserId,
+          food_name: editForm.food_name,
+          kcal: parseFloat(editForm.kcal) || 0,
+          protein: parseFloat(editForm.protein) || 0,
+          carb: parseFloat(editForm.carb) || 0,
+          fat: parseFloat(editForm.fat) || 0
+        })
+      });
+      if (res.ok) {
+        setEditingMealId(null);
+        await fetchNutritionData();
+      }
+    } catch (err) {
+      console.error("Öğün güncellenemedi:", err);
+    }
+  };
+
+  const filteredFoods = availableFoods.filter(item => 
+    item.food_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -187,11 +238,10 @@ export default function NutritionTracker({ userId = 3 }) {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className="text-sm font-bold text-slate-900">Günlük Beslenme & Makro Dengesi</h3>
-          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Neon DB Günlük Takip</p>
+          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Kullanıcı ID: {currentUserId}</p>
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Bugün Neler Yedim Butonu */}
           <button 
             onClick={() => setIsMealsModalOpen(true)}
             className="flex items-center gap-1.5 text-xs bg-[#F8FAF8] hover:bg-slate-100 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold transition-all border border-slate-200"
@@ -199,7 +249,6 @@ export default function NutritionTracker({ userId = 3 }) {
             <ListOrdered size={14} className="text-[#0A3A25]" /> Bugün Ne Yedim?
           </button>
 
-          {/* Öğün Gir Butonu */}
           <button 
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 text-xs bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white px-3.5 py-2.5 rounded-xl font-bold transition-all shadow-sm border border-[#C5A880]/15"
@@ -243,40 +292,72 @@ export default function NutritionTracker({ userId = 3 }) {
         </div>
       </div>
 
-      {/* 📌 Bugün Yenenler Listesi Modalı */}
       {isMealsModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-[#C5A880]/15 max-h-[85vh] flex flex-col">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <ListOrdered size={16} className="text-[#0A3A25]" /> Bugün Tüketilen Öğünler
+                <ListOrdered size={16} className="text-[#0A3A25]" /> Tüketilen Öğünler (Bugün)
               </h3>
               <button onClick={() => setIsMealsModalOpen(false)} className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-all">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
               {loggedMeals.length === 0 ? (
                 <div className="text-center py-10 text-slate-400 text-xs font-medium">
                   Bugün henüz kayıtlı bir öğününüz bulunmuyor.
                 </div>
               ) : (
                 loggedMeals.map((meal) => (
-                  <div key={meal.id} className="flex justify-between items-center p-3 rounded-xl bg-[#F8FAF8] border border-slate-100/80 hover:border-slate-200 transition-all">
-                    <div>
-                      <span className="text-xs font-bold block text-slate-900">{meal.meal_text}</span>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        {meal.kcal} kcal • P: {meal.protein}g | K: {meal.carbs}g | Y: {meal.fat}g
-                      </span>
-                    </div>
-                    <button 
-                      onClick={() => handleDeleteMeal(meal.id)}
-                      className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition-all"
-                      title="Öğünü Sil"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                  <div key={meal.id} className="p-3 rounded-xl bg-[#F8FAF8] border border-slate-100/80 hover:border-slate-200 transition-all">
+                    {editingMealId === meal.id ? (
+                      <div className="space-y-2">
+                        <input 
+                          type="text" 
+                          value={editForm.food_name} 
+                          onChange={(e) => setEditForm({...editForm, food_name: e.target.value})}
+                          className="w-full p-1.5 border rounded-lg text-xs font-bold"
+                          placeholder="Besin adı"
+                        />
+                        <div className="grid grid-cols-4 gap-1.5">
+                          <input type="number" placeholder="Kcal" value={editForm.kcal} onChange={(e) => setEditForm({...editForm, kcal: e.target.value})} className="p-1 border rounded text-[11px]" />
+                          <input type="number" placeholder="Pro (g)" value={editForm.protein} onChange={(e) => setEditForm({...editForm, protein: e.target.value})} className="p-1 border rounded text-[11px]" />
+                          <input type="number" placeholder="Carb (g)" value={editForm.carb} onChange={(e) => setEditForm({...editForm, carb: e.target.value})} className="p-1 border rounded text-[11px]" />
+                          <input type="number" placeholder="Fat (g)" value={editForm.fat} onChange={(e) => setEditForm({...editForm, fat: e.target.value})} className="p-1 border rounded text-[11px]" />
+                        </div>
+                        <div className="flex justify-end gap-1.5 pt-1">
+                          <button onClick={() => setEditingMealId(null)} className="px-2.5 py-1 text-[10px] bg-slate-200 rounded-lg font-bold">İptal</button>
+                          <button onClick={() => handleSaveEdit(meal.id)} className="px-2.5 py-1 text-[10px] bg-[#0A3A25] text-white rounded-lg font-bold flex items-center gap-1"><Check size={12}/> Kaydet</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-xs font-bold block text-slate-900">{meal.meal_text}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {meal.kcal} kcal • P: {meal.protein}g | K: {meal.carbs}g | Y: {meal.fat}g
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button 
+                            onClick={() => handleStartEdit(meal)}
+                            className="text-slate-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-all"
+                            title="Öğünü Düzenle"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteMeal(meal.id)}
+                            className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition-all"
+                            title="Öğünü Sil"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -295,7 +376,6 @@ export default function NutritionTracker({ userId = 3 }) {
         </div>
       )}
 
-      {/* Öğün Ekleme Modal Yapısı */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#C5A880]/15 max-h-[90vh] overflow-y-auto">
@@ -327,7 +407,7 @@ export default function NutritionTracker({ userId = 3 }) {
                   rows={3}
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
-                  placeholder="Örn: 200g tavuk göğsü ve 1 tabak pirinç pilavı yedim."
+                  placeholder="Örn: 1 kase mercimek çorbası içtim."
                   className="w-full border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-[#10B981] resize-none text-slate-700"
                   required
                 />
@@ -347,35 +427,55 @@ export default function NutritionTracker({ userId = 3 }) {
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#10B981]"
                 />
                 <div className="max-h-48 overflow-y-auto space-y-1.5">
-                  {filteredFoods.map((food) => (
-                    <div key={food.id} onClick={() => setSelectedFood(food)} className={`p-2.5 rounded-xl border cursor-pointer flex justify-between items-center ${selectedFood?.id === food.id ? 'bg-[#10B981]/10 border-[#10B981]' : 'bg-[#F8FAF8] border-slate-100'}`}>
-                      <div>
-                        <span className="text-xs font-bold block text-slate-800">{food.name}</span>
-                        <span className="text-[10px] text-slate-400">{food.portion} • {food.kcal} kcal</span>
+                  {filteredFoods.length === 0 ? (
+                    <div className="text-center py-6 text-slate-400 text-xs">Kayıtlı besin bulunamadı.</div>
+                  ) : (
+                    filteredFoods.map((food) => (
+                      <div key={food.id} onClick={() => setSelectedFood(food)} className={`p-2.5 rounded-xl border cursor-pointer flex justify-between items-center ${selectedFood?.id === food.id ? 'bg-[#10B981]/10 border-[#10B981]' : 'bg-[#F8FAF8] border-slate-100'}`}>
+                        <div>
+                          <span className="text-xs font-bold block text-slate-800">{food.food_name}</span>
+                          <span className="text-[10px] text-slate-400">{food.kcal} kcal ({food.serving_unit})</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500">P: {food.protein}g</span>
                       </div>
-                      <span className="text-[10px] font-semibold text-slate-500">P: {food.protein}g</span>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
                 {selectedFood && (
                   <div className="flex justify-between items-center bg-[#FCFAF7] p-3 rounded-xl border border-[#C5A880]/20">
                     <span className="text-xs font-bold text-slate-700">Porsiyon Kat Sayısı:</span>
-                    <input type="number" step="0.1" min="0.1" value={portionAmount} onChange={(e) => setPortionAmount(e.target.value)} className="w-20 p-1.5 border border-slate-200 rounded-lg text-xs text-center font-bold" />
+                    <input type="number" step="0.1" min="0.1" value={portionAmount} onChange={(e) => setPortionAmount(e.target.value)} className="w-20 p-1.5 border rounded-lg text-xs text-center font-bold" />
                   </div>
                 )}
-                <button type="button" onClick={handleAddSearchFood} disabled={!selectedFood} className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl disabled:opacity-40">Seçilen Öğünü Kaydet</button>
+                <button onClick={handleAddSearchFood} disabled={!selectedFood} className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#10B981] disabled:opacity-50">
+                  Öğüne Ekle
+                </button>
               </div>
             )}
 
             {activeTab === 'manual' && (
               <form onSubmit={handleManualSubmit} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <input type="number" placeholder="Kalori (kcal)" value={manualData.kcal} onChange={(e) => setManualData({ ...manualData, kcal: e.target.value })} className="border rounded-xl p-2.5 text-xs font-semibold" />
-                  <input type="number" placeholder="Protein (g)" value={manualData.protein} onChange={(e) => setManualData({ ...manualData, protein: e.target.value })} className="border rounded-xl p-2.5 text-xs font-semibold" />
-                  <input type="number" placeholder="Karbonhidrat (g)" value={manualData.carb} onChange={(e) => setManualData({ ...manualData, carb: e.target.value })} className="border rounded-xl p-2.5 text-xs font-semibold" />
-                  <input type="number" placeholder="Yağ (g)" value={manualData.fat} onChange={(e) => setManualData({ ...manualData, fat: e.target.value })} className="border rounded-xl p-2.5 text-xs font-semibold" />
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Kalori (Kcal)</label>
+                  <input type="number" step="any" placeholder="Örn: 450" value={manualData.kcal} onChange={(e) => setManualData({...manualData, kcal: e.target.value})} className="w-full p-2.5 border rounded-xl text-xs" />
                 </div>
-                <button type="submit" className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl mt-2">Manuel Kaydet</button>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Protein (g)</label>
+                    <input type="number" step="any" placeholder="30" value={manualData.protein} onChange={(e) => setManualData({...manualData, protein: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Karb (g)</label>
+                    <input type="number" step="any" placeholder="50" value={manualData.carb} onChange={(e) => setManualData({...manualData, carb: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Yağ (g)</label>
+                    <input type="number" step="any" placeholder="10" value={manualData.fat} onChange={(e) => setManualData({...manualData, fat: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                  </div>
+                </div>
+                <button type="submit" className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#10B981] mt-2">
+                  Manuel Kayıt
+                </button>
               </form>
             )}
 
