@@ -16,6 +16,7 @@ class User(BaseModel):
     gender: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
+    target_weight: Optional[float] = None
     activity_level: Optional[str] = None
     goal: Optional[str] = None
     profile_photo: Optional[str] = None
@@ -36,6 +37,7 @@ class UserProfileUpdate(BaseModel):
     gender: Optional[str] = None
     height: Optional[float] = None
     weight: Optional[float] = None
+    target_weight: Optional[float] = None
     activity_level: Optional[str] = None
     goal: Optional[str] = None
     profile_photo: Optional[str] = None

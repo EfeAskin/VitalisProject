@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 import psycopg2
+from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2.extras import RealDictCursor
-from backend.database import get_db_connection
+
 from backend import schemas
+from backend.database import get_db_connection
 
 router = APIRouter()
 
@@ -17,7 +18,7 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
     """
     ClientDetailView.jsx sayfası için gerekli tüm verileri tek hamlede getirir:
     - Danışan Profil Bilgileri & Abonelik Süresi
-    - Kilo / Hedef Kilo / Günlük Kalori Metrikleri
+    - Kilo / Hedef Kilo / Günlük Kalori Metrikleri (Target Weight & Fallback Ideal Weight)
     - Uzman Notları
     - Günlük Aktivite ve Diyet Logları
     """
@@ -42,6 +43,7 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
                     u.gender,
                     u.height,
                     u.weight AS current_weight,
+                    u.target_weight,
                     u.target_kcal AS daily_calorie_target,
                     COALESCE(NULLIF(u.profile_photo, ''), 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300') AS avatar
                 FROM specialist_subscriptions s
@@ -56,7 +58,7 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
                 cursor.execute("""
                     SELECT 
                         id AS client_id, first_name, last_name, email, phone, age, gender, 
-                        height, weight AS current_weight, target_kcal AS daily_calorie_target,
+                        height, weight AS current_weight, target_weight, target_kcal AS daily_calorie_target,
                         COALESCE(NULLIF(profile_photo, ''), 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300') AS avatar
                     FROM users WHERE id = %s
                 """, (client_id,))
@@ -67,7 +69,7 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
                 client_info["remaining_days"] = 0
                 client_info["program_name"] = "Program Yok"
 
-            # 4.2 Son Vücut Analizinden Hedef Kilo Çekme (body_analyses tablosu)
+            # 4.2 Son Vücut Analizinden İdeal Kilo Çekme (body_analyses tablosu)
             cursor.execute("""
                 SELECT ideal_weight 
                 FROM body_analyses 
@@ -76,7 +78,20 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
                 LIMIT 1
             """, (client_id,))
             body_analysis = cursor.fetchone()
-            target_weight = body_analysis["ideal_weight"] if body_analysis and body_analysis.get("ideal_weight") else None
+            
+            latest_ideal_weight = float(body_analysis["ideal_weight"]) if body_analysis and body_analysis.get("ideal_weight") is not None else None
+
+            # HEDEF KİLO HESAPLAMA MANTIĞI:
+            # 1. Eğer uzmanın belirlediği u.target_weight varsa o kullanılır.
+            # 2. Eğer u.target_weight NULL ise body_analyses'deki en son ideal_weight kullanılır.
+            if client_info.get("target_weight") is not None:
+                final_target_weight = float(client_info["target_weight"])
+            else:
+                final_target_weight = latest_ideal_weight
+
+            # client_info içine ideal_weight ve nihai target_weight ekleniyor
+            client_info["ideal_weight"] = latest_ideal_weight
+            client_info["target_weight"] = final_target_weight
 
             # 4.3 Uzman Notları (expert_notes tablosu)
             cursor.execute("""
@@ -118,7 +133,8 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
                 "client_info": client_info,
                 "metrics": {
                     "current_weight": client_info.get("current_weight"),
-                    "target_weight": target_weight,
+                    "target_weight": final_target_weight,
+                    "ideal_weight": latest_ideal_weight,
                     "daily_calorie_target": client_info.get("daily_calorie_target")
                 },
                 "notes": notes,
@@ -131,7 +147,7 @@ def get_full_client_file(specialist_id: int, client_id: int, conn=Depends(get_db
 
 
 # ==============================================================================
-# 5. UZMAN NOTLARI YÖNETİMİ (Düzeltilmiş, Çift Rota Destekli & Hatasız)
+# 5. UZMAN NOTLARI YÖNETİMİ
 # ==============================================================================
 @router.post("/{client_id}/notes")
 @router.post("/notes")
@@ -388,8 +404,8 @@ def get_client_daily_summary(client_id: Optional[int] = None, days: int = 7, con
 @router.post("/set-target-weight")
 def set_client_target_weight(payload: Dict[str, Any], conn=Depends(get_db_connection)):
     """
-    Uzmanın danışan için hedef kilo belirlemesini sağlar.
-    body_analyses tablosuna yeni bir hedef analiz kaydı işler veya users tablosunu günceller.
+    Uzmanın danışan için özel hedef kilo belirlemesini sağlar.
+    users tablosundaki target_weight sütununu günceller.
     """
     client_id = payload.get("client_id")
     target_weight = payload.get("target_weight")
@@ -400,9 +416,11 @@ def set_client_target_weight(payload: Dict[str, Any], conn=Depends(get_db_connec
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                INSERT INTO body_analyses (user_id, ideal_weight, measured_at)
-                VALUES (%s, %s, NOW())
-            """, (client_id, float(target_weight)))
+                UPDATE users
+                SET target_weight = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+            """, (float(target_weight), client_id))
             conn.commit()
             return {"status": "success", "message": "Hedef kilo başarıyla güncellendi."}
     except Exception as e:

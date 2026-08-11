@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends, status
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 import psycopg2
+from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2.extras import RealDictCursor
-from backend.database import get_db_connection
+
 from backend import schemas
+from backend.database import get_db_connection
 from backend.routers.expertclient_detail import router as detail_router
 
 router = APIRouter(
@@ -12,7 +13,7 @@ router = APIRouter(
     tags=["Expert Client Management"]
 )
 
-# Child Router'ı (İç sayfa rotalarını) ana router'a dahil ediyoruz
+# Child Router'ı (İç sayfa / detay rotalarını) ana router'a dahil ediyoruz
 router.include_router(detail_router)
 
 

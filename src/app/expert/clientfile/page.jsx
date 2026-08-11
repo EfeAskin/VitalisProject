@@ -5,21 +5,18 @@ import { useSearchParams, useRouter } from "next/navigation";
 import PtClientList from "./components/PtClientList";
 import NewRequests from "./components/NewRequests";
 import ClientDetailView from "./components/ClientDetailView";
-import { Users, UserPlus, FolderOpen } from "lucide-react";
+import { Users, UserPlus, FolderOpen, Loader2 } from "lucide-react";
 
 function ClientFileContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // URL query'sine göre aktif sekme
   const currentTab = searchParams.get("tab") || "list";
   const selectedClientId = searchParams.get("id");
 
-  // Oturumdaki uzmanın ID'sini dinamik al (Varsayılan olarak Neon'daki Ömer Gürün: 4)
   const [specialistId, setSpecialistId] = useState(4);
 
   useEffect(() => {
-    // LocalStorage veya Session'dan giriş yapan uzman ID'sini okuma
     const userJson = localStorage.getItem("user");
     if (userJson) {
       try {
@@ -37,7 +34,13 @@ function ClientFileContent() {
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Backend API'den Canlı Verileri Çekme (Dinamik specialistId ile)
+  // BENZERSİZ (UNIQUE) DANIŞAN SAYISI HESAPLAMA
+  // Tek danışanın birden fazla paket kaydı gelse dahi benzersiz ID sayısını alır
+  const uniqueClientsCount = React.useMemo(() => {
+    const uniqueIds = new Set(clients.map((c) => String(c.id || c.client_id)));
+    return uniqueIds.size;
+  }, [clients]);
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
@@ -60,65 +63,67 @@ function ClientFileContent() {
     }
   }, [specialistId]);
 
-  // Yeni Başvuruyu Kabul Etme
   const handleAcceptRequest = async (request) => {
     const reqId = request.request_id || request.id;
     try {
-      await fetch("/api/expert-clients/requests/action", {
+      const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          request_id: parseInt(reqId),
+          request_id: parseInt(reqId, 10),
           action: "accept",
           package_days: 90
         })
       });
 
-      // Kabul edildikten sonra verileri tekrar güncelle
-      setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== reqId));
-      setClients((prev) => [
-        {
-          id: String(request.client_id || request.id),
-          first_name: request.first_name,
-          last_name: request.last_name,
-          email: request.email,
-          phone: request.phone,
-          avatar: request.avatar,
-          goal: request.goal || "Formu Korumak & Sağlıklı Beslenme",
-          program_name: "Henüz Program Atanmadı",
-          status: "active",
-          compliance_rate: 100,
-          starting_weight: request.weight || 75,
-          current_weight: request.weight || 75,
-          target_weight: (request.weight || 75) - 5,
-          height: request.height || 180,
-          age: request.age || 22,
-          gender: request.gender || "Erkek",
-          active_package: request.requested_package || "Aylık Pt Danışmanlığı",
-          package_days_left: 90,
-          daily_calories: 2200,
-          notes: [],
-          weekly_logs: []
-        },
-        ...prev
-      ]);
+      if (res.ok) {
+        setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== reqId));
+        setClients((prev) => [
+          {
+            id: String(request.client_id || request.id),
+            first_name: request.first_name,
+            last_name: request.last_name,
+            email: request.email,
+            phone: request.phone,
+            avatar: request.avatar,
+            goal: request.goal || "Formu Korumak & Sağlıklı Beslenme",
+            program_name: "Henüz Program Atanmadı",
+            status: "active",
+            compliance_rate: 100,
+            starting_weight: request.weight || 75,
+            current_weight: request.weight || 75,
+            target_weight: (request.weight || 75) - 5,
+            height: request.height || 180,
+            age: request.age || 22,
+            gender: request.gender || "Erkek",
+            active_package: request.requested_package || "Aylık PT Danışmanlığı",
+            package_days_left: 90,
+            daily_calories: 2200,
+            notes: [],
+            weekly_logs: []
+          },
+          ...prev
+        ]);
+      }
     } catch (err) {
       console.error("API kabul isteği hatası:", err);
     }
   };
 
-  // Başvuruyu Reddetme
   const handleRejectRequest = async (requestId) => {
     try {
-      await fetch("/api/expert-clients/requests/action", {
+      const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          request_id: parseInt(requestId),
+          request_id: parseInt(requestId, 10),
           action: "reject"
         })
       });
-      setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== requestId));
+
+      if (res.ok) {
+        setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== requestId));
+      }
     } catch (err) {
       console.error("API reddetme isteği hatası:", err);
     }
@@ -135,7 +140,7 @@ function ClientFileContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 md:p-8 space-y-8 selection:bg-[#EA580C] selection:text-white">
       {/* Header & Tab Navigasyon Barı */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-[#EA580C]/10 text-[#EA580C] rounded-2xl border border-[#EA580C]/20">
             <FolderOpen size={24} />
@@ -147,7 +152,7 @@ function ClientFileContent() {
         </div>
 
         {/* Tab Butonları */}
-        <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800">
+        <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 self-start sm:self-auto">
           <button
             onClick={() => navigateTab("list")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
@@ -157,7 +162,8 @@ function ClientFileContent() {
             }`}
           >
             <Users size={16} />
-            <span>Danışanlarım ({clients.length})</span>
+            {/* DÜZELTME: Artık benzersiz danışan sayısını basıyor */}
+            <span>Danışanlarım ({uniqueClientsCount})</span>
           </button>
 
           <button
@@ -171,7 +177,7 @@ function ClientFileContent() {
             <UserPlus size={16} />
             <span>Yeni İstekler</span>
             {requests.length > 0 && (
-              <span className="w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] flex items-center justify-center font-extrabold ml-1">
+              <span className="w-5 h-5 bg-rose-500 text-white rounded-full text-[10px] flex items-center justify-center font-extrabold ml-1 animate-pulse">
                 {requests.length}
               </span>
             )}
@@ -181,8 +187,9 @@ function ClientFileContent() {
 
       {/* İçerik Alanı */}
       {isLoading ? (
-        <div className="p-12 text-center text-slate-400 text-sm font-semibold">
-          Yükleniyor...
+        <div className="flex items-center justify-center p-16 text-slate-400 text-xs font-bold gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[#EA580C]" />
+          <span>Veriler Yükleniyor...</span>
         </div>
       ) : (
         <>
@@ -205,7 +212,7 @@ function ClientFileContent() {
             <ClientDetailView
               clientId={selectedClientId}
               clients={clients}
-              specialistId={specialistId} // Oturumdaki uzmanın ID'si
+              specialistId={specialistId}
               onBack={() => navigateTab("list")}
             />
           )}
@@ -217,7 +224,14 @@ function ClientFileContent() {
 
 export default function ClientFilePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-400">Yükleniyor...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 text-xs font-bold gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-[#EA580C]" />
+          <span>Modül Yükleniyor...</span>
+        </div>
+      }
+    >
       <ClientFileContent />
     </Suspense>
   );
