@@ -79,38 +79,44 @@ export default function BadgesPanel({ onNavigate }) {
   const earnedBadges = BADGE_CATEGORIES.flatMap((c) => c.badges).filter((b) => b.earned).length;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Seviye / Puan Kartı */}
-      <div className="bg-gradient-to-br from-[#111827] to-[#0B1120] border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#EA580C]/10 rounded-full blur-3xl" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="relative overflow-hidden bg-slate-800/40 backdrop-blur-2xl border border-amber-500/25 rounded-3xl p-6 shadow-[0_0_25px_rgba(245,158,11,0.08)] hover:border-amber-400/40 hover:shadow-[0_0_35px_rgba(245,158,11,0.13)] transition-all duration-500">
+        <div className="absolute -top-24 -left-24 w-72 h-72 bg-orange-500/10 rounded-full blur-[90px] pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-[90px] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#EA580C] to-orange-700 flex items-center justify-center shadow-[0_0_25px_rgba(234,88,12,0.5)]">
-              <Crown size={28} className="text-white" />
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-orange-600 via-amber-500 to-yellow-400 flex items-center justify-center shadow-[0_0_25px_rgba(234,88,12,0.45)] ring-2 ring-amber-400/30 shrink-0">
+              <Crown size={30} className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
             </div>
             <div>
-              <p className="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase">Mevcut Seviye</p>
-              <h2 className="text-xl font-black text-white">{currentTier.name}</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[10px] font-heading font-black tracking-[0.2em] text-amber-400/90 uppercase">
+                Mevcut Seviye
+              </p>
+              <h2 className="text-xl font-heading font-black text-white mt-0.5">{currentTier.name}</h2>
+              <p className="text-xs font-bold text-slate-400 mt-0.5">
                 {earnedBadges}/{totalBadges} rozet kazanıldı
               </p>
             </div>
           </div>
 
           <div className="flex-1 max-w-sm w-full">
-            <div className="flex justify-between text-[11px] font-bold text-slate-400 mb-1.5">
+            <div className="flex justify-between text-[11px] font-heading font-extrabold text-slate-300 mb-2">
               <span>{CURRENT_POINTS} Puan</span>
-              <span>{nextTier ? `${nextTier.min} Puan · ${nextTier.name}` : "Maksimum Seviye"}</span>
+              <span className="text-amber-400">
+                {nextTier ? `${nextTier.min} Puan · ${nextTier.name}` : "Maksimum Seviye"}
+              </span>
             </div>
-            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-slate-900/80 border border-slate-700/50 rounded-full p-0.5 overflow-hidden shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-[#EA580C] to-orange-400 rounded-full shadow-[0_0_10px_rgba(234,88,12,0.6)] transition-all duration-500"
+                className="h-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.6)] transition-all duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
             {nextTier && (
-              <p className="text-[10px] text-slate-500 mt-1.5">
-                {nextTier.name} seviyesine {nextTier.min - CURRENT_POINTS} puan kaldı
+              <p className="text-[10px] font-bold text-slate-400 mt-2">
+                {nextTier.name} seviyesine <span className="text-amber-400">{nextTier.min - CURRENT_POINTS}</span> puan kaldı
               </p>
             )}
           </div>
@@ -127,10 +133,10 @@ export default function BadgesPanel({ onNavigate }) {
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`text-xs font-bold px-3.5 py-1.5 rounded-full border transition-all ${
+            className={`text-xs font-heading font-extrabold px-4 py-2 rounded-full border transition-all duration-300 active:scale-95 ${
               filter === f.id
-                ? "bg-[#EA580C] text-white border-[#EA580C] shadow-[0_0_12px_rgba(234,88,12,0.35)]"
-                : "bg-[#111827] text-slate-400 border-slate-700 hover:border-slate-500"
+                ? "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-white border-orange-400/50 shadow-[0_0_18px_rgba(234,88,12,0.35)]"
+                : "bg-slate-900/80 backdrop-blur-md text-slate-400 border-slate-700/80 hover:border-slate-500 hover:text-slate-200"
             }`}
           >
             {f.label}
@@ -148,46 +154,59 @@ export default function BadgesPanel({ onNavigate }) {
         if (visibleBadges.length === 0) return null;
 
         return (
-          <div key={category.id} className="bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <p className="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase mb-4">{category.label}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div
+            key={category.id}
+            className="relative overflow-hidden bg-slate-800/40 backdrop-blur-2xl border border-violet-500/25 rounded-3xl p-6 shadow-[0_0_25px_rgba(139,92,246,0.08)] hover:border-violet-400/40 hover:shadow-[0_0_35px_rgba(139,92,246,0.13)] transition-all duration-500"
+          >
+            <div className="absolute -top-32 right-0 w-80 h-80 bg-violet-500/8 rounded-full blur-[100px] pointer-events-none" />
+
+            <p className="text-[10px] font-heading font-black tracking-[0.2em] text-violet-400 uppercase mb-4 relative z-10">
+              {category.label}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
               {visibleBadges.map((badge) => {
                 const Icon = badge.icon;
                 return (
                   <div
                     key={badge.id}
-                    className={`relative rounded-xl border p-4 flex flex-col items-center text-center gap-2 transition-all ${
+                    className={`relative rounded-2xl border p-4 flex flex-col items-center text-center gap-2.5 backdrop-blur-xl transition-all duration-300 group ${
                       badge.earned
-                        ? "bg-gradient-to-b from-[#182134] to-[#0B1120] border-[#EA580C]/40 shadow-[0_0_15px_rgba(234,88,12,0.12)]"
-                        : "bg-[#141b2c] border-slate-800"
+                        ? "bg-slate-900/90 border-orange-500/40 shadow-[0_0_20px_rgba(234,88,12,0.12)] hover:border-orange-400/60 hover:shadow-[0_0_25px_rgba(234,88,12,0.22)]"
+                        : "bg-slate-900/50 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900/70 shadow-[0_0_12px_rgba(0,0,0,0.15)]"
                     }`}
                   >
                     {badge.earned && (
-                      <CheckCircle2 size={14} className="absolute top-2.5 right-2.5 text-emerald-400" />
+                      <CheckCircle2 size={16} className="absolute top-3 right-3 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                     )}
-                    {!badge.earned && <Lock size={13} className="absolute top-2.5 right-2.5 text-slate-600" />}
+                    {!badge.earned && <Lock size={14} className="absolute top-3 right-3 text-slate-600" />}
 
                     <div
-                      className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                        badge.earned ? "bg-[#EA580C]/15 text-[#EA580C]" : "bg-slate-800 text-slate-600"
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 ${
+                        badge.earned
+                          ? "bg-gradient-to-tr from-orange-500/20 to-amber-500/20 border border-orange-500/30 text-orange-400 shadow-[0_0_12px_rgba(234,88,12,0.2)]"
+                          : "bg-slate-800/60 border border-slate-700/50 text-slate-500"
                       }`}
                     >
-                      <Icon size={20} />
+                      <Icon size={22} className={badge.earned ? "drop-shadow-[0_0_6px_rgba(234,88,12,0.4)]" : ""} />
                     </div>
-                    <h4 className={`text-xs font-bold ${badge.earned ? "text-white" : "text-slate-400"}`}>
-                      {badge.label}
-                    </h4>
-                    <p className="text-[10px] text-slate-500 leading-snug">{badge.desc}</p>
+
+                    <div>
+                      <h4 className={`text-xs font-heading font-extrabold ${badge.earned ? "text-white" : "text-slate-400"}`}>
+                        {badge.label}
+                      </h4>
+                      <p className="text-[10px] font-medium text-slate-400 leading-snug mt-1">{badge.desc}</p>
+                    </div>
 
                     {!badge.earned && badge.progress && (
-                      <div className="w-full mt-1">
-                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full mt-auto pt-1">
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
                           <div
-                            className="h-full bg-slate-600 rounded-full"
+                            className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.4)]"
                             style={{ width: `${(badge.progress.current / badge.progress.target) * 100}%` }}
                           />
                         </div>
-                        <p className="text-[9px] text-slate-600 mt-1 font-bold">
+                        <p className="text-[9px] font-heading font-bold text-amber-400/90 mt-1.5">
                           {badge.progress.current}/{badge.progress.target}
                         </p>
                       </div>
@@ -201,24 +220,27 @@ export default function BadgesPanel({ onNavigate }) {
       })}
 
       {/* Çapraz Navigasyon */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
           onClick={() => onNavigate?.("showcase")}
-          className="flex items-center justify-between bg-[#111827] border border-slate-800 hover:border-[#EA580C]/50 rounded-xl px-4 py-3 transition-colors group"
+          className="relative overflow-hidden flex items-center justify-between bg-slate-800/40 backdrop-blur-2xl border border-orange-500/20 hover:border-orange-400/40 shadow-[0_0_18px_rgba(234,88,12,0.06)] hover:shadow-[0_0_25px_rgba(234,88,12,0.14)] rounded-2xl p-4 transition-all duration-300 group"
         >
-          <span className="flex items-center gap-2 text-xs font-bold text-slate-300 group-hover:text-white">
-            <Store size={14} className="text-[#EA580C]" /> Vitrinim & İlanlarım
+          <span className="flex items-center gap-2.5 text-xs font-heading font-extrabold text-slate-300 group-hover:text-white transition-colors">
+            <Store size={16} className="text-orange-400 drop-shadow-[0_0_7px_rgba(234,88,12,0.45)]" />
+            Vitrinim & İlanlarım
           </span>
-          <ChevronRight size={14} className="text-slate-600 group-hover:text-[#EA580C]" />
+          <ChevronRight size={15} className="text-slate-500 group-hover:text-orange-400 group-hover:translate-x-1 transition-all" />
         </button>
+
         <button
           onClick={() => onNavigate?.("leaderboard")}
-          className="flex items-center justify-between bg-[#111827] border border-slate-800 hover:border-[#EA580C]/50 rounded-xl px-4 py-3 transition-colors group"
+          className="relative overflow-hidden flex items-center justify-between bg-slate-800/40 backdrop-blur-2xl border border-amber-500/20 hover:border-amber-400/40 shadow-[0_0_18px_rgba(245,158,11,0.06)] hover:shadow-[0_0_25px_rgba(245,158,11,0.14)] rounded-2xl p-4 transition-all duration-300 group"
         >
-          <span className="flex items-center gap-2 text-xs font-bold text-slate-300 group-hover:text-white">
-            <Trophy size={14} className="text-[#EA580C]" /> Liderlik Tablosu
+          <span className="flex items-center gap-2.5 text-xs font-heading font-extrabold text-slate-300 group-hover:text-white transition-colors">
+            <Trophy size={16} className="text-amber-400 drop-shadow-[0_0_7px_rgba(245,158,11,0.45)]" />
+            Liderlik Tablosu
           </span>
-          <ChevronRight size={14} className="text-slate-600 group-hover:text-[#EA580C]" />
+          <ChevronRight size={15} className="text-slate-500 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
         </button>
       </div>
     </div>

@@ -10,12 +10,20 @@ router = APIRouter(
     tags=["Expert Marketplace"]
 )
 
+def normalize_specialties(val) -> List[str]:
+    """PostgreSQL text[] dizilerini ve string formatlarını temiz bir Python listesine çevirir."""
+    if not val:
+        return []
+    if isinstance(val, list):
+        return [str(x).strip(' "^\'') for x in val if x]
+    if isinstance(val, str):
+        cleaned = val.strip('{}[]"\' ')
+        if not cleaned:
+            return []
+        return [item.strip(' "^\'') for item in cleaned.split(',') if item.strip(' "^\'')]
+    return []
 
 def get_current_specialist_id(conn) -> int:
-    """
-    Geliştirme/test aşamasında Ömer Gürün hesabının ID'sini dinamik olarak tespit eder.
-    JWT/Session auth mekanizması tamamlandığında doğrudan token'dan alınacaktır.
-    """
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
@@ -42,13 +50,26 @@ def get_current_specialist_id(conn) -> int:
     finally:
         cursor.close()
 
+def get_specialist_profile_id(conn, user_id: int) -> int:
+    """Aynı zamanda specialist_profiles tablosunun kendi PK 'id'sini getirir."""
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT id FROM specialist_profiles WHERE user_id = %s LIMIT 1;", (user_id,))
+        row = cursor.fetchone()
+        if row and row.get("id"):
+            return row["id"]
+        return user_id
+    except Exception:
+        return user_id
+    finally:
+        cursor.close()
+
 
 @router.get("/profile")
 def get_marketplace_profile(conn = Depends(get_db_connection)):
     specialist_id = get_current_specialist_id(conn)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        # Uzman bilgisi ve profil çekme
         cursor.execute("""
             SELECT 
                 u.id AS user_id,
@@ -58,7 +79,7 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
                 u.*,
                 COALESCE(sp.title, 'Personal Trainer') AS title,
                 COALESCE(sp.bio, '') AS bio,
-                COALESCE(sp.specialties, '{}') AS specialties,
+                sp.specialties AS raw_specialties,
                 COALESCE(sp.is_accepting_clients, TRUE) AS is_accepting_clients,
                 COALESCE(sp.rating, 5.0) AS rating,
                 COALESCE(sp.review_count, 0) AS review_count,
@@ -72,7 +93,6 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
         if not raw_profile:
             raise HTTPException(status_code=404, detail="Uzman profili bulunamadı.")
 
-        # Profil fotoğrafını veritabanındaki tüm olası kolon isimlerinden kontrol et
         photo_url = (
             raw_profile.get("profile_picture_url") or 
             raw_profile.get("profile_picture") or 
@@ -82,6 +102,8 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
             ""
         )
 
+        clean_specs = normalize_specialties(raw_profile.get("raw_specialties"))
+
         profile = {
             "user_id": raw_profile["user_id"],
             "full_name": raw_profile["full_name"],
@@ -89,7 +111,7 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
             "last_name": raw_profile.get("last_name", ""),
             "title": raw_profile["title"],
             "bio": raw_profile["bio"],
-            "specialties": raw_profile["specialties"],
+            "specialties": clean_specs,
             "is_accepting_clients": raw_profile["is_accepting_clients"],
             "rating": raw_profile["rating"],
             "review_count": raw_profile["review_count"],
@@ -100,7 +122,6 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
             "avatar_url": photo_url
         }
 
-        # Gelen Talep Sayısı (specialist_subscriptions tablosundan)
         cursor.execute("""
             SELECT COUNT(*) AS total_requests 
             FROM specialist_subscriptions 
@@ -109,7 +130,6 @@ def get_marketplace_profile(conn = Depends(get_db_connection)):
         req_res = cursor.fetchone()
         req_count = req_res["total_requests"] if req_res else 0
 
-        # Dönüşüm Oranı Hesabı
         views = profile["profile_views"] if profile["profile_views"] > 0 else 1
         conversion_rate = round((req_count / views) * 100, 1)
 
@@ -136,6 +156,8 @@ def update_marketplace_profile(payload: schemas.MarketplaceProfileUpdate, conn =
     specialist_id = get_current_specialist_id(conn)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
+        clean_specs = normalize_specialties(payload.specialties) if payload.specialties is not None else None
+
         cursor.execute("""
             INSERT INTO specialist_profiles (user_id, bio, specialties, is_accepting_clients, updated_at)
             VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
@@ -148,10 +170,13 @@ def update_marketplace_profile(payload: schemas.MarketplaceProfileUpdate, conn =
         """, (
             specialist_id,
             payload.bio,
-            payload.specialties,
+            clean_specs,
             payload.is_accepting_clients
         ))
         updated_profile = cursor.fetchone()
+        if updated_profile and updated_profile.get("specialties") is not None:
+            updated_profile["specialties"] = normalize_specialties(updated_profile["specialties"])
+            
         conn.commit()
         return {"message": "Profil başarıyla güncellendi", "profile": updated_profile}
     except HTTPException:
@@ -166,6 +191,7 @@ def update_marketplace_profile(payload: schemas.MarketplaceProfileUpdate, conn =
 @router.get("/listings")
 def get_listings(conn = Depends(get_db_connection)):
     specialist_id = get_current_specialist_id(conn)
+    sp_profile_id = get_specialist_profile_id(conn, specialist_id)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
@@ -178,9 +204,9 @@ def get_listings(conn = Depends(get_db_connection)):
                 is_active AS active,
                 created_at
             FROM marketplace_listings
-            WHERE specialist_id = %s
+            WHERE specialist_id = %s OR specialist_id = %s
             ORDER BY created_at DESC
-        """, (specialist_id,))
+        """, (specialist_id, sp_profile_id))
         listings = cursor.fetchall()
         return listings
     except HTTPException:
@@ -194,34 +220,40 @@ def get_listings(conn = Depends(get_db_connection)):
 @router.post("/listings", status_code=201)
 def create_listing(payload: schemas.MarketplaceListingCreate, conn = Depends(get_db_connection)):
     specialist_id = get_current_specialist_id(conn)
+    sp_profile_id = get_specialist_profile_id(conn, specialist_id)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cursor.execute("""
-            INSERT INTO marketplace_listings (specialist_id, title, price, period, description)
-            VALUES (%s, %s, %s, %s, %s)
-            RETURNING id, title, price::text AS price, period, description, is_active AS active;
-        """, (
-            specialist_id,
-            payload.title,
-            payload.price,
-            payload.period,
-            payload.description
-        ))
-        new_listing = cursor.fetchone()
-        conn.commit()
-        return new_listing
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
+    
+    # FK uyumluluğu için önce user_id ile, hata verirse specialist_profiles.id ile dener
+    target_ids = [specialist_id, sp_profile_id] if specialist_id != sp_profile_id else [specialist_id]
+    
+    last_error = None
+    for target_id in target_ids:
+        try:
+            cursor.execute("""
+                INSERT INTO marketplace_listings (specialist_id, title, price, period, description, is_active)
+                VALUES (%s, %s, %s, %s, %s, TRUE)
+                RETURNING id, title, price::text AS price, period, description, is_active AS active;
+            """, (
+                target_id,
+                payload.title,
+                payload.price,
+                payload.period,
+                payload.description
+            ))
+            new_listing = cursor.fetchone()
+            conn.commit()
+            return new_listing
+        except Exception as e:
+            conn.rollback()
+            last_error = e
+
+    raise HTTPException(status_code=500, detail=f"İlan oluşturulamadı: {str(last_error)}")
 
 
 @router.put("/listings/{listing_id}")
 def update_listing(listing_id: int, payload: schemas.MarketplaceListingUpdate, conn = Depends(get_db_connection)):
     specialist_id = get_current_specialist_id(conn)
+    sp_profile_id = get_specialist_profile_id(conn, specialist_id)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
@@ -233,7 +265,7 @@ def update_listing(listing_id: int, payload: schemas.MarketplaceListingUpdate, c
                 description = COALESCE(%s, description),
                 is_active = COALESCE(%s, is_active),
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s AND specialist_id = %s
+            WHERE id = %s AND (specialist_id = %s OR specialist_id = %s)
             RETURNING id, title, price::text AS price, period, description, is_active AS active;
         """, (
             payload.title,
@@ -242,7 +274,8 @@ def update_listing(listing_id: int, payload: schemas.MarketplaceListingUpdate, c
             payload.description,
             payload.is_active,
             listing_id,
-            specialist_id
+            specialist_id,
+            sp_profile_id
         ))
         updated = cursor.fetchone()
         if not updated:
@@ -261,13 +294,14 @@ def update_listing(listing_id: int, payload: schemas.MarketplaceListingUpdate, c
 @router.delete("/listings/{listing_id}")
 def delete_listing(listing_id: int, conn = Depends(get_db_connection)):
     specialist_id = get_current_specialist_id(conn)
+    sp_profile_id = get_specialist_profile_id(conn, specialist_id)
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
             DELETE FROM marketplace_listings
-            WHERE id = %s AND specialist_id = %s
+            WHERE id = %s AND (specialist_id = %s OR specialist_id = %s)
             RETURNING id;
-        """, (listing_id, specialist_id))
+        """, (listing_id, specialist_id, sp_profile_id))
         deleted = cursor.fetchone()
         if not deleted:
             raise HTTPException(status_code=404, detail="İlan bulunamadı.")

@@ -136,147 +136,167 @@ export default function BodyAnalysisModal({ isOpen, onClose, onSave, userId }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-[#C5A880]/15 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+    /* Arka Plan Karartma (Overlay) */
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-2xl flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      
+      {/* 
+        Ana Modal Kutusu (Outer Box):
+        - #11142D (Lacivert) arka plandan kolaylıkla ayrılan Kristal Beyaz Zemin (bg-white/95).
+        - Neon Zümrüt & Kehribar Işıltılı Kenarlıklar.
+        - En kötü projeksiyonda bile %100 seçilebilir ultra net tipografi ve gölgelendirme.
+      */}
+      <div className="bg-white/95 backdrop-blur-2xl rounded-3xl p-6 max-w-lg w-full shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border-2 border-emerald-500/40 hover:border-amber-400/60 transition-all duration-300 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 relative">
         
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-            <Calculator size={18} className="text-[#0A3A25]" /> Form & Detaylı Vücut Analiz Hesaplayıcı
+        {/* Üst Başlık ve Kapat Butonu */}
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-950 flex items-center gap-2">
+            <Calculator size={20} className="text-emerald-600 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]" /> 
+            <span>Form & Detaylı Vücut Analiz Hesaplayıcı</span>
           </h3>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-all"
+            className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-2 rounded-xl transition-all border border-transparent hover:border-rose-200/80 cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="bg-[#FCFAF7] text-[#8C724D] p-3 rounded-xl flex gap-2 text-[10px] font-bold mb-4 border border-[#C5A880]/20 leading-relaxed">
-          <Info size={14} className="shrink-0 mt-0.5 text-[#C5A880]" />
+        {/* Bilgilendirme Kartı */}
+        <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-amber-500/10 border border-amber-400/40 rounded-2xl p-3.5 flex gap-2.5 text-[10px] font-black text-amber-950 mb-5 shadow-xs leading-relaxed">
+          <Info size={16} className="shrink-0 mt-0.5 text-amber-500 fill-amber-400/20" />
           <span>Yaş, boy, kilo ve cinsiyet bilgileriniz profilinizden otomatik çekilmiştir. Her kullanıcı haftada 1, ayda en fazla 4 kez ölçüm hakkına sahiptir; aylık ortalamalarınız güvenilir gelişim takibi için baz alınır.</span>
         </div>
 
         {loadingProfile ? (
-          <div className="flex items-center justify-center py-8 gap-2.5 text-xs font-semibold text-slate-500">
-            <Loader2 className="animate-spin text-[#10B981]" size={18} /> Güncel profil bilgileri veritabanından getiriliyor...
+          <div className="flex items-center justify-center py-10 gap-3 text-xs font-black text-slate-700">
+            <Loader2 className="animate-spin text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]" size={20} /> 
+            <span>Güncel profil bilgileri veritabanından getiriliyor...</span>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-4 gap-2 bg-[#F8FAF8] p-3 rounded-xl border border-slate-100/80 mb-4 text-center">
+            {/* Profil Verileri Özeti */}
+            <div className="grid grid-cols-4 gap-2.5 bg-slate-100/90 p-3.5 rounded-2xl border border-slate-200/90 mb-5 text-center shadow-inner">
               <div>
-                <span className="text-[9px] text-slate-400 block font-bold">Boy</span>
-                <span className="text-xs font-extrabold text-[#0A3A25]">{profile.height} cm</span>
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Boy</span>
+                <span className="text-xs font-black text-emerald-950 tracking-tight">{profile.height} cm</span>
               </div>
               <div>
-                <span className="text-[9px] text-slate-400 block font-bold">Kilo</span>
-                <span className="text-xs font-extrabold text-[#0A3A25]">{profile.weight} kg</span>
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Kilo</span>
+                <span className="text-xs font-black text-emerald-950 tracking-tight">{profile.weight} kg</span>
               </div>
               <div>
-                <span className="text-[9px] text-slate-400 block font-bold">Yaş</span>
-                <span className="text-xs font-extrabold text-[#0A3A25]">{profile.age}</span>
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Yaş</span>
+                <span className="text-xs font-black text-emerald-950 tracking-tight">{profile.age}</span>
               </div>
               <div>
-                <span className="text-[9px] text-slate-400 block font-bold">Cinsiyet</span>
-                <span className="text-xs font-extrabold text-[#0A3A25] capitalize">{profile.gender}</span>
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Cinsiyet</span>
+                <span className="text-xs font-black text-emerald-950 tracking-tight capitalize">{profile.gender}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-4">
+            {/* Ölçüm Girdileri */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
               <div>
-                <label className="text-[10px] font-bold text-slate-500 block mb-1">Boyun (cm)</label>
+                <label className="text-[10px] font-black text-slate-800 uppercase tracking-wider block mb-1.5">Boyun (cm)</label>
                 <input 
                   type="number" 
                   step="0.1"
                   placeholder="Örn: 38" 
                   value={neck} 
                   onChange={(e) => setNeck(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981]/10 text-slate-700 font-semibold transition-all" 
+                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl p-2.5 text-xs outline-none text-slate-950 font-black transition-all shadow-xs" 
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 block mb-1">Bel (cm)</label>
+                <label className="text-[10px] font-black text-slate-800 uppercase tracking-wider block mb-1.5">Bel (cm)</label>
                 <input 
                   type="number" 
                   step="0.1"
                   placeholder="Örn: 86" 
                   value={waist} 
                   onChange={(e) => setWaist(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981]/10 text-slate-700 font-semibold transition-all" 
+                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl p-2.5 text-xs outline-none text-slate-950 font-black transition-all shadow-xs" 
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 block mb-1">Kalça (cm)</label>
+                <label className="text-[10px] font-black text-slate-800 uppercase tracking-wider block mb-1.5">Kalça (cm)</label>
                 <input 
                   type="number" 
                   step="0.1"
                   placeholder="Örn: 95" 
                   value={hip} 
                   onChange={(e) => setHip(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981]/10 text-slate-700 font-semibold transition-all" 
+                  className="w-full bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl p-2.5 text-xs outline-none text-slate-950 font-black transition-all shadow-xs" 
                 />
               </div>
             </div>
 
+            {/* Hesaplama Butonu */}
             <button 
               onClick={calculateMetrics}
               disabled={calculating}
-              className="w-full bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 mb-4 disabled:opacity-50 border border-[#C5A880]/15"
+              className="w-full bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-800 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white text-xs font-black py-3 rounded-2xl transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center justify-center gap-2 mb-5 disabled:opacity-50 border border-emerald-400/40 cursor-pointer"
             >
               {calculating ? (
                 <>
-                  <Loader2 className="animate-spin" size={14} /> Hesaplama Yapılıyor...
+                  <Loader2 className="animate-spin text-amber-300" size={16} /> 
+                  <span>Hesaplama Yapılıyor...</span>
                 </>
               ) : (
                 <>
-                  <RefreshCw size={14} className="text-[#C5A880]" /> Bilimsel Ölçümleri Hesapla & DB'ye Yaz
+                  <RefreshCw size={15} className="text-amber-300 drop-shadow-xs" /> 
+                  <span>Bilimsel Ölçümleri Hesapla & DB'ye Yaz</span>
                 </>
               )}
             </button>
           </>
         )}
 
+        {/* Sonuç Alanı */}
         {results && (
-          <div className="bg-[#F8FAF8] border border-slate-100/80 rounded-2xl p-4 space-y-3 animate-in fade-in zoom-in-95 duration-200 shadow-inner">
-            <h4 className="text-xs font-extrabold text-[#0A3A25] border-b border-slate-200/60 pb-2 flex items-center justify-between">
+          <div className="bg-slate-50/90 border-2 border-slate-200/90 rounded-2xl p-4 space-y-3.5 shadow-inner animate-in fade-in zoom-in-95 duration-200">
+            <h4 className="text-xs font-black text-slate-950 border-b border-slate-200 pb-2.5 flex items-center justify-between">
               <span>Hesaplama Sonuçları</span>
-              <span className="text-[8px] bg-[#C5A880]/10 text-[#8C724D] px-2 py-0.5 rounded-full border border-[#C5A880]/20 font-bold">Medikal Analiz</span>
+              <span className="text-[9px] bg-emerald-950 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/40 font-black tracking-wider uppercase shadow-xs">
+                Medikal Analiz
+              </span>
             </h4>
             
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-white p-2.5 rounded-xl border border-slate-100/80 transition-all hover:border-[#C5A880]/30 shadow-xs">
-                <span className="text-[9px] text-slate-400 block font-bold">Vücut Yağ Oranı (US Navy)</span>
-                <span className="text-sm font-black text-[#C5A880]">%{results.bodyFat}</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200/90 transition-all hover:border-emerald-500/40 shadow-xs hover:shadow-md">
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Vücut Yağ Oranı (US Navy)</span>
+                <span className="text-sm font-black text-amber-600 drop-shadow-xs">%{results.bodyFat}</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-slate-100/80 transition-all hover:border-[#10B981]/25 shadow-xs">
-                <span className="text-[9px] text-slate-400 block font-bold">Bazal Metabolizma Hızı</span>
-                <span className="text-sm font-black text-sky-600">{results.bmr} kcal</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200/90 transition-all hover:border-emerald-500/40 shadow-xs hover:shadow-md">
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Bazal Metabolizma Hızı</span>
+                <span className="text-sm font-black text-emerald-600 drop-shadow-xs">{results.bmr} kcal</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-slate-100/80 transition-all hover:border-slate-300 shadow-xs">
-                <span className="text-[9px] text-slate-400 block font-bold">Vücut Kitle Endeksi (BMI)</span>
-                <span className="text-sm font-black text-slate-700">{results.bmi}</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200/90 transition-all hover:border-emerald-500/40 shadow-xs hover:shadow-md">
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Vücut Kitle Endeksi (BMI)</span>
+                <span className="text-sm font-black text-slate-900">{results.bmi}</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-slate-100/80 transition-all hover:border-[#10B981]/25 shadow-xs">
-                <span className="text-[9px] text-slate-400 block font-bold">İdeal Kilo Oranı</span>
-                <span className="text-sm font-black text-[#10B981]">{results.idealWeight} kg</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200/90 transition-all hover:border-emerald-500/40 shadow-xs hover:shadow-md">
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">İdeal Kilo Oranı</span>
+                <span className="text-sm font-black text-teal-600">{results.idealWeight} kg</span>
               </div>
-              <div className="bg-white p-2.5 rounded-xl border border-slate-100/80 transition-all hover:border-slate-300 col-span-2 shadow-xs">
-                <span className="text-[9px] text-slate-400 block font-bold">Yağsız Vücut Kütlesi (LBM)</span>
-                <span className="text-xs font-bold text-slate-700">{results.lbm} kg</span>
+              <div className="bg-white p-3 rounded-xl border border-slate-200/90 transition-all hover:border-emerald-500/40 col-span-2 shadow-xs hover:shadow-md">
+                <span className="text-[9px] text-slate-500 block font-black uppercase tracking-wider">Yağsız Vücut Kütlesi (LBM)</span>
+                <span className="text-xs font-black text-slate-900">{results.lbm} kg</span>
               </div>
             </div>
 
-            <div className="flex gap-2 mt-4 pt-2 border-t border-slate-200/60">
+            <div className="flex gap-2.5 mt-4 pt-3 border-t border-slate-200">
               <button 
                 type="button"
                 onClick={onClose} 
-                className="w-1/2 bg-white border border-slate-200 text-slate-600 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 active:scale-95 transition-all"
+                className="w-1/2 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 text-xs font-black py-2.5 rounded-xl active:scale-95 transition-all cursor-pointer"
               >
                 Kapat
               </button>
               <button 
                 type="button"
                 onClick={handleSave} 
-                className="w-1/2 bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white text-xs font-bold py-2.5 rounded-xl shadow-md transition-all border border-[#C5A880]/15"
+                className="w-1/2 bg-gradient-to-r from-emerald-600 via-teal-700 to-emerald-800 hover:from-emerald-500 hover:to-teal-600 active:scale-95 text-white text-xs font-black py-2.5 rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all border border-emerald-400/40 cursor-pointer"
               >
                 Kaydet & Grafiği Güncelle
               </button>

@@ -9,7 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="tr">
-      <body className="antialiased bg-[#F8FAF8] min-h-screen flex flex-col justify-between selection:bg-[#C5A880]/30 selection:text-slate-900">
+      <body className="antialiased bg-[#11142D] min-h-screen flex flex-col justify-between selection:bg-[#C5A880]/30 selection:text-slate-900">
         
         <main className="flex-grow flex flex-col">
           {children}

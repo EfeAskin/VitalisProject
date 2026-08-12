@@ -88,7 +88,7 @@ const INITIAL_PRODUCTS = [
     reviewCount: 124,
     price: 1450,
     oldPrice: 1650,
-    externalUrl: 'https://www.google.com',
+    externalUrl: 'https://www.bigjoy.com.tr/bigwhey-protein-klasik-cikolata-16-servis',
     inStock: true,
     isPopular: true
   },
@@ -102,7 +102,7 @@ const INITIAL_PRODUCTS = [
     reviewCount: 89,
     price: 650,
     oldPrice: 720,
-    externalUrl: 'https://www.google.com',
+    externalUrl: 'https://www.bigjoy.com.tr/kreatin-toz-aromasiz?srsltid=AfmBOopYPp2Iv90qpnuf8nHZhSadGuqwc3MUVtK-a6tIZ4RxIhEMVeji',
     inStock: true,
     isPopular: false
   }
@@ -177,9 +177,16 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF8] p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#11142D] p-4 md:p-8 relative overflow-hidden text-slate-100">
+      
+      {/* Lüks Arka Plan Ambient Işıltıları */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-10 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-10 w-[400px] h-[400px] bg-fuchsia-500/5 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto space-y-10 relative z-10">
         
+        {/* Filtre ve Arama Başlık Bileşeni */}
         <MarketplaceHeader 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -189,36 +196,41 @@ export default function MarketplacePage() {
           setSortBy={setSortBy}
         />
 
+        {/* UZMANLAR SEKSİYONU */}
         {(activeTab === 'all' || activeTab === 'trainer' || activeTab === 'dietitian') && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]"></span>
+          <div className="space-y-5">
+            {/* Seksiyon Başlık Box'ı (Obsidyen Zümrüt Tonlarında - Lacivertten Bağımsız) */}
+            <div className="flex justify-between items-center bg-gradient-to-r from-[#19221E] via-[#161C1A] to-[#19221E] border border-emerald-500/30 p-4 sm:p-5 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.15)] backdrop-blur-xl">
+              <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-3 tracking-wide">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_10px_#10B981]"></span>
+                </span>
                 Sertifikalı Uzmanlar & Koçlar
               </h2>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-3 py-1.5 rounded-xl shadow-[0_0_12px_rgba(16,185,129,0.2)]">
                 {filteredExperts.length} Uzman Bulundu
               </span>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-white rounded-3xl h-64 animate-pulse border border-slate-100 p-5 space-y-4">
-                    <div className="flex gap-3 items-center">
-                      <div className="w-16 h-16 bg-slate-100 rounded-2xl"></div>
-                      <div className="space-y-2 flex-1">
-                        <div className="h-4 bg-slate-100 rounded w-3/4"></div>
-                        <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                  <div key={n} className="bg-gradient-to-b from-[#1E1C2B] to-[#151422] rounded-3xl h-64 animate-pulse border border-purple-500/20 p-6 space-y-4 shadow-[0_0_20px_rgba(168,85,247,0.1)]">
+                    <div className="flex gap-4 items-center">
+                      <div className="w-16 h-16 bg-purple-900/30 rounded-2xl border border-purple-500/20"></div>
+                      <div className="space-y-2.5 flex-1">
+                        <div className="h-4 bg-purple-900/40 rounded-lg w-3/4"></div>
+                        <div className="h-3 bg-purple-900/30 rounded-lg w-1/2"></div>
                       </div>
                     </div>
-                    <div className="h-12 bg-slate-50 rounded-2xl w-full"></div>
-                    <div className="h-10 bg-slate-100 rounded-2xl w-full"></div>
+                    <div className="h-12 bg-purple-950/40 rounded-2xl w-full border border-purple-500/10"></div>
+                    <div className="h-10 bg-purple-900/30 rounded-2xl w-full"></div>
                   </div>
                 ))}
               </div>
             ) : filteredExperts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredExperts.map(expert => (
                   <ExpertCard 
                     key={expert.id || expert.userId} 
@@ -232,19 +244,24 @@ export default function MarketplacePage() {
           </div>
         )}
 
+        {/* ÜRÜNLER / SUPPLEMENT SEKSİYONU */}
         {(activeTab === 'all' || activeTab === 'supplement') && filteredProducts.length > 0 && (
-          <div className="space-y-4 pt-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C5A880]"></span>
+          <div className="space-y-5 pt-4">
+            {/* Seksiyon Başlık Box'ı (Obsidyen Kehribar Tonlarında - Lacivertten Bağımsız) */}
+            <div className="flex justify-between items-center bg-gradient-to-r from-[#221D17] via-[#1C1814] to-[#221D17] border border-amber-500/30 p-4 sm:p-5 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.15)] backdrop-blur-xl">
+              <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-3 tracking-wide">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500 shadow-[0_0_10px_#F59E0B]"></span>
+                </span>
                 Onaylı Supplement & Ekipmanlar
               </h2>
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 rounded-xl shadow-[0_0_12px_rgba(245,158,11,0.2)]">
                 {filteredProducts.length} Ürün Listelendi
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredProducts.map(product => (
                 <ProductCard 
                   key={product.id} 
@@ -255,13 +272,14 @@ export default function MarketplacePage() {
           </div>
         )}
 
+        {/* BOŞ SONUÇ KUTUSU (Obsidyen Mürdüm Tonlarında) */}
         {!loading && filteredExperts.length === 0 && filteredProducts.length === 0 && (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/60 shadow-sm space-y-3">
-            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+          <div className="bg-gradient-to-b from-[#211A30] via-[#1B1628] to-[#151221] rounded-3xl p-12 text-center border border-fuchsia-500/30 shadow-[0_0_40px_rgba(217,70,239,0.15)] backdrop-blur-xl space-y-4">
+            <div className="w-16 h-16 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-2xl flex items-center justify-center mx-auto text-fuchsia-400 text-2xl shadow-[0_0_20px_rgba(217,70,239,0.3)]">
               🔍
             </div>
-            <h3 className="text-sm font-bold text-slate-800">Aramanıza Uygun Sonuç Bulunamadı</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <h3 className="text-base font-black text-white tracking-wide">Aramanıza Uygun Sonuç Bulunamadı</h3>
+            <p className="text-xs text-fuchsia-200/70 max-w-sm mx-auto font-medium leading-relaxed">
               Farklı bir arama terimi deneyebilir veya kategorileri sıfırlayabilirsiniz.
             </p>
           </div>
@@ -269,6 +287,7 @@ export default function MarketplacePage() {
 
       </div>
 
+      {/* UZMAN DETAY MODALI */}
       {selectedExpert && (
         <ExpertDetailModal 
           expert={selectedExpert} 

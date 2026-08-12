@@ -72,33 +72,36 @@ export default function AdminRegister({ setView }) {
   };
 
   return (
-    <div className="bg-[#EAEAEA]/95 backdrop-blur-md rounded-[2.5rem] p-8 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border border-white/20 w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-[18px] font-black tracking-widest text-[#1c1c1c] uppercase">EXPERT REGISTRATION</h2>
-        <button onClick={() => setView('admin-login')} className="text-slate-600 hover:text-[#A80000] transition-colors">
-          <ArrowLeft size={22} strokeWidth={2.5} />
+    <div className="bg-[#16161C] border border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto relative overflow-hidden text-white">
+      {/* Arka Plan Işıltı Efekti */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#D4AF37]/10 blur-[100px] pointer-events-none"></div>
+
+      <div className="flex justify-between items-center mb-6 relative z-10">
+        <h2 className="text-[18px] font-black tracking-widest text-white uppercase">UZMAN KAYDI</h2>
+        <button onClick={() => setView('admin-login')} className="text-white/50 hover:text-[#D4AF37] transition-colors p-2 rounded-xl bg-white/5 border border-white/5 hover:border-[#D4AF37]/30">
+          <ArrowLeft size={20} strokeWidth={2.5} />
         </button>
       </div>
 
       {errorMsg && (
-        <div className="bg-red-100 text-red-700 text-xs font-bold p-3.5 rounded-2xl mb-4 text-center">
+        <div className="bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs font-bold p-3.5 rounded-2xl mb-6 text-center shadow-[0_0_20px_rgba(244,63,94,0.15)] relative z-10">
           {errorMsg}
         </div>
       )}
 
-      <form onSubmit={handleRegister} className="space-y-3">
+      <form onSubmit={handleRegister} className="space-y-3.5 relative z-10">
         
         {/* Uzmanlık Alanı Seçimi (DDL + Aşağı Ok İkonu) */}
         <div className="relative">
           <select 
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full bg-white text-slate-800 text-xs font-bold px-6 py-3.5 rounded-full outline-none appearance-none shadow-inner border border-slate-200/50 cursor-pointer pr-12"
+            className="w-full bg-[#221F1C] text-white text-xs font-bold px-6 py-3.5 rounded-2xl outline-none appearance-none shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] cursor-pointer pr-12 transition-all"
           >
-            <option value="dietitian">Diyetisyen (Beslenme Uzmanı)</option>
-            <option value="trainer">Antrenor / PT (Personal Trainer)</option>
+            <option value="dietitian" className="bg-[#16161C] text-white">Diyetisyen (Beslenme Uzmanı)</option>
+            <option value="trainer" className="bg-[#16161C] text-white">Antrenör / PT (Personal Trainer)</option>
           </select>
-          <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none text-slate-500">
+          <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none text-[#D4AF37]">
             <ChevronDown size={16} strokeWidth={2.5} />
           </div>
         </div>
@@ -107,13 +110,13 @@ export default function AdminRegister({ setView }) {
           <input 
             type="email" 
             required
-            placeholder="Email" 
+            placeholder="E-posta Adresi" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
-            <Mail className="text-slate-400" size={15} />
+            <Mail className="text-[#D4AF37]" size={15} />
           </div>
         </div>
 
@@ -121,13 +124,13 @@ export default function AdminRegister({ setView }) {
           <input 
             type="password" 
             required
-            placeholder="Password" 
+            placeholder="Şifre" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
-            <Lock className="text-slate-400" size={15} />
+            <Lock className="text-[#D4AF37]" size={15} />
           </div>
         </div>
 
@@ -135,13 +138,13 @@ export default function AdminRegister({ setView }) {
           <input 
             type="password" 
             required
-            placeholder="Confirm Password" 
+            placeholder="Şifre Tekrar" 
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
-            <Lock className="text-slate-400" size={15} />
+            <Lock className="text-[#D4AF37]" size={15} />
           </div>
         </div>
 
@@ -149,18 +152,18 @@ export default function AdminRegister({ setView }) {
           <input 
             type="text" 
             required
-            placeholder="First Name" 
+            placeholder="Ad" 
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <input 
             type="text" 
             required
-            placeholder="Last Name" 
+            placeholder="Soyad" 
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
         </div>
 
@@ -168,23 +171,23 @@ export default function AdminRegister({ setView }) {
           <input 
             type="tel" 
             required
-            placeholder="Phone Number" 
+            placeholder="Telefon Numarası" 
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-3.5 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-3.5 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
-            <Phone className="text-slate-400" size={15} />
+            <Phone className="text-[#D4AF37]" size={15} />
           </div>
         </div>
 
         {/* e-Devlet Belge / Sertifika Yükleme Alanı (Güvenlik Kısıtlamalı) */}
-        <div className="bg-white/80 border border-slate-200 p-3 rounded-2xl shadow-inner space-y-1.5">
-          <label className="text-[10px] font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5 px-2">
-            <Award size={13} className="text-[#A80000]" /> e-Devlet Belgesi (PDF, JPG, PNG)
+        <div className="bg-[#221F1C] border border-[#D4AF37]/20 p-3.5 rounded-2xl shadow-inner space-y-1.5">
+          <label className="text-[10px] font-black uppercase text-white/70 tracking-wider flex items-center gap-1.5 px-1">
+            <Award size={13} className="text-[#D4AF37]" /> e-Devlet Belgesi / Sertifika (PDF, JPG, PNG)
           </label>
-          <div className="relative flex items-center justify-between bg-white border border-dashed border-slate-300 rounded-xl px-4 py-2.5 hover:border-[#A80000] transition-colors cursor-pointer">
-            <span className="text-xs font-bold text-slate-500 truncate max-w-[220px]">
+          <div className="relative flex items-center justify-between bg-[#16161C] border border-dashed border-[#D4AF37]/30 rounded-xl px-4 py-2.5 hover:border-[#D4AF37] transition-colors cursor-pointer">
+            <span className="text-xs font-bold text-white/50 truncate max-w-[220px]">
               {certificate ? certificate.name : "Belge seçin (PDF / Görsel)..."}
             </span>
             <input 
@@ -194,16 +197,16 @@ export default function AdminRegister({ setView }) {
               onChange={handleFileChange}
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
             />
-            <Upload size={16} className="text-slate-400" />
+            <Upload size={16} className="text-[#D4AF37]" />
           </div>
         </div>
 
         <button 
           type="submit"
           disabled={loading}
-          className="w-full bg-[#A80000] hover:bg-[#8d0000] text-white text-xs font-extrabold py-3.5 rounded-full tracking-widest uppercase transition-all shadow-lg mt-2 disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5BF47] hover:to-amber-500 text-slate-950 text-xs font-black py-4 rounded-2xl tracking-[0.2em] uppercase transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] mt-2 disabled:opacity-50 border border-amber-400/40 active:scale-95"
         >
-          {loading ? 'REGISTERING...' : 'REGISTER EXPERT'}
+          {loading ? 'YÜKLENİYOR...' : 'UZMAN KAYDI OLUŞTUR'}
         </button>
       </form>
     </div>

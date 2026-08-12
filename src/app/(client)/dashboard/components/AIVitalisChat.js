@@ -4,16 +4,23 @@ import { Sparkles } from 'lucide-react';
 
 export default function AIVitalisChat() {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#C5A880]/15 transition-all hover:shadow-md hover:border-[#C5A880]/30">
+    /* 
+      Dış Kapsayıcı:
+      - #11142D (Lacivert) arka plandan tam ayrışan Kristal Beyaz zemin (bg-white/95).
+      - Neon Zümrüt border (border-emerald-500/30) ve hover durumunda Kehribar/Altın ışıltısı.
+      - En kötü projeksiyonda dahi kolayca seçilebilir yüksek kontrastlı gölgelendirme.
+    */
+    <div className="bg-white/95 backdrop-blur-2xl rounded-3xl p-5 shadow-[0_15px_35px_rgba(0,0,0,0.4)] border border-emerald-500/30 hover:border-amber-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.25)] relative">
       
       {/* Premium Header - Zümrüt Yeşil & Mat Altın Pırıltı */}
-      <h3 className="text-[10px] font-bold uppercase tracking-wider mb-3 flex items-center gap-1.5 text-[#0A3A25]">
-        <Sparkles size={14} className="text-[#C5A880] fill-[#C5A880]/30 animate-pulse" /> Vitalis AI Asistan
+      <h3 className="text-xs font-black uppercase tracking-wider mb-3 flex items-center gap-2 text-slate-950">
+        <Sparkles size={16} className="text-amber-400 fill-amber-300/40 animate-pulse drop-shadow-xs" /> 
+        <span>Vitalis AI Asistan</span>
       </h3>
       
-      {/* Öneri Kutusu - Fildişi Bej Arka Plan & Zümrüt Vurgu */}
-      <div className="bg-[#FCFAF7] rounded-xl p-3 border border-[#C5A880]/20 mb-3 text-[11px] text-[#8C724D] leading-relaxed">
-        <span className="font-extrabold text-[#10B981] block mb-1">Öneri:</span>
+      {/* Öneri Kutusu - Fildişi/Bej Degrade Arka Plan & Zümrüt Vurgu */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-amber-500/10 border border-amber-400/40 rounded-2xl p-3.5 mb-3.5 text-xs font-black text-amber-950 leading-relaxed shadow-xs">
+        <span className="font-black text-emerald-700 uppercase tracking-wider block mb-1 drop-shadow-xs">Öneri:</span>
         "Bugün antrenmandan sonra kas onarımı için 150g tavuk göğsü yanına kompleks karbonhidrat eklemen ideal olacaktır."
       </div>
       
@@ -22,10 +29,10 @@ export default function AIVitalisChat() {
         <input 
           type="text" 
           placeholder="Bugün antrenmandan sonra ne yemeliyim?" 
-          className="w-full text-xs bg-[#F8FAF8] border border-slate-200/80 rounded-xl pl-3 pr-9 py-2.5 outline-none focus:border-[#10B981] focus:bg-white focus:ring-1 focus:ring-[#10B981]/10 transition-all text-slate-700 placeholder-slate-400 font-medium"
+          className="w-full text-xs bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-2xl pl-3.5 pr-10 py-3 outline-none transition-all text-slate-950 placeholder-slate-400 font-black shadow-xs"
         />
-        <button className="absolute right-3 top-2.5 text-[#0A3A25] hover:text-[#10B981] active:scale-90 transition-all duration-150">
-          <Sparkles size={14} className="fill-current" />
+        <button className="absolute right-3 top-3 text-emerald-700 hover:text-emerald-500 active:scale-90 transition-all duration-150 cursor-pointer">
+          <Sparkles size={16} className="fill-emerald-500/20 text-emerald-600 drop-shadow-xs" />
         </button>
       </div>
       

@@ -122,62 +122,65 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 transition-all hover:shadow-md space-y-6">
+    <div className="bg-[#0D2017]/85 backdrop-blur-xl rounded-3xl p-6 border border-emerald-500/30 hover:border-emerald-400/50 shadow-[0_15px_35px_rgba(0,0,0,0.5)] hover:shadow-[0_0_30px_rgba(16,185,129,0.2)] transition-all duration-300 space-y-6">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <TrendingUp size={16} className="text-[#10B981]" /> Form & Vücut Analiz Trendi
+          <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+            <TrendingUp size={20} className="text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> 
+            Form & Vücut Analiz Trendi
           </h3>
-          <p className="text-[10px] text-slate-400 font-medium mt-0.5">Zaman içerisindeki gelişim ve değişim grafikleriniz (Son 6 Ay - Neon DB Live)</p>
+          <p className="text-[11px] text-emerald-200/70 font-medium mt-0.5">
+            Zaman içerisindeki gelişim ve değişim grafikleriniz (Son 6 Ay - Neon DB Live)
+          </p>
         </div>
         <button 
           onClick={onOpenModal}
-          className="text-xs bg-[#0A3A25] hover:bg-[#10B981] text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 border border-[#C5A880]/20 flex items-center gap-1.5"
+          className="text-xs bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-500 hover:from-emerald-400 hover:to-amber-400 text-slate-950 font-black px-4 py-2.5 rounded-xl transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_25px_rgba(245,158,11,0.5)] active:scale-95 border border-amber-300/40 flex items-center gap-1.5 cursor-pointer"
         >
           Ölçüm Güncelle
         </button>
       </div>
 
-      {/* Tab Bar */}
-      <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+      {/* Tab Bar - Koyu Kehribar/Siyah Zemin */}
+      <div className="flex bg-[#07130D] p-1.5 rounded-2xl border border-emerald-500/20 w-fit gap-1 flex-wrap sm:flex-nowrap">
         <button 
           onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-xl transition-all duration-300 ${
             activeTab === 'all' 
-              ? 'bg-[#0A3A25] text-white shadow-sm' 
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.6)]' 
+              : 'text-emerald-200/60 hover:text-white'
           }`}
         >
           Genel Bakış
         </button>
         <button 
           onClick={() => setActiveTab('kilo')}
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-xl transition-all duration-300 ${
             activeTab === 'kilo' 
-              ? 'bg-[#10B981] text-white shadow-sm' 
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(52,211,153,0.6)]' 
+              : 'text-emerald-200/60 hover:text-white'
           }`}
         >
           Kilo (kg)
         </button>
         <button 
           onClick={() => setActiveTab('yag')}
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-xl transition-all duration-300 ${
             activeTab === 'yag' 
-              ? 'bg-[#C5A880] text-white shadow-sm' 
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-amber-400 text-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.6)]' 
+              : 'text-emerald-200/60 hover:text-white'
           }`}
         >
           Yağ Oranı (%)
         </button>
         <button 
           onClick={() => setActiveTab('lbm')}
-          className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${
+          className={`px-3 py-1.5 text-[11px] font-extrabold rounded-xl transition-all duration-300 ${
             activeTab === 'lbm' 
-              ? 'bg-[#2563eb] text-white shadow-sm' 
-              : 'text-slate-500 hover:text-slate-700'
+              ? 'bg-orange-500 text-white shadow-[0_0_15px_rgba(249,115,22,0.6)]' 
+              : 'text-emerald-200/60 hover:text-white'
           }`}
         >
           Kas/Yağsız Kütle (LBM)
@@ -185,10 +188,10 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
       </div>
 
       {/* Grafik Alanı */}
-      <div className="h-56 w-full relative">
+      <div className="h-60 w-full relative pt-2">
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10 gap-2 text-xs text-slate-500 font-semibold rounded-xl">
-            <Loader2 className="animate-spin text-[#10B981]" size={18} /> Veriler yükleniyor...
+          <div className="absolute inset-0 flex items-center justify-center bg-[#07130D]/90 backdrop-blur-md z-10 gap-2 text-xs text-emerald-300 font-bold rounded-2xl border border-emerald-500/30">
+            <Loader2 className="animate-spin text-emerald-400" size={20} /> Veriler yükleniyor...
           </div>
         )}
 
@@ -196,27 +199,36 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
           <AreaChart data={chartData} margin={{ top: 15, right: 15, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorKilo" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                <stop offset="5%" stopColor="#10B981" stopOpacity={0.6}/>
                 <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorYag" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#C5A880" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#C5A880" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.6}/>
+                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorLbm" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#F97316" stopOpacity={0.6}/>
+                <stop offset="95%" stopColor="#F97316" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(16, 185, 129, 0.15)" />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#A7F3D0', fontWeight: 700 }} axisLine={false} tickLine={false} />
             <YAxis 
-              tick={{ fontSize: 10, fill: '#94a3b8' }} 
+              tick={{ fontSize: 11, fill: '#A7F3D0', fontWeight: 700 }} 
               axisLine={false} 
               tickLine={false} 
               domain={activeTab === 'yag' ? getYDomain('yag') : getYDomain('kilo')} 
             />
-            <Tooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#07130D', 
+                borderRadius: '16px', 
+                border: '1px solid rgba(16, 185, 129, 0.4)', 
+                fontSize: '12px', 
+                color: '#fff',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.8)' 
+              }} 
+            />
             
             {(activeTab === 'all' || activeTab === 'kilo') && (
               <Area 
@@ -224,11 +236,11 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
                 dataKey="kilo" 
                 name="Kilo (kg)" 
                 stroke="#10B981" 
-                strokeWidth={3} 
+                strokeWidth={3.5} 
                 fillOpacity={1} 
                 fill="url(#colorKilo)" 
-                dot={{ r: 7, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }} 
-                activeDot={{ r: 9 }} 
+                dot={{ r: 6, fill: '#10B981', strokeWidth: 2, stroke: '#07130D' }} 
+                activeDot={{ r: 8, fill: '#34D399', strokeWidth: 3, stroke: '#fff' }} 
                 isAnimationActive={false}
                 connectNulls
               />
@@ -238,12 +250,12 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
                 type="monotone" 
                 dataKey="yag" 
                 name="Yağ Oranı (%)" 
-                stroke="#C5A880" 
-                strokeWidth={3} 
+                stroke="#F59E0B" 
+                strokeWidth={3.5} 
                 fillOpacity={1} 
                 fill="url(#colorYag)" 
-                dot={{ r: 7, fill: '#C5A880', strokeWidth: 2, stroke: '#fff' }} 
-                activeDot={{ r: 9 }} 
+                dot={{ r: 6, fill: '#F59E0B', strokeWidth: 2, stroke: '#07130D' }} 
+                activeDot={{ r: 8, fill: '#FBBF24', strokeWidth: 3, stroke: '#fff' }} 
                 isAnimationActive={false}
                 connectNulls
               />
@@ -253,12 +265,12 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
                 type="monotone" 
                 dataKey="lbm" 
                 name="Yağsız Kütle (kg)" 
-                stroke="#2563eb" 
-                strokeWidth={3} 
+                stroke="#F97316" 
+                strokeWidth={3.5} 
                 fillOpacity={1} 
                 fill="url(#colorLbm)" 
-                dot={{ r: 7, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }} 
-                activeDot={{ r: 9 }} 
+                dot={{ r: 6, fill: '#F97316', strokeWidth: 2, stroke: '#07130D' }} 
+                activeDot={{ r: 8, fill: '#FB923C', strokeWidth: 3, stroke: '#fff' }} 
                 isAnimationActive={false}
                 connectNulls
               />
@@ -267,31 +279,31 @@ export default function WeightChart({ onOpenModal, userId, refreshKey = 0 }) {
         </ResponsiveContainer>
       </div>
 
-      {/* Alt Bölüm: Son Ölçüm İndikatör Kartları */}
-      <div className="grid grid-cols-3 gap-3 border-t border-slate-100 pt-5">
-        <div className="bg-[#10B981]/5 p-3 rounded-xl border border-[#10B981]/10">
-          <span className="text-[9px] text-[#0A5C36] font-bold flex items-center gap-1 mb-1">
-            <Activity size={12} /> Son Kilo
+      {/* Alt Bölüm: Neon Kartlar (Koyu Kehribar & Zümrüt Zeminler) */}
+      <div className="grid grid-cols-3 gap-3 border-t border-emerald-500/20 pt-5">
+        <div className="bg-[#071D14] p-3.5 rounded-2xl border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+          <span className="text-[10px] text-emerald-300 font-extrabold flex items-center gap-1 mb-1">
+            <Activity size={13} className="text-emerald-400" /> Son Kilo
           </span>
-          <span className="text-sm font-black text-slate-800">
-            {latestData && (latestData.kilo ?? latestData.weight) !== undefined ? (latestData.kilo ?? latestData.weight) : '--'} <span className="text-[10px] font-normal text-slate-500">kg</span>
+          <span className="text-base font-black text-white">
+            {latestData && (latestData.kilo ?? latestData.weight) !== undefined ? (latestData.kilo ?? latestData.weight) : '--'} <span className="text-xs font-bold text-emerald-300/70">kg</span>
           </span>
         </div>
 
-        <div className="bg-[#C5A880]/10 p-3 rounded-xl border border-[#C5A880]/20">
-          <span className="text-[9px] text-[#8C724D] font-bold flex items-center gap-1 mb-1">
-            <Percent size={12} /> Yağ Oranı
+        <div className="bg-[#1C160C] p-3.5 rounded-2xl border border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+          <span className="text-[10px] text-amber-300 font-extrabold flex items-center gap-1 mb-1">
+            <Percent size={13} className="text-amber-400" /> Yağ Oranı
           </span>
-          <span className="text-sm font-black text-slate-800">
+          <span className="text-base font-black text-white">
             {latestData && (latestData.yag ?? latestData.body_fat) !== undefined ? `%${latestData.yag ?? latestData.body_fat}` : '--'}
           </span>
         </div>
 
-        <div className="bg-blue-50/40 p-3 rounded-xl border border-blue-100">
-          <span className="text-[9px] text-blue-600 font-bold flex items-center gap-1 mb-1">
-            <Flame size={12} /> Yağsız Kütle
+        <div className="bg-[#201309] p-3.5 rounded-2xl border border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.15)]">
+          <span className="text-[10px] text-orange-300 font-extrabold flex items-center gap-1 mb-1">
+            <Flame size={13} className="text-orange-400" /> Yağsız Kütle
           </span>
-          <span className="text-sm font-black text-slate-800">
+          <span className="text-base font-black text-white">
             {latestData && latestData.lbm !== undefined ? `${latestData.lbm} kg` : '--'}
           </span>
         </div>

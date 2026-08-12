@@ -111,6 +111,7 @@ export default function NutritionTracker({ userId }) {
     }
   };
 
+  // Besin Ekleme ve Modal Kapama Düzeltmesi
   const handleAddSearchFood = async () => {
     if (!selectedFood || !currentUserId) return;
 
@@ -136,12 +137,13 @@ export default function NutritionTracker({ userId }) {
       }
     } catch (err) {
       console.error("Öğün loglanamadı:", err);
+    } finally {
+      // İşlem bitince ekranı kesin olarak kapat
+      setSelectedFood(null);
+      setSearchQuery('');
+      setPortionAmount(1);
+      setIsModalOpen(false);
     }
-
-    setSelectedFood(null);
-    setSearchQuery('');
-    setPortionAmount(1);
-    setIsModalOpen(false);
   };
 
   const handleManualSubmit = async (e) => {
@@ -176,10 +178,10 @@ export default function NutritionTracker({ userId }) {
       }
     } catch (err) {
       console.error("Manuel öğün kaydedilemedi:", err);
+    } finally {
+      setManualData({ kcal: '', protein: '', carb: '', fat: '' });
+      setIsModalOpen(false);
     }
-
-    setManualData({ kcal: '', protein: '', carb: '', fat: '' });
-    setIsModalOpen(false);
   };
 
   const handleDeleteMeal = async (mealId) => {
@@ -234,26 +236,31 @@ export default function NutritionTracker({ userId }) {
   );
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/60 transition-all hover:shadow-md">
+    // Dış Box: backdrop-blur kaldırıldı, çakışma engellendi
+    <div className="bg-white/95 rounded-3xl p-6 shadow-[0_15px_35px_rgba(0,0,0,0.4)] border border-emerald-500/30 hover:border-amber-400/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.2)] relative">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-sm font-bold text-slate-900">Günlük Beslenme & Makro Dengesi</h3>
-          <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Kullanıcı ID: {currentUserId}</p>
+          <h3 className="text-sm font-black text-slate-950 tracking-tight flex items-center gap-2">
+            Günlük Beslenme & Makro Dengesi
+          </h3>
+          <p className="text-[10px] text-slate-500 font-extrabold mt-0.5 uppercase tracking-wider">
+            Kullanıcı ID: <span className="text-emerald-700">{currentUserId}</span>
+          </p>
         </div>
         
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsMealsModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs bg-[#F8FAF8] hover:bg-slate-100 text-slate-700 px-3.5 py-2.5 rounded-xl font-bold transition-all border border-slate-200"
+            className="flex items-center gap-1.5 text-xs bg-slate-100 hover:bg-emerald-50 text-slate-800 hover:text-emerald-800 px-3.5 py-2.5 rounded-2xl font-black transition-all border border-slate-200/80 shadow-xs cursor-pointer"
           >
-            <ListOrdered size={14} className="text-[#0A3A25]" /> Bugün Ne Yedim?
+            <ListOrdered size={15} className="text-emerald-700" /> Bugün Ne Yedim?
           </button>
 
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs bg-[#0A3A25] hover:bg-[#10B981] active:scale-95 text-white px-3.5 py-2.5 rounded-xl font-bold transition-all shadow-sm border border-[#C5A880]/15"
+            className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-500 hover:to-teal-700 active:scale-95 text-white px-4 py-2.5 rounded-2xl font-black transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] border border-emerald-400/30 cursor-pointer"
           >
-            <Sparkles size={12} className="text-[#C5A880] fill-[#C5A880]" /> Öğün Gir
+            <Sparkles size={13} className="text-amber-300 fill-amber-300 animate-pulse" /> Öğün Gir
           </button>
         </div>
       </div>
@@ -272,85 +279,86 @@ export default function NutritionTracker({ userId }) {
           
           <div className="absolute text-center flex flex-col items-center justify-center">
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-black text-slate-900 tracking-tight">{Math.round(totalConsumedKcal)}</span>
-              <span className="text-xs font-bold text-slate-400">/ {targetKcal}</span>
+              <span className="text-2xl font-black text-slate-950 tracking-tight drop-shadow-xs">{Math.round(totalConsumedKcal)}</span>
+              <span className="text-xs font-black text-slate-400">/ {targetKcal}</span>
             </div>
-            <span className="text-[9px] text-[#C5A880] font-extrabold uppercase tracking-wider block mt-0.5">Kcal Alındı</span>
+            <span className="text-[9px] text-amber-700 font-black uppercase tracking-widest block mt-0.5">Kcal Alındı</span>
           </div>
         </div>
 
         <div className="space-y-2.5">
           {macroData.map((macro, i) => (
-            <div key={i} className="flex justify-between items-center p-2.5 rounded-xl bg-[#F8FAF8] border border-slate-100/80">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full shadow-xs" style={{ backgroundColor: macro.color }}></span>
-                <span className="text-xs font-semibold text-slate-600">{macro.name}</span>
+            <div key={i} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-xs hover:border-emerald-500/30 transition-all">
+              <div className="flex items-center gap-2.5">
+                <span className="w-3 h-3 rounded-full shadow-xs" style={{ backgroundColor: macro.color }}></span>
+                <span className="text-xs font-black text-slate-800">{macro.name}</span>
               </div>
-              <span className="text-xs font-bold text-slate-900">{macro.value}g</span>
+              <span className="text-xs font-black text-slate-950">{macro.value}g</span>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Bugün Ne Yedim Modalı - z-[9999] ile tüm sayfanın üstüne taşındı */}
       {isMealsModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl border border-[#C5A880]/15 max-h-[85vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <ListOrdered size={16} className="text-[#0A3A25]" /> Tüketilen Öğünler (Bugün)
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-emerald-500/30 max-h-[85vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <h3 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                <ListOrdered size={18} className="text-emerald-700" /> Tüketilen Öğünler (Bugün)
               </h3>
-              <button onClick={() => setIsMealsModalOpen(false)} className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-all">
+              <button onClick={() => setIsMealsModalOpen(false)} className="text-slate-400 hover:text-rose-600 p-1.5 rounded-xl transition-all cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
               {loggedMeals.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-xs font-medium">
+                <div className="text-center py-10 text-slate-400 text-xs font-bold">
                   Bugün henüz kayıtlı bir öğününüz bulunmuyor.
                 </div>
               ) : (
                 loggedMeals.map((meal) => (
-                  <div key={meal.id} className="p-3 rounded-xl bg-[#F8FAF8] border border-slate-100/80 hover:border-slate-200 transition-all">
+                  <div key={meal.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-500/40 transition-all">
                     {editingMealId === meal.id ? (
                       <div className="space-y-2">
                         <input 
                           type="text" 
                           value={editForm.food_name} 
                           onChange={(e) => setEditForm({...editForm, food_name: e.target.value})}
-                          className="w-full p-1.5 border rounded-lg text-xs font-bold"
+                          className="w-full p-2 border border-emerald-500/40 rounded-xl text-xs font-black text-slate-900 outline-none"
                           placeholder="Besin adı"
                         />
                         <div className="grid grid-cols-4 gap-1.5">
-                          <input type="number" placeholder="Kcal" value={editForm.kcal} onChange={(e) => setEditForm({...editForm, kcal: e.target.value})} className="p-1 border rounded text-[11px]" />
-                          <input type="number" placeholder="Pro (g)" value={editForm.protein} onChange={(e) => setEditForm({...editForm, protein: e.target.value})} className="p-1 border rounded text-[11px]" />
-                          <input type="number" placeholder="Carb (g)" value={editForm.carb} onChange={(e) => setEditForm({...editForm, carb: e.target.value})} className="p-1 border rounded text-[11px]" />
-                          <input type="number" placeholder="Fat (g)" value={editForm.fat} onChange={(e) => setEditForm({...editForm, fat: e.target.value})} className="p-1 border rounded text-[11px]" />
+                          <input type="number" placeholder="Kcal" value={editForm.kcal} onChange={(e) => setEditForm({...editForm, kcal: e.target.value})} className="p-1.5 border border-slate-200 rounded-xl text-[11px] font-bold" />
+                          <input type="number" placeholder="Pro (g)" value={editForm.protein} onChange={(e) => setEditForm({...editForm, protein: e.target.value})} className="p-1.5 border border-slate-200 rounded-xl text-[11px] font-bold" />
+                          <input type="number" placeholder="Carb (g)" value={editForm.carb} onChange={(e) => setEditForm({...editForm, carb: e.target.value})} className="p-1.5 border border-slate-200 rounded-xl text-[11px] font-bold" />
+                          <input type="number" placeholder="Fat (g)" value={editForm.fat} onChange={(e) => setEditForm({...editForm, fat: e.target.value})} className="p-1.5 border border-slate-200 rounded-xl text-[11px] font-bold" />
                         </div>
                         <div className="flex justify-end gap-1.5 pt-1">
-                          <button onClick={() => setEditingMealId(null)} className="px-2.5 py-1 text-[10px] bg-slate-200 rounded-lg font-bold">İptal</button>
-                          <button onClick={() => handleSaveEdit(meal.id)} className="px-2.5 py-1 text-[10px] bg-[#0A3A25] text-white rounded-lg font-bold flex items-center gap-1"><Check size={12}/> Kaydet</button>
+                          <button onClick={() => setEditingMealId(null)} className="px-3 py-1.5 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-xl font-bold cursor-pointer">İptal</button>
+                          <button onClick={() => handleSaveEdit(meal.id)} className="px-3 py-1.5 text-[10px] bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl font-black flex items-center gap-1 cursor-pointer"><Check size={12}/> Kaydet</button>
                         </div>
                       </div>
                     ) : (
                       <div className="flex justify-between items-center">
                         <div>
-                          <span className="text-xs font-bold block text-slate-900">{meal.meal_text}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">
+                          <span className="text-xs font-black block text-slate-950">{meal.meal_text}</span>
+                          <span className="text-[10px] text-slate-500 font-extrabold mt-0.5 block">
                             {meal.kcal} kcal • P: {meal.protein}g | K: {meal.carbs}g | Y: {meal.fat}g
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
                           <button 
                             onClick={() => handleStartEdit(meal)}
-                            className="text-slate-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition-all"
+                            className="text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-all cursor-pointer"
                             title="Öğünü Düzenle"
                           >
                             <Pencil size={15} />
                           </button>
                           <button 
                             onClick={() => handleDeleteMeal(meal.id)}
-                            className="text-slate-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition-all"
+                            className="text-slate-400 hover:text-rose-600 p-2 rounded-xl hover:bg-rose-50 transition-all cursor-pointer"
                             title="Öğünü Sil"
                           >
                             <Trash2 size={15} />
@@ -364,10 +372,10 @@ export default function NutritionTracker({ userId }) {
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-              <span className="text-[11px] text-slate-500 font-semibold">Toplam Kalori: <strong className="text-slate-900">{Math.round(totalConsumedKcal)} kcal</strong></span>
+              <span className="text-xs text-slate-600 font-bold">Toplam Kalori: <strong className="text-slate-950 font-black">{Math.round(totalConsumedKcal)} kcal</strong></span>
               <button 
                 onClick={() => setIsMealsModalOpen(false)}
-                className="bg-[#0A3A25] text-white text-xs font-bold px-4 py-2 rounded-xl"
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer"
               >
                 Kapat
               </button>
@@ -376,104 +384,130 @@ export default function NutritionTracker({ userId }) {
         </div>
       )}
 
+      {/* Öğün Gir Modalı - z-[9999] ile tüm sayfanın üstüne taşındı */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-[#C5A880]/15 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-emerald-500/30 max-h-[90vh] overflow-y-auto">
             
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Utensils size={16} className="text-[#0A3A25]" /> Öğün & Besin Kaydı
+              <h3 className="text-sm font-black text-slate-950 flex items-center gap-2">
+                <Utensils size={18} className="text-emerald-700" /> Öğün & Besin Kaydı
               </h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-all">
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-600 p-1.5 rounded-xl transition-all cursor-pointer">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex bg-slate-100 p-1 rounded-xl mb-4 gap-1">
-              <button onClick={() => setActiveTab('ai')} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${activeTab === 'ai' ? 'bg-[#0A3A25] text-white shadow-sm' : 'text-slate-500'}`}>
+            {/* Tab Grubu */}
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-4 gap-1">
+              <button onClick={() => setActiveTab('ai')} className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === 'ai' ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}>
                 <Sparkles size={12} /> AI Akıllı
               </button>
-              <button onClick={() => setActiveTab('search')} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${activeTab === 'search' ? 'bg-[#0A3A25] text-white shadow-sm' : 'text-slate-500'}`}>
+              <button onClick={() => setActiveTab('search')} className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === 'search' ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}>
                 <Search size={12} /> Besin Ara
               </button>
-              <button onClick={() => setActiveTab('manual')} className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${activeTab === 'manual' ? 'bg-[#0A3A25] text-white shadow-sm' : 'text-slate-500'}`}>
+              <button onClick={() => setActiveTab('manual')} className={`flex-1 py-2 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeTab === 'manual' ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md' : 'text-slate-600 hover:text-slate-900'}`}>
                 <Sliders size={12} /> Manuel Gir
               </button>
             </div>
 
+            {/* Tab 1: AI Akıllı */}
             {activeTab === 'ai' && (
               <form onSubmit={handleAiAnalysis} className="space-y-4">
                 <textarea 
                   rows={3}
                   value={aiInput}
                   onChange={(e) => setAiInput(e.target.value)}
-                  placeholder="Örn: 1 kase mercimek çorbası içtim."
-                  className="w-full border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-[#10B981] resize-none text-slate-700"
+                  placeholder="Örn: 1 kase mercimek çorbası ve tavuk ızgara yedim."
+                  className="w-full border border-slate-200 rounded-2xl p-3.5 text-xs outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none text-slate-800 font-semibold transition-all"
                   required
                 />
-                <button type="submit" disabled={isAnalyzing} className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#10B981] disabled:opacity-50">
+                <button type="submit" disabled={isAnalyzing} className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-black py-3 rounded-2xl shadow-md transition-all cursor-pointer disabled:opacity-50">
                   {isAnalyzing ? "Veritabanına İşleniyor..." : "Analiz Et & Kaydet"}
                 </button>
               </form>
             )}
 
+            {/* Tab 2: Besin Ara */}
             {activeTab === 'search' && (
               <div className="space-y-4">
                 <input 
                   type="text" 
-                  placeholder="Besin ara..."
+                  placeholder="Besin ara (örn: tavuk ızgara)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#10B981]"
+                  className="w-full px-3.5 py-3 border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all text-slate-900"
                 />
-                <div className="max-h-48 overflow-y-auto space-y-1.5">
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                   {filteredFoods.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 text-xs">Kayıtlı besin bulunamadı.</div>
+                    <div className="text-center py-6 text-slate-400 text-xs font-bold">Kayıtlı besin bulunamadı.</div>
                   ) : (
                     filteredFoods.map((food) => (
-                      <div key={food.id} onClick={() => setSelectedFood(food)} className={`p-2.5 rounded-xl border cursor-pointer flex justify-between items-center ${selectedFood?.id === food.id ? 'bg-[#10B981]/10 border-[#10B981]' : 'bg-[#F8FAF8] border-slate-100'}`}>
+                      <div 
+                        key={food.id} 
+                        onClick={() => setSelectedFood(food)} 
+                        className={`p-3 rounded-2xl border cursor-pointer flex justify-between items-center transition-all ${
+                          selectedFood?.id === food.id 
+                            ? 'bg-emerald-50 border-emerald-500 shadow-xs' 
+                            : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
                         <div>
-                          <span className="text-xs font-bold block text-slate-800">{food.food_name}</span>
-                          <span className="text-[10px] text-slate-400">{food.kcal} kcal ({food.serving_unit})</span>
+                          <span className="text-xs font-black block text-slate-950">{food.food_name}</span>
+                          <span className="text-[10px] text-slate-500 font-extrabold">{food.kcal} kcal ({food.serving_unit})</span>
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-500">P: {food.protein}g</span>
+                        <span className="text-[10px] font-black text-emerald-700">P: {food.protein}g</span>
                       </div>
                     ))
                   )}
                 </div>
+
                 {selectedFood && (
-                  <div className="flex justify-between items-center bg-[#FCFAF7] p-3 rounded-xl border border-[#C5A880]/20">
-                    <span className="text-xs font-bold text-slate-700">Porsiyon Kat Sayısı:</span>
-                    <input type="number" step="0.1" min="0.1" value={portionAmount} onChange={(e) => setPortionAmount(e.target.value)} className="w-20 p-1.5 border rounded-lg text-xs text-center font-bold" />
+                  <div className="flex justify-between items-center bg-amber-50/80 p-3.5 rounded-2xl border border-amber-300/60">
+                    <span className="text-xs font-black text-amber-900">Porsiyon Kat Sayısı:</span>
+                    <input 
+                      type="number" 
+                      step="0.1" 
+                      min="0.1" 
+                      value={portionAmount} 
+                      onChange={(e) => setPortionAmount(e.target.value)} 
+                      className="w-20 p-1.5 border border-amber-400 bg-white rounded-xl text-xs text-center font-black text-slate-900 outline-none" 
+                    />
                   </div>
                 )}
-                <button onClick={handleAddSearchFood} disabled={!selectedFood} className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#10B981] disabled:opacity-50">
+
+                <button 
+                  onClick={handleAddSearchFood} 
+                  disabled={!selectedFood} 
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-black py-3 rounded-2xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                >
                   Öğüne Ekle
                 </button>
               </div>
             )}
 
+            {/* Tab 3: Manuel Giriş */}
             {activeTab === 'manual' && (
               <form onSubmit={handleManualSubmit} className="space-y-3">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">Kalori (Kcal)</label>
-                  <input type="number" step="any" placeholder="Örn: 450" value={manualData.kcal} onChange={(e) => setManualData({...manualData, kcal: e.target.value})} className="w-full p-2.5 border rounded-xl text-xs" />
+                  <label className="text-[11px] font-black text-slate-700 block mb-1">Kalori (Kcal)</label>
+                  <input type="number" step="any" placeholder="Örn: 450" value={manualData.kcal} onChange={(e) => setManualData({...manualData, kcal: e.target.value})} className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-emerald-500" />
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Protein (g)</label>
-                    <input type="number" step="any" placeholder="30" value={manualData.protein} onChange={(e) => setManualData({...manualData, protein: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                    <label className="text-[10px] font-black text-slate-700 block mb-1">Protein (g)</label>
+                    <input type="number" step="any" placeholder="30" value={manualData.protein} onChange={(e) => setManualData({...manualData, protein: e.target.value})} className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-emerald-500" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Karb (g)</label>
-                    <input type="number" step="any" placeholder="50" value={manualData.carb} onChange={(e) => setManualData({...manualData, carb: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                    <label className="text-[10px] font-black text-slate-700 block mb-1">Karb (g)</label>
+                    <input type="number" step="any" placeholder="50" value={manualData.carb} onChange={(e) => setManualData({...manualData, carb: e.target.value})} className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-emerald-500" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Yağ (g)</label>
-                    <input type="number" step="any" placeholder="10" value={manualData.fat} onChange={(e) => setManualData({...manualData, fat: e.target.value})} className="w-full p-2 border rounded-xl text-xs" />
+                    <label className="text-[10px] font-black text-slate-700 block mb-1">Yağ (g)</label>
+                    <input type="number" step="any" placeholder="10" value={manualData.fat} onChange={(e) => setManualData({...manualData, fat: e.target.value})} className="w-full p-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none focus:border-emerald-500" />
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-[#0A3A25] text-white text-xs font-bold py-2.5 rounded-xl hover:bg-[#10B981] mt-2">
+                <button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-black py-3 rounded-2xl shadow-md transition-all cursor-pointer mt-2">
                   Manuel Kayıt
                 </button>
               </form>
