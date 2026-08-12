@@ -50,58 +50,74 @@ export default function SupportTab() {
     <div className="space-y-6 animate-fadeIn">
       
       {/* Üst Bilgi & Yeni Ticket Al Butonu */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900/60 border border-slate-800 p-6 rounded-3xl shadow-xl">
-        <div>
-          <h3 className="text-lg font-black text-white flex items-center gap-2">
-            <Headphones className="w-5 h-5 text-purple-500" /> Destek Talepleri (Ticket)
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 bg-gradient-to-r from-[#1E192E] via-[#1B172B] to-[#1E192E] border border-purple-500/30 p-6 sm:p-7 rounded-3xl shadow-[0_0_30px_rgba(168,85,247,0.15)] backdrop-blur-xl relative overflow-hidden">
+        {/* Ortam Ambient Glow */}
+        <div className="absolute -top-12 -left-12 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative z-10">
+          <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-3 tracking-wide">
+            <div className="p-2.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+              <Headphones className="w-5 h-5 text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+            </div>
+            Destek Talepleri (Ticket)
           </h3>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Teknik, üyelik veya sistemle ilgili karşılaştığınız tüm durumlar için 7/24 admin desteği alın.
+          <p className="text-xs sm:text-sm text-purple-200/70 mt-2 font-medium max-w-xl">
+            Teknik, üyelik veya sistemle ilgili karşılaştığınız tüm durumlar için 7/24 VIP admin desteği alın.
           </p>
         </div>
+
         <button
           onClick={() => setIsTicketModalOpen(true)}
-          className="px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs rounded-2xl transition-all shadow-lg shadow-purple-600/30 flex items-center gap-2 shrink-0"
+          className="relative z-10 px-6 py-3.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 text-white font-black text-xs tracking-wider uppercase rounded-2xl transition-all duration-300 shadow-[0_0_25px_rgba(168,85,247,0.4)] hover:shadow-[0_0_35px_rgba(168,85,247,0.6)] flex items-center justify-center gap-2 shrink-0 cursor-pointer border border-purple-400/40"
         >
-          <Plus className="w-4 h-4" /> YENİ TICKET OLUŞTUR
+          <Plus className="w-4 h-4 stroke-[3]" /> YENİ TICKET OLUŞTUR
         </button>
       </div>
 
-      {/* Ticket Listesi Tablosu */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl overflow-hidden">
+      {/* Ticket Listesi Tablosu Container */}
+      <div className="bg-[#191726]/90 border border-fuchsia-500/20 rounded-3xl p-6 sm:p-7 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden relative">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                <th className="pb-4 px-4">TICKET ID</th>
-                <th className="pb-4 px-4">KONU</th>
-                <th className="pb-4 px-4">KATEGORİ</th>
-                <th className="pb-4 px-4">ÖNCELİK</th>
-                <th className="pb-4 px-4">TARİH</th>
-                <th className="pb-4 px-4">DURUM</th>
+              <tr className="border-b border-purple-500/20 text-[10px] font-black text-purple-300/80 uppercase tracking-widest bg-purple-950/20">
+                <th className="pb-4 pt-2 px-4">TICKET ID</th>
+                <th className="pb-4 pt-2 px-4">KONU</th>
+                <th className="pb-4 pt-2 px-4">KATEGORİ</th>
+                <th className="pb-4 pt-2 px-4">ÖNCELİK</th>
+                <th className="pb-4 pt-2 px-4">TARİH</th>
+                <th className="pb-4 pt-2 px-4">DURUM</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-xs">
+            <tbody className="divide-y divide-purple-500/10 text-xs">
               {tickets.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-950/40 transition-all">
-                  <td className="py-4 px-4 font-mono font-bold text-purple-400">{t.id}</td>
-                  <td className="py-4 px-4 font-bold text-white">{t.subject}</td>
-                  <td className="py-4 px-4 text-slate-300">{t.category}</td>
+                <tr key={t.id} className="hover:bg-purple-500/10 transition-all duration-200 group">
+                  <td className="py-4 px-4 font-mono font-bold text-fuchsia-400 drop-shadow-[0_0_8px_rgba(217,70,239,0.5)]">
+                    {t.id}
+                  </td>
+                  <td className="py-4 px-4 font-bold text-white group-hover:text-purple-200 transition-colors">
+                    {t.subject}
+                  </td>
+                  <td className="py-4 px-4 text-purple-200/80 font-medium">
+                    {t.category}
+                  </td>
                   <td className="py-4 px-4">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                      t.priority === "Yüksek" ? "bg-rose-500/10 text-rose-400 border border-rose-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-block ${
+                      t.priority === "Yüksek" 
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.3)]" 
+                        : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.3)]"
                     }`}>
                       {t.priority}
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-slate-400">{t.date}</td>
+                  <td className="py-4 px-4 text-purple-300/60 font-medium">{t.date}</td>
                   <td className="py-4 px-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 w-fit ${
+                    <span className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 w-fit ${
                       t.status === "Çözüldü" 
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" 
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
+                        : "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
                     }`}>
-                      {t.status === "Çözüldü" ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                      {t.status === "Çözüldü" ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />}
                       {t.status}
                     </span>
                   </td>
@@ -114,84 +130,97 @@ export default function SupportTab() {
 
       {/* 🚀 YENİ TICKET OLUŞTURMA MODALI */}
       {isTicketModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl relative space-y-6">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-gradient-to-b from-[#211A30] to-[#151726] border border-purple-500/40 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-[0_0_50px_rgba(168,85,247,0.3)] relative space-y-6 text-slate-100">
             
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-black text-white flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-purple-500" /> Destek Talebi Oluştur
+            {/* Modal Başlığı */}
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-4">
+              <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
+                  <ShieldAlert className="w-5 h-5 text-purple-400" />
+                </div>
+                Destek Talebi Oluştur
               </h3>
               <button 
                 onClick={() => setIsTicketModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white"
+                className="w-9 h-9 rounded-xl bg-[#11121C] border border-purple-500/30 flex items-center justify-center text-purple-300 hover:text-white hover:border-purple-400 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
+            {/* Modal Formu */}
             <form onSubmit={handleCreateTicket} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1.5 block">KONU BAŞLIĞI</label>
+                <label className="text-xs font-black text-purple-300 uppercase tracking-wider mb-1.5 block">
+                  KONU BAŞLIĞI
+                </label>
                 <input 
                   type="text"
                   required
                   placeholder="Yaşadığınız durumu özetleyin..."
                   value={newTicket.subject}
                   onChange={(e) => setNewTicket({...newTicket, subject: e.target.value})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500"
+                  className="w-full bg-[#11121C] border border-purple-500/30 focus:border-purple-400 focus:ring-1 focus:ring-purple-400/50 rounded-2xl px-4 py-3 text-xs text-white placeholder-purple-300/40 font-medium outline-none transition-all"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 mb-1.5 block">KATEGORİ</label>
+                  <label className="text-xs font-black text-purple-300 uppercase tracking-wider mb-1.5 block">
+                    KATEGORİ
+                  </label>
                   <select 
                     value={newTicket.category}
                     onChange={(e) => setNewTicket({...newTicket, category: e.target.value})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 font-bold"
+                    className="w-full bg-[#11121C] border border-purple-500/30 focus:border-purple-400 rounded-2xl px-4 py-3 text-xs text-white font-bold outline-none transition-all cursor-pointer"
                   >
-                    <option value="Teknik Destek">Teknik Destek</option>
-                    <option value="Fatura & Üyelik">Fatura & Üyelik</option>
-                    <option value="Antrenman/Diyet">Antrenman/Diyet</option>
+                    <option value="Teknik Destek" className="bg-[#151726] text-white">Teknik Destek</option>
+                    <option value="Fatura & Üyelik" className="bg-[#151726] text-white">Fatura & Üyelik</option>
+                    <option value="Antrenman/Diyet" className="bg-[#151726] text-white">Antrenman/Diyet</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 mb-1.5 block">ÖNCELİK SEVİYESİ</label>
+                  <label className="text-xs font-black text-purple-300 uppercase tracking-wider mb-1.5 block">
+                    ÖNCELİK SEVİYESİ
+                  </label>
                   <select 
                     value={newTicket.priority}
                     onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 font-bold"
+                    className="w-full bg-[#11121C] border border-purple-500/30 focus:border-purple-400 rounded-2xl px-4 py-3 text-xs text-white font-bold outline-none transition-all cursor-pointer"
                   >
-                    <option value="Düşük">Düşük</option>
-                    <option value="Normal">Normal</option>
-                    <option value="Yüksek">Yüksek (Acil)</option>
+                    <option value="Düşük" className="bg-[#151726] text-white">Düşük</option>
+                    <option value="Normal" className="bg-[#151726] text-white">Normal</option>
+                    <option value="Yüksek" className="bg-[#151726] text-white">Yüksek (Acil)</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1.5 block">DETAYLI AÇIKLAMA</label>
+                <label className="text-xs font-black text-purple-300 uppercase tracking-wider mb-1.5 block">
+                  DETAYLI AÇIKLAMA
+                </label>
                 <textarea 
                   rows="4"
                   required
                   placeholder="Lütfen sistem hatasını veya talebinizi detaylıca yazın..."
                   value={newTicket.message}
                   onChange={(e) => setNewTicket({...newTicket, message: e.target.value})}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-white focus:outline-none focus:border-purple-500 resize-none"
+                  className="w-full bg-[#11121C] border border-purple-500/30 focus:border-purple-400 focus:ring-1 focus:ring-purple-400/50 rounded-2xl p-4 text-xs text-white placeholder-purple-300/40 font-medium outline-none resize-none transition-all"
                 />
               </div>
 
-              <div className="pt-2 flex gap-3">
+              <div className="pt-3 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsTicketModalOpen(false)}
-                  className="flex-1 py-3 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold text-xs rounded-2xl transition-all"
+                  className="flex-1 py-3.5 bg-[#11121C] border border-purple-500/30 hover:bg-purple-950/40 text-purple-200 font-bold text-xs tracking-wider uppercase rounded-2xl transition-all cursor-pointer"
                 >
                   VAZGEÇ
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs rounded-2xl transition-all shadow-lg shadow-purple-600/30"
+                  className="flex-1 py-3.5 bg-gradient-to-r from-purple-600 via-fuchsia-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs tracking-wider uppercase rounded-2xl transition-all shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] cursor-pointer border border-purple-400/40"
                 >
                   TICKET GÖNDER
                 </button>

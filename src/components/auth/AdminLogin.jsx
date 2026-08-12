@@ -39,9 +39,9 @@ export default function AdminLogin({ setView, handleAccess }) {
         
         // 🔀 Tamamen veritabanından dönen 'role' verisine dayalı dinamik yönlendirme
         if (data.role === 'admin') { 
-          router.push('/admin'); // Sen db'ye admin olarak kaydolunca buraya uçacaksın
+          router.push('/admin');
         } else if (data.role === 'trainer' || data.role === 'dietitian') {
-          router.push('/expert/dashboard'); // Diğer hocalar buraya gidecek
+          router.push('/expert/dashboard');
         } else {
           router.push('/dashboard');
         }
@@ -57,80 +57,96 @@ export default function AdminLogin({ setView, handleAccess }) {
   };
 
   return (
-    <div className="bg-[#EAEAEA]/95 backdrop-blur-md rounded-[2.5rem] p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border border-white/20 w-full max-w-md mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-[22px] font-black tracking-widest text-[#1c1c1c] uppercase">LOGIN</h2>
-        <button type="button" onClick={() => setView('set-role')} className="text-slate-600 hover:text-[#A80000] transition-colors">
-          <ArrowLeft size={22} strokeWidth={2.5} />
+    <div className="bg-[#16161C] border border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl w-full max-w-md mx-auto relative overflow-hidden text-white">
+      {/* Arka Plan Işıltı Efekti (Premium Görünüm) */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#D4AF37]/10 blur-[100px] pointer-events-none"></div>
+
+      <div className="flex justify-between items-center mb-8 relative z-10">
+        <h2 className="text-[18px] font-black tracking-widest text-white uppercase">UZMAN GİRİŞİ</h2>
+        <button 
+          type="button" 
+          onClick={() => setView('set-role')} 
+          className="text-white/50 hover:text-[#D4AF37] transition-colors p-2 rounded-xl bg-white/5 border border-white/5 hover:border-[#D4AF37]/30"
+        >
+          <ArrowLeft size={20} strokeWidth={2.5} />
         </button>
       </div>
 
       {errorMsg && (
-        <div className="bg-red-100 text-red-700 text-xs font-bold p-3.5 rounded-2xl mb-4 text-center">
+        <div className="bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs font-bold p-3.5 rounded-2xl mb-6 text-center shadow-[0_0_20px_rgba(244,63,94,0.15)] relative z-10">
           {errorMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+        {/* Email Input */}
         <div className="relative">
           <input 
             type="email" 
             required
-            placeholder="Email" 
+            placeholder="E-posta Adresi" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-4 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-4 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <div className="absolute right-5 inset-y-0 flex items-center pointer-events-none">
-            <Mail className="text-slate-400" size={16} />
+            <Mail className="text-[#D4AF37]" size={16} />
           </div>
         </div>
 
+        {/* Password Input */}
         <div className="relative">
           <input 
             type={showPassword ? 'text' : 'password'} 
             required
-            placeholder="Password" 
+            placeholder="Şifre" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white text-slate-800 placeholder-slate-400 text-xs font-bold px-6 py-4 rounded-full outline-none pr-12 shadow-inner border border-slate-200/50"
+            className="w-full bg-[#221F1C] text-white placeholder-white/30 text-xs font-bold px-6 py-4 rounded-2xl outline-none pr-12 shadow-inner border border-[#D4AF37]/20 focus:border-[#D4AF37] transition-all"
           />
           <button 
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-5 inset-y-0 flex items-center text-slate-400 hover:text-slate-600"
+            className="absolute right-5 inset-y-0 flex items-center text-[#D4AF37] hover:text-white transition-colors"
           >
             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         </div>
 
-        <div className="flex justify-between items-center px-2 text-[10px] font-bold text-slate-500 tracking-wide">
-          <label className="flex items-center gap-1.5 cursor-pointer hover:text-slate-700">
+        {/* Footer Actions */}
+        <div className="flex justify-between items-center px-2 text-[10px] font-bold text-white/50 tracking-wide mt-2">
+          <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors">
             <input 
               type="checkbox" 
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-3 h-3 rounded text-[#A80000] focus:ring-0 border-slate-300 cursor-pointer"
+              className="w-3.5 h-3.5 rounded border-[#D4AF37]/30 bg-[#221F1C] text-[#D4AF37] focus:ring-[#D4AF37] cursor-pointer"
             />
-            <span>Remember me</span>
+            <span>Beni Hatırla</span>
           </label>
-          <a href="#" className="hover:text-slate-700 underline">Forgot Password?</a>
+          <a href="#" className="hover:text-[#D4AF37] transition-colors underline">Şifremi Unuttum?</a>
         </div>
 
+        {/* Submit Button */}
         <button 
           type="submit"
           disabled={loading}
-          className="w-full bg-[#A80000] hover:bg-[#8d0000] text-white text-xs font-extrabold py-4 rounded-full tracking-widest uppercase transition-all shadow-lg mt-6 disabled:opacity-50"
+          className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5BF47] hover:to-amber-500 text-slate-950 text-xs font-black py-4 rounded-2xl tracking-[0.2em] uppercase transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] mt-6 disabled:opacity-50 border border-amber-400/40 active:scale-95"
         >
-          {loading ? 'LOADING...' : 'ACCESS'}
+          {loading ? 'LÜTFEN BEKLEYİN...' : 'GİRİŞ YAP'}
         </button>
       </form>
 
-      <div className="text-center mt-6">
-        <p className="text-[10px] text-slate-500 font-bold tracking-wide">
-          Don't have an account?{' '}
-          <button type="button" onClick={() => setView('admin-register')} className="text-[#0052B4] hover:underline font-extrabold uppercase ml-1">
-            Register
+      {/* Register Link */}
+      <div className="text-center mt-8 relative z-10">
+        <p className="text-[10px] text-white/50 font-bold tracking-wide">
+          Hesabınız yok mu?{' '}
+          <button 
+            type="button" 
+            onClick={() => setView('admin-register')} 
+            className="text-[#D4AF37] hover:underline font-extrabold uppercase ml-1 transition-colors"
+          >
+            Kayıt Ol
           </button>
         </p>
       </div>

@@ -3,23 +3,26 @@ import React from 'react';
 
 export default function SetRole({ setView }) {
   return (
-    <div className="bg-[#EAEAEA]/95 backdrop-blur-md rounded-[2.5rem] p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] border border-white/20 text-center">
-      <h1 className="text-[21px] font-black tracking-wider text-[#1c1c1c] mb-12 uppercase">
-        WELCOME TO <span className="text-[#00A859]">VITALIS</span><span className="text-[#0052B4]">-</span><span className="text-[#A80000]">OS</span>
+    <div className="bg-[#16161C] border border-[#D4AF37]/30 rounded-[2.5rem] p-10 shadow-[0_25px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-center relative overflow-hidden">
+      {/* Arka Plan Işıltı Efekti */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#D4AF37]/10 blur-[100px] pointer-events-none"></div>
+
+      <h1 className="text-[21px] font-black tracking-wider text-white mb-12 uppercase relative z-10">
+        <span className="text-[#D4AF37]">VITALIS</span>-<span className="text-emerald-400">OS</span>&apos;E HOŞ GELDİNİZ
       </h1>
       
-      <div className="space-y-4 max-w-[260px] mx-auto">
+      <div className="space-y-4 max-w-[280px] mx-auto relative z-10">
         <button 
           onClick={() => setView('client-login')}
-          className="w-full bg-[#00A859] hover:bg-[#00944f] text-white text-xs font-extrabold py-4 px-6 rounded-full tracking-widest uppercase transition-all shadow-md active:scale-95"
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-xs font-black py-4 px-6 rounded-2xl tracking-[0.2em] uppercase transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 border border-emerald-400/40"
         >
-          Client
+          DANIŞAN GİRİŞİ
         </button>
         <button 
           onClick={() => setView('admin-login')}
-          className="w-full bg-[#A80000] hover:bg-[#8d0000] text-white text-xs font-extrabold py-4 px-6 rounded-full tracking-widest uppercase transition-all shadow-md active:scale-95"
+          className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5BF47] hover:to-amber-500 text-slate-950 text-xs font-black py-4 px-6 rounded-2xl tracking-[0.2em] uppercase transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95 border border-amber-400/40"
         >
-          Professional
+          UZMAN GİRİŞİ
         </button>
       </div>
     </div>

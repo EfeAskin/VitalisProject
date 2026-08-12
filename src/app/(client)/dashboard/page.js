@@ -135,19 +135,19 @@ export default function ClientDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8FAF8] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#C5A880]"></div>
+      <div className="min-h-screen bg-[#11142D] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAF8] bg-slate-950 antialiased font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-[#11142D] text-slate-100 antialiased font-sans transition-colors duration-300">
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          <div className="mb-6 bg-rose-950/50 border border-rose-500/40 text-rose-200 px-4 py-3 rounded-2xl text-sm backdrop-blur-md shadow-[0_0_15px_rgba(244,63,94,0.3)] font-medium">
             {error}
           </div>
         )}

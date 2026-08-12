@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Sparkles, ArrowLeft } from "lucide-react";
 
 import ClientHeader from "./ClientHeader";
 import ClientProfileCard from "./ClientProfileCard";
@@ -177,16 +177,22 @@ export default function ClientDetailView({
 
   if (!client) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 bg-slate-900 border border-slate-800 rounded-3xl space-y-4">
-        <AlertCircle className="w-10 h-10 text-amber-500" />
-        <p className="text-slate-400 font-semibold text-sm">
-          Danışan kaydı bulunamadı.
-        </p>
+      <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800/80 rounded-3xl p-12 text-center space-y-6 backdrop-blur-2xl shadow-2xl flex flex-col items-center justify-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.2)] animate-pulse">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-lg font-heading font-black text-white">Kayda Ulaşılamadı</h3>
+          <p className="text-slate-300 font-medium text-xs">
+            Seçilen danışan kaydı sistemde bulunamadı veya silinmiş olabilir.
+          </p>
+        </div>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+          className="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl text-xs font-heading font-black tracking-wider transition-all duration-300 flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:scale-[1.02]"
         >
-          Geri Dön
+          <ArrowLeft className="w-4 h-4" />
+          <span>Listeye Geri Dön</span>
         </button>
       </div>
     );
@@ -287,23 +293,25 @@ export default function ClientDetailView({
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-8 animate-in fade-in duration-300 relative">
       {/* HEADER */}
       <ClientHeader client={client} onBack={onBack} />
 
       {/* YÜKLENİYOR BİLDİRİMİ */}
       {isLoadingDetails ? (
-        <div className="flex items-center justify-center p-12 text-slate-400 gap-3 bg-slate-900/50 rounded-3xl border border-slate-800">
-          <Loader2 className="w-6 h-6 animate-spin text-[#EA580C]" />
-          <span className="text-xs font-bold">
-            Danışan verileri ve aktivite özetleri yükleniyor...
+        <div className="flex flex-col items-center justify-center p-12 gap-3 bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-slate-800/80 shadow-2xl text-slate-300">
+          <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 animate-pulse">
+            <Loader2 className="w-5 h-5 animate-spin" />
+          </div>
+          <span className="text-xs font-heading font-extrabold uppercase tracking-widest text-slate-200 animate-pulse">
+            Danışan Verileri ve Aktivite Özetleri Yükleniyor...
           </span>
         </div>
       ) : (
         <>
           {/* PROFİL & METRİKLER & AKTİVİTE */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* SOL KOLLON: Profil Kartı */}
+            {/* SOL KOLON: Profil Kartı */}
             <ClientProfileCard client={client} />
 
             {/* SAĞ KOLON: Metrikler & Haftalık Tracker */}
@@ -336,7 +344,7 @@ export default function ClientDetailView({
         </>
       )}
 
-      {/* YENİ MODÜL: ABONELİKLER VE ALINAN HİZMETLER */}
+      {/* ABONELİKLER VE ALINAN HİZMETLER */}
       <ClientSubscriptionsManager clientId={client.id} client={client} />
 
       {/* UZMAN NOTLARI */}
