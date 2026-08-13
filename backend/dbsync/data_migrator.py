@@ -1,5 +1,5 @@
 from psycopg2 import sql
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, Json
 
 from backend.dbsync.logger import logger
 
@@ -52,7 +52,9 @@ class DataMigrator:
 
             else:
 
-                logger.warning(f"Desteklenmeyen işlem : {action}")
+                logger.warning(
+                    f"Desteklenmeyen işlem : {action}"
+                )
 
         logger.info("=" * 70)
         logger.info("DATA MIGRATION TAMAMLANDI")
@@ -116,7 +118,10 @@ class DataMigrator:
 
         columns = list(row.keys())
 
-        values = [row[column] for column in columns]
+        values = [
+            row[column]
+            for column in columns
+        ]
 
         insert_columns = sql.SQL(", ").join(
 
@@ -174,7 +179,9 @@ class DataMigrator:
 
             pk=sql.Identifier(primary_key),
 
-            updates=sql.SQL(", ").join(update_columns)
+            updates=sql.SQL(", ").join(
+                update_columns
+            )
 
         )
 
@@ -218,11 +225,44 @@ class DataMigrator:
 
             )
 
+            # --------------------------------------------------
+            # JSON / JSONB DEĞERLERİ
+            # --------------------------------------------------
+            #
+            # PostgreSQL'den gelen JSON/JSONB alanları
+            # psycopg2 tarafından Python dict/list olarak
+            # dönebilir.
+            #
+            # Örneğin:
+            #
+            # {
+            #     "assigned_days": ["Pzt", "Sal"],
+            #     "template_name": "Göğüs & Arka Kol"
+            # }
+            #
+            # psycopg2 doğrudan dict/list değerlerini SQL
+            # parametresi olarak adapte edemez.
+            #
+            # Bu nedenle dict ve list değerlerini Json()
+            # adapter'ı ile PostgreSQL JSON/JSONB formatına
+            # uygun şekilde bağlıyoruz.
+            # --------------------------------------------------
+
+            adapted_values = [
+
+                Json(value)
+                if isinstance(value, (dict, list))
+                else value
+
+                for value in values
+
+            ]
+
             cursor.execute(
 
                 query,
 
-                values
+                adapted_values
 
             )
 

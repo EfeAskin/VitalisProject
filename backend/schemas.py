@@ -181,7 +181,7 @@ class ClientMealLogCreate(BaseModel):
 
 
 # ==========================================
-# 9. SPECIALIST_PROFILES TABLE SCHEMA (YENİ EKLENDİ)
+# 9. SPECIALIST_PROFILES TABLE SCHEMA
 # ==========================================
 class SpecialistProfile(BaseModel):
     id: Optional[int] = None
@@ -201,7 +201,7 @@ class SpecialistProfile(BaseModel):
 
 
 # ==========================================
-# 10. MARKETPLACE_LISTINGS TABLE SCHEMA (YENİ EKLENDİ)
+# 10. MARKETPLACE_LISTINGS TABLE SCHEMA
 # ==========================================
 class MarketplaceListing(BaseModel):
     id: Optional[int] = None
@@ -231,7 +231,7 @@ class SpecialistSubscription(BaseModel):
     package_name: Optional[str] = None
     status: Optional[str] = "pending"
     goal: Optional[str] = None
-    program_name: Optional[str] = "Henüz Program Atanmadı"
+    program_name: Optional[List[str]] = []  # Artık birden fazla program ismi tutabilmesi için dizi yapıldı
     request_message: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -257,13 +257,71 @@ class NutritionProgram(BaseModel):
 
 
 # ==========================================
-# 13. WORKOUT_PROGRAMS TABLE SCHEMA
+# 13. WORKOUT & EXERCISE LIBRARY SCHEMAS
 # ==========================================
+
+class ExerciseBase(BaseModel):
+    name: str
+    muscle_group: str                         # Örn: 'Göğüs', 'Kol', 'Sırt'
+    target_muscles: List[str] = []            # Örn: ['Üst Göğüs', 'Orta Göğüs', 'Triceps'] (Çoklu Rozetler)
+    difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
+    video_url: Optional[str] = None           # YouTube Linki
+    description: Optional[str] = None         # Egzersiz Açıklaması / Form Notları
+
+
+class ExerciseCreate(ExerciseBase):
+    pass
+
+
+class Exercise(ExerciseBase):
+    id: int
+    trainer_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkoutTemplateExerciseItem(BaseModel):
+    exercise_id: int
+    sets: int = 3
+    reps: str = "10-12"
+    notes: Optional[str] = None               # Egzersize özel ek eğitmen notu
+    order_index: Optional[int] = 0
+
+
+class WorkoutTemplateCreate(BaseModel):
+    name: str
+    difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
+    target_muscles: List[str] = []            # Şablonun içerdiği tüm kas grupları rozetleri
+    duration_minutes: Optional[int] = 60
+    description: Optional[str] = None
+    exercises: List[WorkoutTemplateExerciseItem] = []
+
+
+class WorkoutTemplateResponse(BaseModel):
+    id: int
+    trainer_id: int
+    name: str
+    difficulty_level: str
+    target_muscles: List[str] = []            # Filtreleme için hedef kas rozet dizisi
+    duration_minutes: Optional[int] = 60
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
+    exercises: List[Dict[str, Any]] = []
+
+    class Config:
+        from_attributes = True
+
+
 class WorkoutProgram(BaseModel):
     id: Optional[int] = None
     client_id: Optional[int] = None
     trainer_id: Optional[int] = None
-    program_details: Dict[str, Any]
+    template_id: Optional[int] = None
+    program_details: Dict[str, Any] = {}
+    status: Optional[str] = "active"
+    created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
@@ -328,7 +386,7 @@ class ClientDailyLog(BaseModel):
 
 
 # ==========================================
-# 17. EXPERT ACTION & RESPONSE SCHEMAS
+# 17. EXPERT ACTION & RESPONSE SCHEMAS (GÜNCELLENDİ)
 # ==========================================
 class SubscriptionActionRequest(BaseModel):
     request_id: int
@@ -351,7 +409,7 @@ class ClientSummaryForExpert(BaseModel):
     daily_calories: Optional[int] = None
     package_name: str
     goal: Optional[str] = None
-    program_name: Optional[str] = None
+    program_name: Optional[List[str]] = []  # Artık birden fazla atanmış program adını destekliyor
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str

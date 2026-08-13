@@ -1,11 +1,13 @@
 "use client";
 
-import React from 'react';
-import { Clock, Dumbbell, Edit3, Trash2, Send, Zap, Users } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Dumbbell, Edit3, Trash2, Send, Zap, Users, Loader2 } from 'lucide-react';
 
 export default function WorkoutCard({ workout, onEdit, onDelete, onAssign }) {
-  // assignedUsers veritabanından gelen many-to-many ilişkisi için (örnek array)
-  const { title, level, duration, exercises = [], targetMuscles = [], assignedUsers = [1, 2, 3] } = workout;
+  const { id, title, level, duration, exercises = [], targetMuscles = [], assignedUsers = [] } = workout;
+
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Zorluk seviyesine göre neon rozet renkleri
   const getLevelStyle = (lvl) => {
@@ -24,6 +26,30 @@ export default function WorkoutCard({ workout, onEdit, onDelete, onAssign }) {
     }
   };
 
+  const handleDeleteClick = async () => {
+    if (!onDelete) return;
+    try {
+      setIsDeleting(true);
+      await onDelete(id);
+    } catch (err) {
+      console.error("Silme hatası:", err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleAssignClick = async () => {
+    if (!onAssign) return;
+    try {
+      setIsAssigning(true);
+      await onAssign(workout);
+    } catch (err) {
+      console.error("Atama hatası:", err);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   return (
     <div className="bg-[#11142D]/60 border border-slate-700/60 rounded-3xl p-6 shadow-xl hover:shadow-[0_0_30px_rgba(234,88,12,0.2)] hover:border-orange-500/50 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group relative overflow-hidden backdrop-blur-md">
       
@@ -39,18 +65,19 @@ export default function WorkoutCard({ workout, onEdit, onDelete, onAssign }) {
           
           <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity duration-300">
             <button 
-              onClick={() => onEdit(workout)}
+              onClick={() => onEdit && onEdit(workout)}
               className="p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors border border-slate-700/50"
               title="Şablonu Düzenle"
             >
               <Edit3 size={15} />
             </button>
             <button 
-              onClick={() => onDelete(workout.id)}
-              className="p-2 bg-slate-800/80 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-xl transition-colors border border-slate-700/50"
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+              className="p-2 bg-slate-800/80 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 rounded-xl transition-colors border border-slate-700/50 disabled:opacity-50"
               title="Şablonu Sil"
             >
-              <Trash2 size={15} />
+              {isDeleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
             </button>
           </div>
         </div>
@@ -111,8 +138,8 @@ export default function WorkoutCard({ workout, onEdit, onDelete, onAssign }) {
           </div>
           <div className="flex -space-x-2">
             {assignedUsers.slice(0, 3).map((u, idx) => (
-              <div key={idx} className="w-6 h-6 rounded-full border-2 border-[#11142D] bg-slate-700 flex items-center justify-center text-[8px] font-bold text-white z-10 shadow-sm">
-                PT
+              <div key={idx} className="w-6 h-6 rounded-full border-2 border-[#11142D] bg-slate-700 flex items-center justify-center text-[8px] font-bold text-white z-10 shadow-sm" title={u.name || "Danışan"}>
+                {u.initials || "PT"}
               </div>
             ))}
             {assignedUsers.length > 3 && (
@@ -128,10 +155,20 @@ export default function WorkoutCard({ workout, onEdit, onDelete, onAssign }) {
 
         {/* Atama Butonu */}
         <button 
-          onClick={() => onAssign && onAssign(workout)}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-600 to-amber-500 hover:scale-[1.02] text-white text-xs font-bold rounded-xl shadow-[0_0_20px_rgba(234,88,12,0.3)] transition-all duration-300"
+          onClick={handleAssignClick}
+          disabled={isAssigning}
+          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-orange-600 to-amber-500 hover:scale-[1.02] text-white text-xs font-bold rounded-xl shadow-[0_0_20px_rgba(234,88,12,0.3)] transition-all duration-300 disabled:opacity-50 disabled:hover:scale-100"
         >
-          <Send size={14} /> Danışana Atayarak Gönder
+          {isAssigning ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              Atanıyor...
+            </>
+          ) : (
+            <>
+              <Send size={14} /> Danışana Atayarak Gönder
+            </>
+          )}
         </button>
       </div>
     </div>

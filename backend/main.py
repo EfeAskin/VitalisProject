@@ -11,6 +11,9 @@ from backend.routers import expertclient
 from backend.routers import expertmarketplace
 from backend.routers import clientmarketplace
 
+from backend.routers import expertprograms
+from backend.routers import expertatama
+
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
 # ==========================================
@@ -88,6 +91,9 @@ app.include_router(expertclient.router) # <-- YENİ EKLENDİ
 app.include_router(expertmarketplace.router)
 
 app.include_router(clientmarketplace.router)
+
+app.include_router(expertprograms.router)
+app.include_router(expertatama.router)
 
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA

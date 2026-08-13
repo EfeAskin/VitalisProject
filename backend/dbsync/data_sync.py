@@ -119,14 +119,15 @@ class DataSync:
 
         }
 
+        dependency_order = DataExtractor(
+            self.local_conn
+        ).get_dependency_order()
+
         comparator = DataComparator(
-
             source_data,
-
-            target_data
-
+            target_data,
+            table_order=dependency_order
         )
-
         changes = comparator.compare()
 
         if not changes:
@@ -188,12 +189,14 @@ class DataSync:
 
         }
 
+        dependency_order = DataExtractor(
+            self.neon_conn
+        ).get_dependency_order()
+
         comparator = DataComparator(
-
             source_data,
-
-            target_data
-
+            target_data,
+            table_order=dependency_order
         )
 
         changes = comparator.compare()
