@@ -5680,3 +5680,757 @@ psycopg2.ProgrammingError: can't adapt type 'dict'
 [2026-08-13 16:27:02] [INFO] SYNC LOCK bırakıldı.
 [2026-08-13 16:27:02] [INFO] Local PostgreSQL bağlantısı kapatıldı.
 [2026-08-13 16:27:02] [INFO] Neon PostgreSQL bağlantısı kapatıldı.
+[2026-08-13 23:15:35] [INFO] Database Mode : auto
+[2026-08-13 23:15:35] [INFO] ✅ Local PostgreSQL bağlantısı başarılı.
+[2026-08-13 23:15:36] [INFO] ✅ Neon PostgreSQL bağlantısı başarılı.
+[2026-08-13 23:15:36] [INFO] ✅ Her iki veritabanı da erişilebilir.
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:15:42] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:15:43] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:15:43] [INFO] ======================================================================
+[2026-08-13 23:15:43] [INFO] SCHEMA SYNC BAŞLATILDI
+[2026-08-13 23:15:43] [INFO] ======================================================================
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:15:48] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:15:49] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:15:50] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:15:50] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:15:50] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:15:50] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:15:50] [INFO] LOCAL -> NEON karşılaştırılıyor...
+[2026-08-13 23:15:50] [INFO] Neon güncel.
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:15:55] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:15:56] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:15:57] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:15:57] [INFO] NEON -> LOCAL karşılaştırılıyor...
+[2026-08-13 23:15:57] [INFO] Local güncel.
+[2026-08-13 23:15:57] [INFO] Son doğrulama yapılıyor...
+[2026-08-13 23:16:02] [INFO] Schema tamamen senkron.
+[2026-08-13 23:16:02] [INFO] ======================================================================
+[2026-08-13 23:16:02] [INFO] SCHEMA SYNC TAMAMLANDI
+[2026-08-13 23:16:02] [INFO] ======================================================================
+[2026-08-13 23:16:02] [INFO] SYNC LOCK alındı.
+[2026-08-13 23:16:02] [INFO] SYNC HISTORY başlatıldı.
+[2026-08-13 23:16:02] [INFO] ======================================================================
+[2026-08-13 23:16:02] [INFO] DATA SYNC BAŞLADI
+[2026-08-13 23:16:02] [INFO] ======================================================================
+[2026-08-13 23:16:02] [INFO] LOCAL -> NEON
+[2026-08-13 23:16:02] [INFO] Database verileri okunuyor...
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:16:02] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:16:02] [INFO] Database verileri okunuyor...
+[2026-08-13 23:16:02] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:16:03] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:16:03] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:16:03] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:16:03] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:16:04] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:16:04] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:16:04] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:16:04] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:16:04] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:16:05] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:16:05] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:16:05] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:16:05] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:16:05] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:16:06] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:16:06] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:16:06] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:16:06] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:16:06] [INFO] Checksum karşılaştırması başlatıldı.
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] body_analyses
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] client_daily_logs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] client_meal_logs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] dietitian_targets
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] exercises
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] expert_notes
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] marketplace_listings
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] meal_logs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] newsletter_subscribers
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] nutrition_programs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] onboarding_assessments
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] specialist_profiles
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] specialist_subscriptions
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] users
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] water_logs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] workout_programs
+[2026-08-13 23:16:06] [INFO] [CHECKSUM SAME] workout_template_exercises
+[2026-08-13 23:16:06] [INFO] [CHECKSUM DIFFERENT] workout_templates
+[2026-08-13 23:16:06] [INFO] Checksum karşılaştırması tamamlandı.
+[2026-08-13 23:16:06] [INFO] Data dependency sırası oluşturuldu:
+[2026-08-13 23:16:06] [INFO]   1. body_analyses
+[2026-08-13 23:16:06] [INFO]   2. client_meal_logs
+[2026-08-13 23:16:06] [INFO]   3. dietitian_targets
+[2026-08-13 23:16:06] [INFO]   4. meal_logs
+[2026-08-13 23:16:06] [INFO]   5. newsletter_subscribers
+[2026-08-13 23:16:06] [INFO]   6. nutrition_programs
+[2026-08-13 23:16:06] [INFO]   7. onboarding_assessments
+[2026-08-13 23:16:06] [INFO]   8. users
+[2026-08-13 23:16:06] [INFO]   9. client_daily_logs
+[2026-08-13 23:16:06] [INFO]   10. exercises
+[2026-08-13 23:16:06] [INFO]   11. expert_notes
+[2026-08-13 23:16:06] [INFO]   12. marketplace_listings
+[2026-08-13 23:16:06] [INFO]   13. specialist_profiles
+[2026-08-13 23:16:06] [INFO]   14. specialist_subscriptions
+[2026-08-13 23:16:06] [INFO]   15. water_logs
+[2026-08-13 23:16:06] [INFO]   16. workout_templates
+[2026-08-13 23:16:06] [INFO]   17. workout_programs
+[2026-08-13 23:16:06] [INFO]   18. workout_template_exercises
+[2026-08-13 23:16:06] [INFO] Karşılaştırma tablo sırası:
+[2026-08-13 23:16:06] [INFO]   1. body_analyses
+[2026-08-13 23:16:06] [INFO]   2. client_meal_logs
+[2026-08-13 23:16:06] [INFO]   3. users
+[2026-08-13 23:16:06] [INFO]   4. exercises
+[2026-08-13 23:16:06] [INFO]   5. expert_notes
+[2026-08-13 23:16:06] [INFO]   6. marketplace_listings
+[2026-08-13 23:16:06] [INFO]   7. specialist_profiles
+[2026-08-13 23:16:06] [INFO]   8. specialist_subscriptions
+[2026-08-13 23:16:06] [INFO]   9. water_logs
+[2026-08-13 23:16:06] [INFO]   10. workout_templates
+[2026-08-13 23:16:06] [INFO]   11. workout_programs
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 1
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 16
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 17
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 18
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 19
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 20
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 21
+[2026-08-13 23:16:06] [INFO] [UPDATE] body_analyses -> 22
+[2026-08-13 23:16:06] [INFO] [INSERT] client_meal_logs -> 32
+[2026-08-13 23:16:06] [INFO] [INSERT] client_meal_logs -> 33
+[2026-08-13 23:16:06] [INFO] [INSERT] client_meal_logs -> 34
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 7
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 9
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 11
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 12
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 13
+[2026-08-13 23:16:06] [INFO] [UPDATE] client_meal_logs -> 24
+[2026-08-13 23:16:06] [INFO] [UPDATE] users -> 1
+[2026-08-13 23:16:06] [INFO] [UPDATE] users -> 2
+[2026-08-13 23:16:06] [INFO] [UPDATE] users -> 3
+[2026-08-13 23:16:06] [INFO] [UPDATE] users -> 4
+[2026-08-13 23:16:06] [INFO] [UPDATE] users -> 5
+[2026-08-13 23:16:06] [INFO] [UPDATE] specialist_subscriptions -> 1
+[2026-08-13 23:16:06] [INFO] [UPDATE] specialist_subscriptions -> 5
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 1
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 2
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 3
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 4
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 5
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 6
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 7
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 10
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 11
+[2026-08-13 23:16:06] [INFO] [UPDATE] water_logs -> 15
+[2026-08-13 23:16:06] [INFO] [INSERT] workout_programs -> 4
+[2026-08-13 23:16:06] [INFO] [INSERT] workout_programs -> 5
+[2026-08-13 23:16:06] [INFO] History -> INSERT=5 | UPDATE=31
+[2026-08-13 23:16:06] [INFO] 36 değişiklik bulundu.
+[2026-08-13 23:16:06] [INFO] ======================================================================
+[2026-08-13 23:16:06] [INFO] DATA MIGRATION BAŞLADI
+[2026-08-13 23:16:06] [INFO] ======================================================================
+[2026-08-13 23:16:06] [INFO] body_analyses -> 1 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 16 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 17 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 18 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 19 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 20 senkronize edildi.
+[2026-08-13 23:16:07] [INFO] body_analyses -> 21 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] body_analyses -> 22 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 32 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 33 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 34 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 7 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 9 senkronize edildi.
+[2026-08-13 23:16:08] [INFO] client_meal_logs -> 11 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] client_meal_logs -> 12 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] client_meal_logs -> 13 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] client_meal_logs -> 24 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] users -> 1 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] users -> 2 senkronize edildi.
+[2026-08-13 23:16:09] [INFO] users -> 3 senkronize edildi.
+[2026-08-13 23:16:10] [INFO] users -> 4 senkronize edildi.
+[2026-08-13 23:16:10] [INFO] users -> 5 senkronize edildi.
+[2026-08-13 23:16:10] [ERROR] specialist_subscriptions -> 1
+[2026-08-13 23:16:10] [ERROR] malformed array literal: "["Hen\u00fcz Program Atanmad\u0131", "G\u00f6\u011f\u00fcs & Arka Kol Antreman\u0131", "S\u0131rt & \u00d6n Kol Antreman\u0131"]"
+LINE 7: ...3, 'Aylık Pt Danışmanlığı', 'pt', 'active', NULL, '["Hen\u00...
+                                                             ^
+DETAIL:  "[" must introduce explicitly-specified array dimensions.
+
+[2026-08-13 23:16:10] [ERROR] SYNC FAILED -> malformed array literal: "["Hen\u00fcz Program Atanmad\u0131", "G\u00f6\u011f\u00fcs & Arka Kol Antreman\u0131", "S\u0131rt & \u00d6n Kol Antreman\u0131"]"
+LINE 7: ...3, 'Aylık Pt Danışmanlığı', 'pt', 'active', NULL, '["Hen\u00...
+                                                             ^
+DETAIL:  "[" must introduce explicitly-specified array dimensions.
+
+[2026-08-13 23:16:10] [INFO] SYNC LOCK bırakıldı.
+[2026-08-13 23:16:10] [ERROR] malformed array literal: "["Hen\u00fcz Program Atanmad\u0131", "G\u00f6\u011f\u00fcs & Arka Kol Antreman\u0131", "S\u0131rt & \u00d6n Kol Antreman\u0131"]"
+LINE 7: ...3, 'Aylık Pt Danışmanlığı', 'pt', 'active', NULL, '["Hen\u00...
+                                                             ^
+DETAIL:  "[" must introduce explicitly-specified array dimensions.
+Traceback (most recent call last):
+  File "C:\Users\kamil\Desktop\VitalisProject\sync.py", line 162, in main
+    ).synchronize()
+      ^^^^^^^^^^^^^
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_sync.py", line 53, in synchronize
+    self.sync_local_to_neon()
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_sync.py", line 151, in sync_local_to_neon
+    ).execute()
+      ^^^^^^^^^
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_migrator.py", line 51, in execute
+    self.update(change)
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_migrator.py", line 93, in update
+    self.upsert(
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_migrator.py", line 188, in upsert
+    self.execute_sql(
+  File "C:\Users\kamil\Desktop\VitalisProject\backend\dbsync\data_migrator.py", line 261, in execute_sql
+    cursor.execute(
+  File "C:\Users\kamil\Desktop\VitalisProject\.venv\Lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.InvalidTextRepresentation: malformed array literal: "["Hen\u00fcz Program Atanmad\u0131", "G\u00f6\u011f\u00fcs & Arka Kol Antreman\u0131", "S\u0131rt & \u00d6n Kol Antreman\u0131"]"
+LINE 7: ...3, 'Aylık Pt Danışmanlığı', 'pt', 'active', NULL, '["Hen\u00...
+                                                             ^
+DETAIL:  "[" must introduce explicitly-specified array dimensions.
+
+[2026-08-13 23:16:10] [INFO] Local PostgreSQL bağlantısı kapatıldı.
+[2026-08-13 23:16:10] [INFO] Neon PostgreSQL bağlantısı kapatıldı.
+[2026-08-13 23:20:15] [INFO] Database Mode : auto
+[2026-08-13 23:20:15] [INFO] ✅ Local PostgreSQL bağlantısı başarılı.
+[2026-08-13 23:20:15] [INFO] ✅ Neon PostgreSQL bağlantısı başarılı.
+[2026-08-13 23:20:15] [INFO] ✅ Her iki veritabanı da erişilebilir.
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:20:20] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:20:20] [INFO] ======================================================================
+[2026-08-13 23:20:20] [INFO] SCHEMA SYNC BAŞLATILDI
+[2026-08-13 23:20:20] [INFO] ======================================================================
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:20:25] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:20:26] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:20:27] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:20:27] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:20:27] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:20:27] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:20:27] [INFO] LOCAL -> NEON karşılaştırılıyor...
+[2026-08-13 23:20:27] [INFO] Neon güncel.
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : body_analyses
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : client_daily_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : client_meal_logs
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : dietitian_targets
+[2026-08-13 23:20:32] [INFO] DDL hazırlanıyor : exercises
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : expert_notes
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : marketplace_listings
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : meal_logs
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : newsletter_subscribers
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : nutrition_programs
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : onboarding_assessments
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : specialist_profiles
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : specialist_subscriptions
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : users
+[2026-08-13 23:20:33] [INFO] DDL hazırlanıyor : water_logs
+[2026-08-13 23:20:34] [INFO] DDL hazırlanıyor : workout_programs
+[2026-08-13 23:20:34] [INFO] DDL hazırlanıyor : workout_template_exercises
+[2026-08-13 23:20:34] [INFO] DDL hazırlanıyor : workout_templates
+[2026-08-13 23:20:34] [INFO] NEON -> LOCAL karşılaştırılıyor...
+[2026-08-13 23:20:34] [INFO] Local güncel.
+[2026-08-13 23:20:34] [INFO] Son doğrulama yapılıyor...
+[2026-08-13 23:20:39] [INFO] Schema tamamen senkron.
+[2026-08-13 23:20:39] [INFO] ======================================================================
+[2026-08-13 23:20:39] [INFO] SCHEMA SYNC TAMAMLANDI
+[2026-08-13 23:20:39] [INFO] ======================================================================
+[2026-08-13 23:20:39] [INFO] SYNC LOCK alındı.
+[2026-08-13 23:20:39] [INFO] SYNC HISTORY başlatıldı.
+[2026-08-13 23:20:39] [INFO] ======================================================================
+[2026-08-13 23:20:39] [INFO] DATA SYNC BAŞLADI
+[2026-08-13 23:20:39] [INFO] ======================================================================
+[2026-08-13 23:20:39] [INFO] LOCAL -> NEON
+[2026-08-13 23:20:39] [INFO] Database verileri okunuyor...
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:20:39] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:20:39] [INFO] Database verileri okunuyor...
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:20:39] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:20:40] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:20:40] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:20:40] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:20:40] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:20:40] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:20:41] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:20:41] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:20:41] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:20:41] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:20:42] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:20:42] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:20:42] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:20:42] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:20:42] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:20:43] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:20:43] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:20:43] [INFO] Checksum karşılaştırması başlatıldı.
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] body_analyses
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] client_daily_logs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] client_meal_logs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] dietitian_targets
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] exercises
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] expert_notes
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] marketplace_listings
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] meal_logs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] newsletter_subscribers
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] nutrition_programs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] onboarding_assessments
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] specialist_profiles
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] specialist_subscriptions
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] users
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] water_logs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] workout_programs
+[2026-08-13 23:20:43] [INFO] [CHECKSUM SAME] workout_template_exercises
+[2026-08-13 23:20:43] [INFO] [CHECKSUM DIFFERENT] workout_templates
+[2026-08-13 23:20:43] [INFO] Checksum karşılaştırması tamamlandı.
+[2026-08-13 23:20:43] [INFO] Data dependency sırası oluşturuldu:
+[2026-08-13 23:20:43] [INFO]   1. body_analyses
+[2026-08-13 23:20:43] [INFO]   2. client_meal_logs
+[2026-08-13 23:20:43] [INFO]   3. dietitian_targets
+[2026-08-13 23:20:43] [INFO]   4. meal_logs
+[2026-08-13 23:20:43] [INFO]   5. newsletter_subscribers
+[2026-08-13 23:20:43] [INFO]   6. nutrition_programs
+[2026-08-13 23:20:43] [INFO]   7. onboarding_assessments
+[2026-08-13 23:20:43] [INFO]   8. users
+[2026-08-13 23:20:43] [INFO]   9. client_daily_logs
+[2026-08-13 23:20:43] [INFO]   10. exercises
+[2026-08-13 23:20:43] [INFO]   11. expert_notes
+[2026-08-13 23:20:43] [INFO]   12. marketplace_listings
+[2026-08-13 23:20:43] [INFO]   13. specialist_profiles
+[2026-08-13 23:20:43] [INFO]   14. specialist_subscriptions
+[2026-08-13 23:20:43] [INFO]   15. water_logs
+[2026-08-13 23:20:43] [INFO]   16. workout_templates
+[2026-08-13 23:20:43] [INFO]   17. workout_programs
+[2026-08-13 23:20:43] [INFO]   18. workout_template_exercises
+[2026-08-13 23:20:43] [INFO] Karşılaştırma tablo sırası:
+[2026-08-13 23:20:43] [INFO]   1. body_analyses
+[2026-08-13 23:20:43] [INFO]   2. client_meal_logs
+[2026-08-13 23:20:43] [INFO]   3. users
+[2026-08-13 23:20:43] [INFO]   4. exercises
+[2026-08-13 23:20:43] [INFO]   5. expert_notes
+[2026-08-13 23:20:43] [INFO]   6. marketplace_listings
+[2026-08-13 23:20:43] [INFO]   7. specialist_profiles
+[2026-08-13 23:20:43] [INFO]   8. specialist_subscriptions
+[2026-08-13 23:20:43] [INFO]   9. water_logs
+[2026-08-13 23:20:43] [INFO]   10. workout_templates
+[2026-08-13 23:20:43] [INFO]   11. workout_programs
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 1
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 16
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 17
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 18
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 19
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 20
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 21
+[2026-08-13 23:20:43] [INFO] [UPDATE] body_analyses -> 22
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 7
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 9
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 11
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 12
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 13
+[2026-08-13 23:20:43] [INFO] [UPDATE] client_meal_logs -> 24
+[2026-08-13 23:20:43] [INFO] [UPDATE] users -> 1
+[2026-08-13 23:20:43] [INFO] [UPDATE] users -> 2
+[2026-08-13 23:20:43] [INFO] [UPDATE] users -> 3
+[2026-08-13 23:20:43] [INFO] [UPDATE] users -> 4
+[2026-08-13 23:20:43] [INFO] [UPDATE] users -> 5
+[2026-08-13 23:20:43] [INFO] [UPDATE] specialist_subscriptions -> 1
+[2026-08-13 23:20:43] [INFO] [UPDATE] specialist_subscriptions -> 5
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 1
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 2
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 3
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 4
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 5
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 6
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 7
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 10
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 11
+[2026-08-13 23:20:43] [INFO] [UPDATE] water_logs -> 15
+[2026-08-13 23:20:43] [INFO] [INSERT] workout_programs -> 4
+[2026-08-13 23:20:43] [INFO] [INSERT] workout_programs -> 5
+[2026-08-13 23:20:43] [INFO] History -> INSERT=2 | UPDATE=31
+[2026-08-13 23:20:43] [INFO] 33 değişiklik bulundu.
+[2026-08-13 23:20:43] [INFO] ======================================================================
+[2026-08-13 23:20:43] [INFO] DATA MIGRATION BAŞLADI
+[2026-08-13 23:20:43] [INFO] ======================================================================
+[2026-08-13 23:20:43] [INFO] body_analyses -> 1 senkronize edildi.
+[2026-08-13 23:20:43] [INFO] body_analyses -> 16 senkronize edildi.
+[2026-08-13 23:20:43] [INFO] body_analyses -> 17 senkronize edildi.
+[2026-08-13 23:20:43] [INFO] body_analyses -> 18 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] body_analyses -> 19 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] body_analyses -> 20 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] body_analyses -> 21 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] body_analyses -> 22 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] client_meal_logs -> 7 senkronize edildi.
+[2026-08-13 23:20:44] [INFO] client_meal_logs -> 9 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] client_meal_logs -> 11 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] client_meal_logs -> 12 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] client_meal_logs -> 13 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] client_meal_logs -> 24 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] users -> 1 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] users -> 2 senkronize edildi.
+[2026-08-13 23:20:45] [INFO] users -> 3 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] users -> 4 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] users -> 5 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] specialist_subscriptions -> 1 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] specialist_subscriptions -> 5 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] water_logs -> 1 senkronize edildi.
+[2026-08-13 23:20:46] [INFO] water_logs -> 2 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 3 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 4 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 5 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 6 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 7 senkronize edildi.
+[2026-08-13 23:20:47] [INFO] water_logs -> 10 senkronize edildi.
+[2026-08-13 23:20:48] [INFO] water_logs -> 11 senkronize edildi.
+[2026-08-13 23:20:48] [INFO] water_logs -> 15 senkronize edildi.
+[2026-08-13 23:20:48] [INFO] workout_programs -> 4 senkronize edildi.
+[2026-08-13 23:20:48] [INFO] workout_programs -> 5 senkronize edildi.
+[2026-08-13 23:20:48] [INFO] ======================================================================
+[2026-08-13 23:20:48] [INFO] DATA MIGRATION TAMAMLANDI
+[2026-08-13 23:20:48] [INFO] ======================================================================
+[2026-08-13 23:20:48] [INFO] NEON -> LOCAL
+[2026-08-13 23:20:48] [INFO] Database verileri okunuyor...
+[2026-08-13 23:20:48] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:20:48] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:20:49] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:20:49] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:20:49] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:20:49] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:20:49] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:20:50] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:20:50] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:20:50] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:20:50] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:20:50] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:20:51] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:20:51] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:20:51] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:20:51] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:20:51] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:20:52] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:20:52] [INFO] Database verileri okunuyor...
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> body_analyses
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> client_daily_logs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> client_meal_logs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> dietitian_targets
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> exercises
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> expert_notes
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> marketplace_listings
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> meal_logs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> newsletter_subscribers
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> nutrition_programs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> onboarding_assessments
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> specialist_profiles
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> specialist_subscriptions
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> users
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> water_logs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> workout_programs
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> workout_template_exercises
+[2026-08-13 23:20:52] [INFO] Veriler okunuyor -> workout_templates
+[2026-08-13 23:20:52] [INFO] Veri okuma tamamlandı.
+[2026-08-13 23:20:52] [INFO] Checksum karşılaştırması başlatıldı.
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] body_analyses
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] client_daily_logs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] client_meal_logs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] dietitian_targets
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] exercises
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] expert_notes
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] marketplace_listings
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] meal_logs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] newsletter_subscribers
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] nutrition_programs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] onboarding_assessments
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] specialist_profiles
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] specialist_subscriptions
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] users
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] water_logs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] workout_programs
+[2026-08-13 23:20:52] [INFO] [CHECKSUM SAME] workout_template_exercises
+[2026-08-13 23:20:52] [INFO] [CHECKSUM DIFFERENT] workout_templates
+[2026-08-13 23:20:52] [INFO] Checksum karşılaştırması tamamlandı.
+[2026-08-13 23:20:52] [INFO] Data dependency sırası oluşturuldu:
+[2026-08-13 23:20:52] [INFO]   1. body_analyses
+[2026-08-13 23:20:52] [INFO]   2. client_meal_logs
+[2026-08-13 23:20:52] [INFO]   3. dietitian_targets
+[2026-08-13 23:20:52] [INFO]   4. meal_logs
+[2026-08-13 23:20:52] [INFO]   5. newsletter_subscribers
+[2026-08-13 23:20:52] [INFO]   6. nutrition_programs
+[2026-08-13 23:20:52] [INFO]   7. onboarding_assessments
+[2026-08-13 23:20:52] [INFO]   8. users
+[2026-08-13 23:20:52] [INFO]   9. client_daily_logs
+[2026-08-13 23:20:52] [INFO]   10. exercises
+[2026-08-13 23:20:52] [INFO]   11. expert_notes
+[2026-08-13 23:20:52] [INFO]   12. marketplace_listings
+[2026-08-13 23:20:52] [INFO]   13. specialist_profiles
+[2026-08-13 23:20:52] [INFO]   14. specialist_subscriptions
+[2026-08-13 23:20:52] [INFO]   15. water_logs
+[2026-08-13 23:20:52] [INFO]   16. workout_templates
+[2026-08-13 23:20:52] [INFO]   17. workout_programs
+[2026-08-13 23:20:52] [INFO]   18. workout_template_exercises
+[2026-08-13 23:20:52] [INFO] Karşılaştırma tablo sırası:
+[2026-08-13 23:20:52] [INFO]   1. body_analyses
+[2026-08-13 23:20:52] [INFO]   2. client_meal_logs
+[2026-08-13 23:20:52] [INFO]   3. users
+[2026-08-13 23:20:52] [INFO]   4. exercises
+[2026-08-13 23:20:52] [INFO]   5. expert_notes
+[2026-08-13 23:20:52] [INFO]   6. marketplace_listings
+[2026-08-13 23:20:52] [INFO]   7. specialist_profiles
+[2026-08-13 23:20:52] [INFO]   8. specialist_subscriptions
+[2026-08-13 23:20:52] [INFO]   9. water_logs
+[2026-08-13 23:20:52] [INFO]   10. workout_templates
+[2026-08-13 23:20:52] [INFO]   11. workout_programs
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 1
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 16
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 17
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 18
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 19
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 20
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 21
+[2026-08-13 23:20:52] [INFO] [UPDATE] body_analyses -> 22
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 7
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 9
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 11
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 12
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 13
+[2026-08-13 23:20:52] [INFO] [UPDATE] client_meal_logs -> 24
+[2026-08-13 23:20:52] [INFO] [UPDATE] users -> 1
+[2026-08-13 23:20:52] [INFO] [UPDATE] users -> 2
+[2026-08-13 23:20:52] [INFO] [UPDATE] users -> 3
+[2026-08-13 23:20:52] [INFO] [UPDATE] users -> 4
+[2026-08-13 23:20:52] [INFO] [UPDATE] users -> 5
+[2026-08-13 23:20:52] [INFO] [INSERT] specialist_subscriptions -> 4
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 1
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 2
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 3
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 4
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 5
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 6
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 7
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 10
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 11
+[2026-08-13 23:20:52] [INFO] [UPDATE] water_logs -> 15
+[2026-08-13 23:20:52] [INFO] History -> INSERT=3 | UPDATE=60
+[2026-08-13 23:20:52] [INFO] 30 değişiklik bulundu.
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] DATA MIGRATION BAŞLADI
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] body_analyses -> 1 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 16 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 17 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 18 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 19 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 20 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 21 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] body_analyses -> 22 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 7 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 9 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 11 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 12 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 13 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] client_meal_logs -> 24 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] users -> 1 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] users -> 2 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] users -> 3 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] users -> 4 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] users -> 5 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] specialist_subscriptions -> 4 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 1 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 2 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 3 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 4 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 5 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 6 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 7 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 10 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 11 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] water_logs -> 15 senkronize edildi.
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] DATA MIGRATION TAMAMLANDI
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] SYNC HISTORY tamamlandı.
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] DATA SYNC TAMAMLANDI
+[2026-08-13 23:20:52] [INFO] ======================================================================
+[2026-08-13 23:20:52] [INFO] INSERT=3 | UPDATE=60 | SÜRE=13.362 sn
+[2026-08-13 23:20:52] [INFO] SYNC LOCK bırakıldı.
+[2026-08-13 23:20:52] [INFO] Local PostgreSQL bağlantısı kapatıldı.
+[2026-08-13 23:20:52] [INFO] Neon PostgreSQL bağlantısı kapatıldı.

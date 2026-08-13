@@ -16,7 +16,7 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
     email: user?.email || "",
     phone: user?.phone || "",
     age: user?.age || 23,
-    gender: user?.gender || "erkek",
+    gender: user?.gender || "Belirtilmedi",
     height: user?.height || 180,
     weight: user?.weight || 75.2,
     activity_level: user?.activity_level || "Sedanter (Çok Hareketsiz): Tüm gün oturarak çalışırım, masa başı işim var.",
@@ -31,7 +31,7 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
         email: user.email || "",
         phone: user.phone || "",
         age: user.age || 23,
-        gender: user.gender || "erkek",
+        gender: user.gender || "Belirtilmedi",
         height: user.height || 180,
         weight: user.weight || 75.2,
         activity_level: user.activity_level || "Sedanter (Çok Hareketsiz): Tüm gün oturarak çalışırım, masa başı işim var.",
@@ -263,8 +263,10 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
               onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
               className="w-full bg-[#221F1C] border border-[#D4AF37]/20 text-white text-xs px-4 py-4 rounded-2xl outline-none focus:border-[#D4AF37] disabled:opacity-60 transition-all cursor-pointer font-medium"
             >
-              <option value="erkek">Erkek</option>
-              <option value="kadın">Kadın</option>
+              <option value="Belirtilmedi">Belirtilmedi</option>
+              <option value="Erkek">Erkek</option>
+              <option value="Kadın">Kadın</option>
+              <option value="Diğer">Diğer</option>
             </select>
           </div>
 
@@ -340,7 +342,7 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
           <div className="flex justify-end pt-4 animate-fadeIn">
             <button 
               type="submit"
-              className="px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5BF47] hover:to-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center gap-2 transition-all shadow-xl shadow-amber-500/20 active:scale-95"
+              className="px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5BF47] hover:to-amber-500 text-black font-black text-xs uppercase tracking-[0.2em] rounded-2xl flex items-center gap-2 transition-all shadow-xl shadow-amber-[#D4AF37]/20 active:scale-95"
             >
               <Save className="w-4 h-4" />
               <span>TÜM DEĞİŞİKLİKLERİ VE HEDEFLERİ KAYDET</span>
