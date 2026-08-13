@@ -20,6 +20,52 @@ export default function ExpertDetailModal({ expert, onClose, onSuccess }) {
 
   if (!expert) return null;
 
+  // Aktif giriş yapmış kullanıcının ID'sini tam güvenli ve dinamik bulan fonksiyon
+  const fetchCurrentClientId = async () => {
+    // 1. Önce LocalStorage'daki olası tüm key'leri kontrol et
+    if (typeof window !== "undefined") {
+      const storageKeys = ["user", "currentUser", "vitalis_user", "auth_user"];
+      for (const key of storageKeys) {
+        const storedUser = localStorage.getItem(key);
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            const uid = parsed?.id || parsed?.user_id || parsed?.userId || parsed?.user?.id || parsed?.data?.id;
+            if (uid && parseInt(uid) > 0) {
+              return parseInt(uid);
+            }
+          } catch (e) {
+            console.error("LocalStorage ayrıştırma hatası:", e);
+          }
+        }
+      }
+    }
+
+    // 2. LocalStorage'da bulunamadıysa doğrudan Backend auth/me endpoint'inden aktif oturumu al
+    try {
+      const meResponse = await fetch('http://localhost:8000/api/auth/me', {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include' // Cookie/Oturum verilerini taşır
+      });
+
+      if (meResponse.ok) {
+        const meData = await meResponse.json();
+        const activeUid = meData?.id || meData?.user_id || meData?.user?.id || meData?.data?.id;
+        if (activeUid && parseInt(activeUid) > 0) {
+          // Gelecek istekler için LocalStorage'ı da güncelle
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(meData));
+          }
+          return parseInt(activeUid);
+        }
+      }
+    } catch (err) {
+      console.error("/api/auth/me üzerinden kullanıcı tespit edilemedi:", err);
+    }
+
+    return null;
+  };
+
   const handleSubscribe = async (e) => {
     e.preventDefault();
     if (!selectedListing) {
@@ -27,25 +73,19 @@ export default function ExpertDetailModal({ expert, onClose, onSuccess }) {
       return;
     }
 
-    // 1. Önce LocalStorage'dan Client ID çekilir
-    let currentClientId = 3; // Fallback ID
-    if (typeof window !== "undefined") {  
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          if (parsedUser && parsedUser.id) {
-            currentClientId = parsedUser.id;
-          }
-        } catch (err) {
-          console.error("LocalStorage kullanıcı bilgisi okuma hatası:", err);
-        }
-      }
-    }
-
     setLoading(true);
+
     try {
-      // 2. Fetch isteği ve tam payload tek bir yerde gönderilir
+      // Dinamik olarak tam o anki giriş yapmış kullanıcının ID'sini çek
+      const currentClientId = await fetchCurrentClientId();
+
+      if (!currentClientId) {
+        alert("Giriş yapmış kullanıcı oturumu doğrulanamadı. Lütfen tekrar giriş yapın.");
+        setLoading(false);
+        return;
+      }
+
+      // Backend'e abonelik isteği gönder
       const response = await fetch('http://localhost:8000/api/client/marketplace/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,12 +99,12 @@ export default function ExpertDetailModal({ expert, onClose, onSuccess }) {
       });
 
       const resData = await response.json();
-      if (resData.success) {
+      if (response.ok && resData.success) {
         alert(`Tebrikler! ${expert.name} isimli uzmana "${selectedListing.title}" başvurunuz iletildi.`);
         onSuccess && onSuccess();
         onClose();
       } else {
-        alert("Başvuru yapılırken bir hata oluştu: " + (resData.detail || "Bilinmeyen hata"));
+        alert("Başvuru yapılırken bir hata oluştu: " + (resData.detail || resData.message || "Bilinmeyen hata"));
       }
     } catch (err) {
       console.error("Abonelik Hatası:", err);

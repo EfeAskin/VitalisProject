@@ -38,10 +38,10 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
     last_name: user?.last_name || user?.lastName || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    age: user?.age || 28,
-    gender: user?.gender || "erkek",
-    height: user?.height || 180,
-    weight: user?.weight || 78.5,
+    age: user?.age || 18,
+    gender: user?.gender || "belirtilmedi",
+    height: user?.height || 175,
+    weight: user?.weight || 65,
     activity_level:
       user?.activity_level ||
       "Çok Aktif (Yüksek Aktivite): Yoğun fiziksel iş VEYA haftada 6-7 gün ağır antrenman.",
@@ -59,10 +59,10 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
         last_name: user.last_name || user.lastName || "",
         email: user.email || "",
         phone: user.phone || "",
-        age: user.age || 28,
-        gender: user.gender || "erkek",
-        height: user.height || 180,
-        weight: user.weight || 78.5,
+        age: user.age || 18,
+        gender: user.gender || "belirtilmedi",
+        height: user.height || 175,
+        weight: user.weight || 65,
         activity_level:
           user.activity_level ||
           "Çok Aktif (Yüksek Aktivite): Yoğun fiziksel iş VEYA haftada 6-7 gün ağır antrenman.",
@@ -484,8 +484,10 @@ export default function PersonalInfoTab({ user, onUpdateUser }) {
               }
               className="w-full bg-slate-950 border border-slate-800 text-white text-xs px-4 py-3 rounded-2xl outline-none focus:border-orange-500 disabled:opacity-60 disabled:cursor-not-allowed transition-all cursor-pointer font-medium"
             >
+              <option value="belirtilmedi">Belirtilmedi</option>
               <option value="erkek">Erkek</option>
               <option value="kadın">Kadın</option>
+              <option value="diğer">Diğer</option>
             </select>
           </div>
 

@@ -11,6 +11,8 @@ import ClientSubscriptionsManager from "./ClientSubscriptionsManager";
 import ClientNotesSection from "./ClientNotesSection";
 import TargetWeightModal from "./TargetWeightModal";
 import TargetCalorieModal from "./TargetCalorieModal";
+import ClientAssignedProgramsCard from "./ClientAssignedProgramsCard";
+import ClientWeeklyScheduleCard from "./ClientWeeklyScheduleCard";
 
 // Yerel tarih dizesi oluşturucu (UTC saat dilimi kaymalarını engeller)
 const getLocalDateStr = (d) => {
@@ -52,6 +54,11 @@ export default function ClientDetailView({
   // Son 7 Günlük Aktivite Verileri
   const [weeklySummary, setWeeklySummary] = useState([]);
   const [selectedDayIndex, setSelectedDayIndex] = useState(6);
+
+  // Atanan Antrenman Programları State'i
+  const [workoutPrograms, setWorkoutPrograms] = useState(
+    client?.workout_programs || client?.programs || []
+  );
 
   // 7 Günlük Kronolojik Gün Oluşturucu
   const build7DaysChronological = (backendLogs = []) => {
@@ -159,6 +166,21 @@ export default function ClientDetailView({
 
         const todayIdx = formattedDays.findIndex((d) => d.isToday);
         setSelectedDayIndex(todayIdx !== -1 ? todayIdx : 6);
+
+        // Antrenman programlarını çekme/güncelleme
+        try {
+          const progRes = await fetch(
+            `/api/expert-clients/workout-programs?client_id=${client.id}`
+          );
+          if (progRes.ok) {
+            const progData = await progRes.json();
+            setWorkoutPrograms(progData.programs || progData || []);
+          } else {
+            setWorkoutPrograms(client.workout_programs || client.programs || []);
+          }
+        } catch {
+          setWorkoutPrograms(client.workout_programs || client.programs || []);
+        }
       } catch (err) {
         console.error("Danışan detay verileri çekilemedi:", err);
         setWeeklySummary(build7DaysChronological([]));
@@ -173,6 +195,8 @@ export default function ClientDetailView({
     client?.target_weight,
     client?.expert_target_kcal,
     client?.daily_calories,
+    client?.workout_programs,
+    client?.programs,
   ]);
 
   if (!client) {
@@ -197,6 +221,33 @@ export default function ClientDetailView({
       </div>
     );
   }
+
+  // Program Silme İşlemi
+  const handleDeleteProgram = async (programId) => {
+    try {
+      const res = await fetch(`/api/expert-clients/workout-programs/${programId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setWorkoutPrograms((prev) => prev.filter((p) => p.id !== programId));
+      } else {
+        setWorkoutPrograms((prev) => prev.filter((p) => p.id !== programId));
+      }
+    } catch (err) {
+      console.error("Program silme hatası:", err);
+      setWorkoutPrograms((prev) => prev.filter((p) => p.id !== programId));
+    }
+  };
+
+  // Program Düzenleme Tetikleyicisi
+  const handleEditProgram = (program) => {
+    console.log("Program düzenleniyor:", program);
+  };
+
+  // Yeni Program Atama Tetikleyicisi
+  const handleAssignNewProgram = () => {
+    console.log("Yeni program atama alanı tetiklendi.");
+  };
 
   // Not Kaydetme
   const handleAddNote = async (e) => {
@@ -309,12 +360,22 @@ export default function ClientDetailView({
         </div>
       ) : (
         <>
-          {/* PROFİL & METRİKLER & AKTİVİTE */}
+          {/* PROFİL & METRİKLER & AKTİVİTE & PROGRAM DÜZENİ */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* SOL KOLON: Profil Kartı */}
-            <ClientProfileCard client={client} />
+            {/* SOL KOLON: Profil Kartı & Atanan Programlar Kartı */}
+            <div className="lg:col-span-1 space-y-6">
+              <ClientProfileCard client={client} />
+              
+              {/* COMPONENT 1: Aktif Programlar (Sil/Düzenle/Yeni Ata) */}
+              <ClientAssignedProgramsCard
+                programs={workoutPrograms}
+                onDeleteProgram={handleDeleteProgram}
+                onEditProgram={handleEditProgram}
+                onAssignNewProgram={handleAssignNewProgram}
+              />
+            </div>
 
-            {/* SAĞ KOLON: Metrikler & Haftalık Tracker */}
+            {/* SAĞ KOLON: Metrikler & Haftalık Tracker & Haftalık Antrenman Programı */}
             <div className="lg:col-span-3 space-y-6">
               <ClientMetricsCards
                 client={client}
@@ -339,6 +400,9 @@ export default function ClientDetailView({
                 setSelectedDayIndex={setSelectedDayIndex}
                 dailyCalorieTarget={dailyCalorieTarget}
               />
+
+              {/* COMPONENT 2: Haftalık Antrenman Programı & Günlük Hareket Detayları */}
+              <ClientWeeklyScheduleCard weeklyPrograms={workoutPrograms} />
             </div>
           </div>
         </>

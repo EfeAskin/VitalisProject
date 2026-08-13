@@ -26,7 +26,17 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
   const [newType, setNewType] = useState("one_time"); // 'one_time' | 'recurring'
   const [newDays, setNewDays] = useState(30);
 
-  // Varsayılan / API Verisi Çekimi
+  // Kalan gün hesabı için yardımcı fonksiyon
+  const calculateDaysLeft = (endDateStr) => {
+    if (!endDateStr) return null;
+    const end = new Date(endDateStr);
+    const now = new Date();
+    const diffTime = end - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  // Canlı DB Verisi Çekimi (Statik Fallback Tamamen Kaldırıldı)
   useEffect(() => {
     if (!clientId) return;
 
@@ -36,38 +46,38 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
         const res = await fetch(`/api/expert-clients/${clientId}/subscriptions`);
         if (res.ok) {
           const data = await res.json();
-          setSubscriptions(data.subscriptions || data || []);
+          const rawData = Array.isArray(data) ? data : data.subscriptions || [];
+
+          // DB Alan Adları ile UI Uyumlandırması & ID Bazlı Mükerrerlik Temizleme (Deduplication)
+          const uniqueSubscriptions = [];
+          const seenIds = new Set();
+
+          rawData.forEach((sub) => {
+            if (!seenIds.has(sub.id)) {
+              seenIds.add(sub.id);
+
+              const formattedTitle = sub.title || sub.package_name || "Özel Hizmet";
+              const formattedType =
+                sub.type || (sub.end_date ? "recurring" : "one_time");
+              const remainingDays =
+                sub.remaining_days ?? calculateDaysLeft(sub.end_date);
+
+              uniqueSubscriptions.push({
+                ...sub,
+                title: formattedTitle,
+                type: formattedType,
+                remaining_days: remainingDays,
+              });
+            }
+          });
+
+          setSubscriptions(uniqueSubscriptions);
         } else {
-          // Fallback Varsayılan Demo Verisi
-          setSubscriptions([
-            {
-              id: 101,
-              title: client?.active_package || "Aylık Uzman PT Danışmanlığı",
-              type: "recurring",
-              status: "active",
-              start_date: "2026-08-01",
-              end_date: "2026-08-31",
-              remaining_days: client?.package_days_left || 20,
-            },
-            {
-              id: 102,
-              title: "Postür & Vücut Ölçümü",
-              type: "one_time",
-              status: "active",
-              start_date: "2026-08-10",
-              end_date: null,
-            },
-            {
-              id: 100,
-              title: "Deneme Biyo-Analiz Paketi",
-              type: "one_time",
-              status: "completed",
-              completed_at: "2026-07-15",
-            },
-          ]);
+          setSubscriptions([]);
         }
       } catch (err) {
         console.error("Abonelikler çekilirken hata oluştu:", err);
+        setSubscriptions([]);
       } finally {
         setIsLoading(false);
       }
@@ -79,11 +89,17 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
   // Tek Seferlik Hizmeti Tamamlandı Olarak İşaretle
   const handleMarkAsCompleted = async (subId) => {
     try {
-      await fetch(`/api/expert-clients/subscriptions/${subId}/complete`, {
-        method: "PATCH",
-      });
+      const res = await fetch(
+        `/api/expert-clients/subscriptions/${subId}/complete`,
+        {
+          method: "PATCH",
+        }
+      );
+      if (!res.ok) {
+        console.warn("API tamamlama yanıtı başarısız, arayüz güncelleniyor.");
+      }
     } catch (err) {
-      console.warn("API çağrısı simüle ediliyor:", err);
+      console.error("Tamamlandı işaretlenirken hata:", err);
     } finally {
       setSubscriptions((prev) =>
         prev.map((sub) =>
@@ -109,34 +125,71 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
       return;
 
     try {
-      await fetch(`/api/expert-clients/subscriptions/${subId}`, {
+      const res = await fetch(`/api/expert-clients/subscriptions/${subId}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        console.warn("API silme yanıtı başarısız, arayüzden kaldırılıyor.");
+      }
     } catch (err) {
-      console.warn("API silme simüle ediliyor:", err);
+      console.error("Abonelik silinirken hata oluştu:", err);
     } finally {
       setSubscriptions((prev) => prev.filter((sub) => sub.id !== subId));
     }
   };
 
-  // Yeni Hizmet/Abonelik Tanımla
-  const handleAddSubscription = (e) => {
+  // Yeni Hizmet/Abonelik Tanımla (API Entegrasyonlu)
+  const handleAddSubscription = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
-    const newSub = {
-      id: Date.now(),
-      title: newTitle,
-      type: newType,
-      status: "active",
-      start_date: new Date().toISOString().split("T")[0],
-      end_date: newType === "recurring" ? `+${newDays} Gün` : null,
-      remaining_days: newType === "recurring" ? Number(newDays) : null,
-    };
+    try {
+      const res = await fetch(
+        `/api/expert-clients/${clientId}/subscriptions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: newTitle,
+            type: newType,
+            days: Number(newDays),
+          }),
+        }
+      );
 
-    setSubscriptions((prev) => [newSub, ...prev]);
-    setNewTitle("");
-    setIsAddModalOpen(false);
+      if (res.ok) {
+        const addedSub = await res.json();
+        setSubscriptions((prev) => [
+          {
+            ...addedSub,
+            title: addedSub.title || newTitle,
+            type: addedSub.type || newType,
+            remaining_days:
+              addedSub.remaining_days ??
+              (newType === "recurring" ? Number(newDays) : null),
+          },
+          ...prev,
+        ]);
+      } else {
+        // API başarısız olursa yerel unique ID ile ekle
+        const newSub = {
+          id: Date.now(),
+          title: newTitle,
+          type: newType,
+          status: "active",
+          start_date: new Date().toISOString().split("T")[0],
+          end_date:
+            newType === "recurring" ? `+${newDays} Gün` : null,
+          remaining_days: newType === "recurring" ? Number(newDays) : null,
+        };
+        setSubscriptions((prev) => [newSub, ...prev]);
+      }
+    } catch (err) {
+      console.error("Yeni abonelik eklenirken hata:", err);
+    } finally {
+      setNewTitle("");
+      setIsAddModalOpen(false);
+    }
   };
 
   const activeSubs = subscriptions.filter((s) => s.status === "active");
@@ -234,11 +287,12 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
                       <Calendar size={13} className="text-slate-400" />
                       Başlangıç: {sub.start_date || "Belirtilmedi"}
                     </span>
-                    {sub.remaining_days && (
-                      <span className="flex items-center gap-1.5 text-amber-300 font-mono font-bold drop-shadow">
-                        <Clock size={13} /> Kalan: {sub.remaining_days} Gün
-                      </span>
-                    )}
+                    {sub.remaining_days !== null &&
+                      sub.remaining_days !== undefined && (
+                        <span className="flex items-center gap-1.5 text-amber-300 font-mono font-bold drop-shadow">
+                          <Clock size={13} /> Kalan: {sub.remaining_days} Gün
+                        </span>
+                      )}
                   </div>
                 </div>
 
@@ -248,7 +302,8 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
                       onClick={() => handleMarkAsCompleted(sub.id)}
                       className="px-3.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 text-xs font-heading font-extrabold rounded-xl flex items-center gap-1.5 transition-all duration-200 shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)]"
                     >
-                      <CheckCircle2 size={14} className="text-emerald-300" /> Tamamlandı İşaretle
+                      <CheckCircle2 size={14} className="text-emerald-300" />{" "}
+                      Tamamlandı İşaretle
                     </button>
                   )}
 
@@ -322,7 +377,8 @@ export default function ClientSubscriptionsManager({ clientId, client }) {
           <div className="bg-[#11142D] border border-slate-700/90 rounded-3xl p-6 md:p-8 w-full max-w-md space-y-5 shadow-[0_0_50px_rgba(79,70,229,0.3)] relative overflow-hidden backdrop-blur-xl">
             <div className="flex justify-between items-center border-b border-slate-700/80 pb-4">
               <h3 className="text-base font-heading font-black text-white flex items-center gap-2 drop-shadow">
-                <Sparkles className="w-4 h-4 text-orange-400" /> Yeni Hizmet / Abonelik Tanımla
+                <Sparkles className="w-4 h-4 text-orange-400" /> Yeni Hizmet /
+                Abonelik Tanımla
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}

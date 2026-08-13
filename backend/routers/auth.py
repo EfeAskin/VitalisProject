@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Optional, List
 from jose import JWTError, jwt
@@ -8,39 +9,29 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, EmailStr
 from backend.database import get_db_connection
 
-# Router Yapılandırması
 router = APIRouter(
     prefix="/api/auth",
     tags=["Authentication Engine"]
 )
 
-# .env'den güvenli anahtar ve süre ayarları
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secret-vitalis-os-key-2026-secure-layer")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
-REMEMBER_ME_EXPIRE_MINUTES = 10080  # 7 gün (dakika cinsinden)
+REMEMBER_ME_EXPIRE_MINUTES = 10080
 
-# Şifre özetleme motoru (Bcrypt)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# JWT token'ın çözüleceği rota tanımlaması
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 
-# --- 1. ŞİFRELEME VE TOKEN YARDIMCILARI ---
-
 def hash_password(password: str) -> str:
-    """Şifreyi güçlü bir salt ile tek yönlü hash'ler."""
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Gelen düz şifreyi db hash'iyle zamanlama saldırısına dirençli şekilde doğrular."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Payload verilerinden şifreli bir JWT üretir."""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -52,17 +43,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def get_current_user(request: Request, conn = Depends(get_db_connection)):
-    """Hem HttpOnly Cookie'den hem de Authorization Header'dan token'ı okur ve kullanıcıyı doğrular."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Geçersiz veya süresi dolmuş oturum.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    # 1. Öncelik: HttpOnly Cookie içindeki access_token
     token = request.cookies.get("access_token")
-    
-    # 2. Öncelik: Authorization Header (Bearer Token)
     if not token:
         auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -91,9 +78,7 @@ def get_current_user(request: Request, conn = Depends(get_db_connection)):
         return user
 
 
-# 🔐 SİBER GÜVENLİK KATMANI: Rol Tabanlı Erişim Kontrolü (RBAC) Bağımlılığı
 class RoleChecker:
-    """İsteği atan kullanıcının rolünü doğrular, yetkisiz ise geçit vermez."""
     def __init__(self, allowed_roles: List[str]):
         self.allowed_roles = allowed_roles
 
@@ -108,12 +93,10 @@ class RoleChecker:
         if not user_role or user_role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bu işlem veya sayfa için yetkiniz bulunmamaktadır. Erişim engellendi."
+                detail="Bu işlem veya sayfa için yetkiniz bulunmamaktadır."
             )
         return current_user
 
-
-# --- 2. INPUT PYDANTIC MODELLERİ ---
 
 class UserRegisterInput(BaseModel):
     email: EmailStr
@@ -121,7 +104,12 @@ class UserRegisterInput(BaseModel):
     first_name: str
     last_name: str
     phone: str
-    role: str  # 'client', 'dietitian', 'trainer', 'admin'
+    role: str
+    gender: Optional[str] = "Diğer"
+    age: Optional[int] = 18
+    height: Optional[float] = 175.0
+    weight: Optional[float] = 65.0
+    profile_photo: Optional[str] = None
 
 
 class UserLoginInput(BaseModel):
@@ -130,11 +118,8 @@ class UserLoginInput(BaseModel):
     rememberMe: bool = False
 
 
-# --- 3. ENDPOINT ROTALARI ---
-
 @router.post("/register")
 def register_user(data: UserRegisterInput, conn = Depends(get_db_connection)):
-    """Kullanıcıyı siber güvenli tuzlama yöntemiyle şifreleyerek Neon DB'ye yazar."""
     hashed = hash_password(data.password)
     
     with conn.cursor() as cur:
@@ -145,11 +130,27 @@ def register_user(data: UserRegisterInput, conn = Depends(get_db_connection)):
                 detail="Bu e-posta adresi sistemde zaten kayıtlı."
             )
 
+        full_name = f"{data.first_name} {data.last_name}".strip()
+        encoded_name = urllib.parse.quote(full_name if full_name else "Kullanıcı")
+        default_avatar = f"https://ui-avatars.com/api/?name={encoded_name}&background=18231E&color=10B981&bold=true"
+
+        avatar_url = data.profile_photo.strip() if (data.profile_photo and data.profile_photo.strip()) else default_avatar
+        
+        # Cinsiyet ve Telefon alanlarına VARCHAR(10) taşma koruması
+        raw_gender = data.gender.strip() if (data.gender and data.gender.strip()) else "Diğer"
+        user_gender = raw_gender[:10]  # Max 10 karaktere sığdırır
+        
+        user_phone = data.phone.strip() if data.phone else ""
+        
+        user_age = data.age if data.age is not None else 18
+        user_height = data.height if data.height is not None else 175.0
+        user_weight = data.weight if data.weight is not None else 65.0
+
         cur.execute("""
-            INSERT INTO users (first_name, last_name, email, password_hash, phone, age, gender, height, weight, role)
-            VALUES (%s, %s, %s, %s, %s, 22, 'erkek', 180.0, 75.2, %s)
-            RETURNING id, first_name, last_name, email, phone, role
-        """, (data.first_name, data.last_name, data.email, hashed, data.phone, data.role))
+            INSERT INTO users (first_name, last_name, email, password_hash, phone, age, gender, height, weight, profile_photo, role)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, first_name, last_name, email, phone, age, gender, height, weight, profile_photo, role
+        """, (data.first_name, data.last_name, data.email, hashed, user_phone, user_age, user_gender, user_height, user_weight, avatar_url, data.role))
         
         new_user = cur.fetchone()
         conn.commit()
@@ -163,7 +164,6 @@ def register_user(data: UserRegisterInput, conn = Depends(get_db_connection)):
 
 @router.post("/login")
 def login_user(data: UserLoginInput, response: Response, conn = Depends(get_db_connection)):
-    """Neon DB üzerinden kullanıcıyı doğrular, maksimum güvenlik için HttpOnly Cookie set eder."""
     with conn.cursor() as cur:
         cur.execute("""
             SELECT id, first_name, last_name, email, password_hash, role 
@@ -201,7 +201,6 @@ def login_user(data: UserLoginInput, response: Response, conn = Depends(get_db_c
         }
         token = create_access_token(data=token_data, expires_delta=access_token_expires)
         
-        # 🛡️ XSS Korumalı HttpOnly Cookie (path="/" eklendi)
         response.set_cookie(
             key="access_token",
             value=token,
@@ -226,7 +225,6 @@ def login_user(data: UserLoginInput, response: Response, conn = Depends(get_db_c
 
 @router.post("/logout")
 def logout_user(response: Response):
-    """Oturum çerezini imha ederek çıkış sağlar."""
     response.delete_cookie(key="access_token", path="/")
     return {
         "status": "success",
@@ -246,34 +244,49 @@ def get_expert_dashboard_metrics(current_user = Depends(RoleChecker(["trainer", 
 
 @router.get("/me")
 def get_logged_in_user(current_user = Depends(get_current_user)):
-    """Oturum açan kullanıcının güncel kimlik ve profil bilgilerini (profile_photo dahil) Neon DB'den döner."""
     if isinstance(current_user, dict) or hasattr(current_user, "get"):
+        first_name = current_user.get("first_name") or ""
+        last_name = current_user.get("last_name") or ""
+        photo = current_user.get("profile_photo")
+        
+        if not photo or not str(photo).strip():
+            full_name = f"{first_name} {last_name}".strip() or "Kullanıcı"
+            photo = f"https://ui-avatars.com/api/?name={urllib.parse.quote(full_name)}&background=18231E&color=10B981&bold=true"
+
         return {
             "id": current_user.get("id"),
-            "first_name": current_user.get("first_name"),
-            "last_name": current_user.get("last_name"),
+            "first_name": first_name,
+            "last_name": last_name,
             "email": current_user.get("email"),
             "phone": current_user.get("phone"),
-            "age": current_user.get("age"),
-            "gender": current_user.get("gender"),
-            "height": current_user.get("height"),
-            "weight": current_user.get("weight"),
-            "profile_photo": current_user.get("profile_photo"),
+            "age": current_user.get("age") if current_user.get("age") is not None else 18,
+            "gender": current_user.get("gender") or "Diğer",
+            "height": current_user.get("height") if current_user.get("height") is not None else 175.0,
+            "weight": current_user.get("weight") if current_user.get("weight") is not None else 65.0,
+            "profile_photo": photo,
             "role": current_user.get("role"),
             "created_at": current_user.get("created_at")
         }
     elif isinstance(current_user, (tuple, list)):
+        first_name = current_user[1] if len(current_user) > 1 and current_user[1] else ""
+        last_name = current_user[2] if len(current_user) > 2 and current_user[2] else ""
+        photo = current_user[9] if len(current_user) > 9 and current_user[9] else None
+        
+        if not photo or not str(photo).strip():
+            full_name = f"{first_name} {last_name}".strip() or "Kullanıcı"
+            photo = f"https://ui-avatars.com/api/?name={urllib.parse.quote(full_name)}&background=18231E&color=10B981&bold=true"
+
         return {
             "id": current_user[0],
-            "first_name": current_user[1],
-            "last_name": current_user[2],
-            "email": current_user[3],
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": current_user[3] if len(current_user) > 3 else None,
             "phone": current_user[4] if len(current_user) > 4 else None,
-            "age": current_user[5] if len(current_user) > 5 else None,
-            "gender": current_user[6] if len(current_user) > 6 else None,
-            "height": current_user[7] if len(current_user) > 7 else None,
-            "weight": current_user[8] if len(current_user) > 8 else None,
-            "profile_photo": current_user[9] if len(current_user) > 9 else None,
+            "age": current_user[5] if len(current_user) > 5 and current_user[5] is not None else 18,
+            "gender": current_user[6] if len(current_user) > 6 and current_user[6] else "Diğer",
+            "height": current_user[7] if len(current_user) > 7 and current_user[7] is not None else 175.0,
+            "weight": current_user[8] if len(current_user) > 8 and current_user[8] is not None else 65.0,
+            "profile_photo": photo,
             "role": current_user[10] if len(current_user) > 10 else "client",
             "created_at": current_user[11] if len(current_user) > 11 else None
         }

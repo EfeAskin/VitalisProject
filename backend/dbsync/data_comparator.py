@@ -12,10 +12,17 @@ class DataComparator:
     DELETE işlemleri ilk sürümde bilinçli olarak desteklenmez.
     """
 
-    def __init__(self, source_data: dict, target_data: dict):
+    def __init__(
+        self,
+        source_data: dict,
+        target_data: dict,
+        table_order=None
+    ):
 
         self.source = source_data
         self.target = target_data
+
+        self.table_order = table_order or []
 
         self.changes = []
 
@@ -25,9 +32,47 @@ class DataComparator:
 
     def compare(self):
 
-        common_tables = set(self.source.keys()) & set(self.target.keys())
+        common_tables = (
+            set(self.source.keys())
+            & set(self.target.keys())
+        )
 
-        for table in sorted(common_tables):
+        # ------------------------------------------------------
+        # Dependency sırasına göre tablo sıralaması
+        # ------------------------------------------------------
+
+        order_index = {
+            table: index
+            for index, table in enumerate(
+                self.table_order
+            )
+        }
+
+        ordered_tables = sorted(
+            common_tables,
+            key=lambda table: (
+                order_index.get(
+                    table,
+                    len(order_index)
+                ),
+                table
+            )
+        )
+
+        logger.info(
+            "Karşılaştırma tablo sırası:"
+        )
+
+        for index, table in enumerate(
+            ordered_tables,
+            start=1
+        ):
+
+            logger.info(
+                f"  {index}. {table}"
+            )
+
+        for table in ordered_tables:
 
             self.compare_table(table)
 
@@ -68,14 +113,21 @@ class DataComparator:
 
         }
 
-        source_ids = set(source_rows.keys())
-        target_ids = set(target_rows.keys())
+        source_ids = set(
+            source_rows.keys()
+        )
+
+        target_ids = set(
+            target_rows.keys()
+        )
 
         # ======================================================
         # INSERT
         # ======================================================
 
-        for row_id in sorted(source_ids - target_ids):
+        for row_id in sorted(
+            source_ids - target_ids
+        ):
 
             logger.info(
                 f"[INSERT] {table} -> {row_id}"
@@ -97,7 +149,9 @@ class DataComparator:
         # UPDATE
         # ======================================================
 
-        for row_id in sorted(source_ids & target_ids):
+        for row_id in sorted(
+            source_ids & target_ids
+        ):
 
             self.compare_row(
 
@@ -135,10 +189,26 @@ class DataComparator:
 
             if source_row[column] != target_row.get(column):
 
-                print("\n-------------------------")
-                print(table, column)
-                print("SOURCE:", repr(source_row[column]), type(source_row[column]))
-                print("TARGET:", repr(target_row.get(column)), type(target_row.get(column)))
+                print(
+                    "\n-------------------------"
+                )
+
+                print(
+                    table,
+                    column
+                )
+
+                print(
+                    "SOURCE:",
+                    repr(source_row[column]),
+                    type(source_row[column])
+                )
+
+                print(
+                    "TARGET:",
+                    repr(target_row.get(column)),
+                    type(target_row.get(column))
+                )
 
                 differences[column] = {
 
@@ -153,11 +223,8 @@ class DataComparator:
             return
 
         logger.info(
-
             f"[UPDATE] {table} -> "
-
             f"{source_row[primary_key]}"
-
         )
 
         self.changes.append({

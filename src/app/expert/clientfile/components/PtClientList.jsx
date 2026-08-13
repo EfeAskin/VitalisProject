@@ -24,54 +24,79 @@ export default function PtClientList({ clients = [], onSelectClient }) {
 
     const map = new Map();
 
+    // Program isimlerini düzleştiren ve tekil string dizisine çeviren yardımcı fonksiyon
+    const extractProgramNames = (c) => {
+      const raw = c.assigned_programs || c.programs || c.program_name;
+      if (!raw) return [];
+
+      const list = Array.isArray(raw) ? raw : [raw];
+
+      return list
+        .flat(Infinity)
+        .map((p) => {
+          if (typeof p === "string") return p.trim();
+          if (p && typeof p === "object") return (p.name || p.program_name || "").trim();
+          return "";
+        })
+        .filter((p) => p && p !== "Henüz Program Atanmadı");
+    };
+
+    // Paket isimlerini düzleştiren yardımcı fonksiyon
+    const extractPackageNames = (c) => {
+      const raw = c.active_packages || c.active_package || c.package_name;
+      if (!raw) return [];
+
+      const list = Array.isArray(raw) ? raw : [raw];
+
+      return list
+        .flat(Infinity)
+        .map((p) => {
+          if (typeof p === "string") return p.trim();
+          if (p && typeof p === "object") return (p.name || p.package_name || "").trim();
+          return "";
+        })
+        .filter(Boolean);
+    };
+
     clients.forEach((c) => {
       const clientId = c.client_id || c.id || c.user_id;
       if (!clientId) return;
 
-      // Paket isimlerini diziye dönüştür
-      let existingPkgs = [];
-      if (Array.isArray(c.active_packages)) {
-        existingPkgs = c.active_packages
-          .map((p) => (typeof p === "string" ? p : p.name || p.package_name || ""))
-          .filter(Boolean);
-      } else if (c.active_package) {
-        existingPkgs = [c.active_package];
-      } else if (c.package_name) {
-        existingPkgs = [c.package_name];
-      }
+      const currentPkgs = extractPackageNames(c);
+      const currentProgs = extractProgramNames(c);
 
       if (!map.has(clientId)) {
         map.set(clientId, {
           ...c,
           id: clientId,
           client_id: c.client_id || clientId,
-          active_packages: existingPkgs.length > 0 ? existingPkgs : ["Aktif Paket"],
+          active_packages: currentPkgs.length > 0 ? [...new Set(currentPkgs)] : ["Aktif Paket"],
+          assigned_programs: [...new Set(currentProgs)],
         });
       } else {
         const existing = map.get(clientId);
 
         // Paketleri mükerrer olmayacak şekilde birleştir
-        existingPkgs.forEach((pkgName) => {
+        currentPkgs.forEach((pkgName) => {
           if (pkgName && !existing.active_packages.includes(pkgName)) {
             existing.active_packages.push(pkgName);
           }
         });
 
-        // Amaç veya Program eksikse diğer kayıttan tamamla
+        // Programları metin bazında mükerrer olmayacak şekilde birleştir
+        currentProgs.forEach((progName) => {
+          if (progName && !existing.assigned_programs.includes(progName)) {
+            existing.assigned_programs.push(progName);
+          }
+        });
+
+        // Amaç eksikse diğer kayıttan tamamla
         if (
           (!existing.goal || existing.goal === "Belirtilmedi") &&
           c.goal &&
           c.goal !== "Belirtilmedi"
         ) {
           existing.goal = c.goal;
-        }
-        if (
-          (!existing.program_name ||
-            existing.program_name === "Henüz Program Atanmadı") &&
-          c.program_name &&
-          c.program_name !== "Henüz Program Atanmadı"
-        ) {
-          existing.program_name = c.program_name;
         }
       }
     });
@@ -117,7 +142,13 @@ export default function PtClientList({ clients = [], onSelectClient }) {
             Array.isArray(client.active_packages) &&
             client.active_packages.length > 0
               ? client.active_packages
-              : [client.active_package || "Aktif Paket"];
+              : ["Aktif Paket"];
+
+          const programs =
+            Array.isArray(client.assigned_programs) &&
+            client.assigned_programs.length > 0
+              ? client.assigned_programs
+              : [];
 
           return (
             <div
@@ -162,8 +193,8 @@ export default function PtClientList({ clients = [], onSelectClient }) {
                   </div>
                 </div>
 
-                {/* Amaç ve Takip Ettiği Program */}
-                <div className="space-y-2 bg-[#121633] p-4 rounded-2xl border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.08)]">
+                {/* Amaç ve Atanan Programlar */}
+                <div className="space-y-2.5 bg-[#121633] p-4 rounded-2xl border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.08)]">
                   <div className="flex items-center gap-2 text-xs text-slate-300">
                     <Target size={14} className="text-orange-500 shrink-0" />
                     <span className="font-bold text-slate-400">Amaç:</span>
@@ -171,12 +202,28 @@ export default function PtClientList({ clients = [], onSelectClient }) {
                       {client.goal || "Belirtilmedi"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-300">
-                    <Dumbbell size={14} className="text-amber-400 shrink-0" />
-                    <span className="font-bold text-slate-400">Program:</span>
-                    <span className="text-amber-400 font-medium truncate">
-                      {client.program_name || "Henüz Program Atanmadı"}
-                    </span>
+
+                  <div className="space-y-1.5 pt-1 border-t border-orange-500/10">
+                    <div className="flex items-center gap-2 text-xs text-slate-300">
+                      <Dumbbell size={14} className="text-amber-400 shrink-0" />
+                      <span className="font-bold text-slate-400">Atanan Programlar:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pl-5">
+                      {programs.length > 0 ? (
+                        programs.map((prog, idx) => (
+                          <span
+                            key={idx}
+                            className="text-[11px] font-heading font-bold text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-lg border border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.15)]"
+                          >
+                            {prog}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">
+                          Henüz Program Atanmadı
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -258,25 +305,50 @@ export default function PtClientList({ clients = [], onSelectClient }) {
               </div>
             </div>
 
-            {/* Aktif Hizmetler Listesi (Popup) */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-heading font-extrabold uppercase text-slate-300 flex items-center gap-1.5 tracking-wider">
-                <ShieldCheck size={14} className="text-emerald-400" /> Aktif
-                Hizmetler
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {(Array.isArray(selectedPopupClient.active_packages) &&
-                selectedPopupClient.active_packages.length > 0
-                  ? selectedPopupClient.active_packages
-                  : [selectedPopupClient.active_package || "Aktif Paket"]
-                ).map((pkg, idx) => (
-                  <span
-                    key={idx}
-                    className="text-xs font-heading font-bold text-emerald-300 bg-emerald-500/15 px-3 py-1 rounded-xl border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
-                  >
-                    {pkg}
-                  </span>
-                ))}
+            {/* Aktif Hizmetler ve Programlar (Popup) */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <span className="text-[11px] font-heading font-extrabold uppercase text-slate-300 flex items-center gap-1.5 tracking-wider">
+                  <ShieldCheck size={14} className="text-emerald-400" /> Aktif
+                  Hizmetler
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {(Array.isArray(selectedPopupClient.active_packages) &&
+                  selectedPopupClient.active_packages.length > 0
+                    ? selectedPopupClient.active_packages
+                    : ["Aktif Paket"]
+                  ).map((pkg, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs font-heading font-bold text-emerald-300 bg-emerald-500/15 px-3 py-1 rounded-xl border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                    >
+                      {pkg}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-heading font-extrabold uppercase text-slate-300 flex items-center gap-1.5 tracking-wider">
+                  <Dumbbell size={14} className="text-amber-400" /> Atanan Programlar
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {Array.isArray(selectedPopupClient.assigned_programs) &&
+                  selectedPopupClient.assigned_programs.length > 0 ? (
+                    selectedPopupClient.assigned_programs.map((prog, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs font-heading font-bold text-amber-300 bg-amber-500/15 px-3 py-1 rounded-xl border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                      >
+                        {prog}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">
+                      Henüz Program Atanmadı
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
