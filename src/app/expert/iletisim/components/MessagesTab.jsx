@@ -130,6 +130,41 @@ export default function MessagesTab({ currentUser = null }) {
   };
 
   // =========================================================================
+  // OKUNDU BİLGİSİNİ İLETEN VE ROZETLERİ SIFIRLAYAN YARDIMCI FONKSİYON
+  // =========================================================================
+
+  const markRoomAsRead = useCallback(
+    async (roomId) => {
+      if (!roomId || roomId === "ai") return;
+
+      // 1. Sol listedeki ilgili oda için unread_count = 0 yap
+      setChatList((prevList) =>
+        prevList.map((chat) =>
+          String(chat.chat_id) === String(roomId)
+            ? { ...chat, unread_count: 0 }
+            : chat
+        )
+      );
+
+      // 2. Üst Navbar ve Global Bildirim Event'lerini Anında Tetikle
+      notifyNavbarUpdate();
+
+      // 3. Backend'e Okundu İsteği Gönder
+      try {
+        await fetch(`/api/v1/expert/messages/rooms/${roomId}/read`, {
+          method: "POST",
+          headers: getAuthHeaders(currentUser),
+          credentials: "include"
+        });
+        notifyNavbarUpdate();
+      } catch (err) {
+        console.error("Okundu bilgisi iletilemedi:", err);
+      }
+    },
+    [currentUser]
+  );
+
+  // =========================================================================
   // SADECE SOHBET KUTUSUNU EN ALTA KAYDIR
   // =========================================================================
 
@@ -195,17 +230,11 @@ export default function MessagesTab({ currentUser = null }) {
     setActiveChat(chatId);
     setMobileChatOpen(true);
 
-    // 1. Anında sol listedeki okunmamış sayısını 0 yap
-    setChatList((prevList) =>
-      prevList.map((chat) =>
-        String(chat.chat_id) === String(chatId)
-          ? { ...chat, unread_count: 0 }
-          : chat
-      )
-    );
-
-    // 2. Üst Navbar'daki bildirim butonlarının anında sıfırlanması için event fırlat
-    notifyNavbarUpdate();
+    if (chatId !== "ai") {
+      markRoomAsRead(chatId);
+    } else {
+      notifyNavbarUpdate();
+    }
   };
 
   // =========================================================================
@@ -236,22 +265,18 @@ export default function MessagesTab({ currentUser = null }) {
       });
     }
 
-    // Odaya girildiğinde Backend'e okundu bilgisini gönder
-    const markRoomAsRead = async () => {
-      try {
-        await fetch(`/api/v1/expert/messages/rooms/${activeChat}/read`, {
-          method: "POST",
-          headers: getAuthHeaders(currentUser),
-          credentials: "include"
-        });
-        notifyNavbarUpdate();
-      } catch (err) {
-        console.error("Okundu bilgisi iletilemedi:", err);
-      }
-    };
+    markRoomAsRead(activeChat);
+  }, [activeChat, chatList, markRoomAsRead]);
 
-    markRoomAsRead();
-  }, [activeChat, chatList, currentUser]);
+  // =========================================================================
+  // AÇIK SOHBETTE MESAJ SAYISI DEĞİŞTİĞİNDE OTOMATİK OKUNDU İŞARETLEME
+  // =========================================================================
+
+  useEffect(() => {
+    if (activeChat && activeChat !== "ai" && messages.length > 0) {
+      markRoomAsRead(activeChat);
+    }
+  }, [messages.length, activeChat, markRoomAsRead]);
 
   // =========================================================================
   // 2. AKTİF DANIŞAN LİSTESİNİ MODAL İÇİN ÇEKME
@@ -373,6 +398,7 @@ export default function MessagesTab({ currentUser = null }) {
                   : "Şimdi")
             }));
             setMessages(mappedMsgs);
+            markRoomAsRead(activeChat);
           }
         } else {
           console.error("Mesaj geçmişi alınamadı:", res.status);
@@ -404,12 +430,13 @@ export default function MessagesTab({ currentUser = null }) {
           if (data.type === "new_message") {
             const senderId = Number(data.sender_id);
             const myUserId = Number(currentUserId);
+            const isFromOther = senderId !== myUserId;
 
             setMessages((prev) => [
               ...prev,
               {
                 id: data.id || Date.now(),
-                sender: senderId === myUserId ? "expert" : "client",
+                sender: isFromOther ? "client" : "expert",
                 text: data.content || data.message_text || "",
                 time:
                   data.timestamp ||
@@ -417,8 +444,11 @@ export default function MessagesTab({ currentUser = null }) {
               }
             ]);
 
+            if (isFromOther) {
+              markRoomAsRead(activeChat);
+            }
+
             fetchChatList();
-            notifyNavbarUpdate();
           }
         } catch (e) {
           console.error("Gelen WebSocket mesajı okunamadı:", e);
@@ -434,7 +464,7 @@ export default function MessagesTab({ currentUser = null }) {
         socketRef.current = null;
       }
     };
-  }, [activeChat, currentUser, fetchChatList]);
+  }, [activeChat, currentUser, fetchChatList, markRoomAsRead]);
 
   // =========================================================================
   // 5. MESAJ GÖNDERME İŞLEMİ

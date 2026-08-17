@@ -98,9 +98,9 @@ export default function MessagesTab({ currentUser = null }) {
   });
 
   const socketRef = useRef(null);
-  const chatContainerRef = useRef(null); // Sadece sohbet kutusunu yönlendirecek ref
+  const chatContainerRef = useRef(null);
 
-  // Sadece sohbet içindeki akışı aşağı kaydıran fonksiyon
+  // Sohbet içindeki akışı aşağı kaydıran fonksiyon
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -113,6 +113,31 @@ export default function MessagesTab({ currentUser = null }) {
     }, 50);
     return () => clearTimeout(timer);
   }, [messages, scrollToBottom]);
+
+  // OKUNDU BİLGİSİ İLETME VE YEREL ROZETİ SIFIRLAMA
+  const markChatAsRead = useCallback(async (chatId) => {
+    if (!chatId || chatId === "ai") return;
+
+    // Yerel state üzerinde okunmamış sayısını hemen sıfırla
+    setChatList((prevList) =>
+      prevList.map((chat) =>
+        String(chat.chat_id) === String(chatId)
+          ? { ...chat, unread_count: 0 }
+          : chat
+      )
+    );
+
+    // Sunucuya okundu isteği gönder
+    try {
+      await fetch(`/api/v1/messages/rooms/${chatId}/read`, {
+        method: "POST",
+        headers: getAuthHeaders(currentUser),
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Okundu bilgisi gönderilemedi:", err);
+    }
+  }, [currentUser]);
 
   // 1. SOHBET LİSTESİNİ ÇEKME
   const fetchChatList = useCallback(async () => {
@@ -203,6 +228,7 @@ export default function MessagesTab({ currentUser = null }) {
           setIsModalOpen(false);
           await fetchChatList();
           setActiveChat(data.room_id);
+          markChatAsRead(data.room_id);
           setMobileChatOpen(true);
         }
       }
@@ -249,6 +275,9 @@ export default function MessagesTab({ currentUser = null }) {
               time: m.timestamp || (m.created_at ? new Date(m.created_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "Şimdi")
             }));
             setMessages(mappedMsgs);
+            
+            // Sohbet geçmişi başarıyla yüklenince okundu işaretle
+            markChatAsRead(activeChat);
           }
         }
       } catch (err) {
@@ -281,16 +310,33 @@ export default function MessagesTab({ currentUser = null }) {
         try {
           const data = JSON.parse(event.data);
           if (data.type === "new_message") {
+            const newMsgText = data.content || data.message_text;
+
             setMessages((prev) => [
               ...prev,
               {
                 id: data.id || Date.now(),
                 sender: data.sender_id === currentUserId ? "user" : "expert",
-                text: data.content || data.message_text,
+                text: newMsgText,
                 time: data.timestamp || new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })
               }
             ]);
-            fetchChatList();
+
+            // Sohbet listesindeki son mesajı ve okunmama durumunu anında güncelle
+            setChatList((prevList) =>
+              prevList.map((chat) => {
+                if (String(chat.chat_id) === String(activeChat)) {
+                  return {
+                    ...chat,
+                    last_message: newMsgText,
+                    unread_count: 0 // Aktif sohbet açık olduğu için bildirim kalmaz
+                  };
+                }
+                return chat;
+              })
+            );
+
+            markChatAsRead(activeChat);
           }
         } catch (e) {
           console.error("WebSocket mesaj hatası:", e);
@@ -306,7 +352,7 @@ export default function MessagesTab({ currentUser = null }) {
         socketRef.current.close();
       }
     };
-  }, [activeChat, currentUser, fetchChatList]);
+  }, [activeChat, currentUser, markChatAsRead]);
 
   // 5. MESAJ GÖNDERME
   const handleSendMessage = async (e) => {
@@ -337,6 +383,15 @@ export default function MessagesTab({ currentUser = null }) {
 
       return;
     }
+
+    // Sol taraftaki son mesaj metnini anında güncelle
+    setChatList((prev) =>
+      prev.map((chat) =>
+        String(chat.chat_id) === String(activeChat)
+          ? { ...chat, last_message: currentText }
+          : chat
+      )
+    );
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({ message: currentText, message_text: currentText }));
@@ -449,6 +504,7 @@ export default function MessagesTab({ currentUser = null }) {
                   key={chat.chat_id}
                   onClick={() => {
                     setActiveChat(chat.chat_id);
+                    markChatAsRead(chat.chat_id);
                     setMobileChatOpen(true);
                   }}
                   className={`p-3 sm:p-3.5 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-200 flex items-center gap-3 border-2 shadow-sm touch-manipulation ${
@@ -474,7 +530,7 @@ export default function MessagesTab({ currentUser = null }) {
                   <div className="flex-grow overflow-hidden">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-black text-white truncate drop-shadow-md">{chat.counterpart.name}</h4>
-                      {chat.unread_count > 0 && (
+                      {chat.unread_count > 0 && !isSelected && (
                         <span className="text-[9px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full shrink-0 animate-bounce">
                           {chat.unread_count}
                         </span>
@@ -502,7 +558,7 @@ export default function MessagesTab({ currentUser = null }) {
         !mobileChatOpen ? "hidden lg:flex" : "flex"
       }`}>
         
-        {/* Sohbet Üst Bilgisi (Header) - Sabit */}
+        {/* Sohbet Üst Bilgisi (Header) */}
         <div className="p-3 sm:p-4 border-b-2 border-emerald-950/80 flex items-center justify-between bg-[#0B1310]/95 backdrop-blur-md shadow-md shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <button
@@ -566,7 +622,7 @@ export default function MessagesTab({ currentUser = null }) {
           )}
         </div>
 
-        {/* Gönder Formu - Sabit Alt Alan */}
+        {/* Gönder Formu */}
         <form onSubmit={handleSendMessage} className="p-3 sm:p-4 border-t-2 border-emerald-950/80 bg-[#0B1310] flex items-center gap-2 shrink-0">
           <input
             type="text"

@@ -14,6 +14,7 @@ try:
 except ImportError:
     try:
         import pytz
+
         tr_tz = pytz.timezone("Europe/Istanbul")
     except Exception:
         tr_tz = timezone(timedelta(hours=3))
@@ -104,7 +105,6 @@ expert_router = APIRouter(
     prefix="/api/v1/expert/messages",
     tags=["Expert Messages"]
 )
-
 
 # =========================================================================
 # YARDIMCI FONKSİYONLAR
@@ -371,6 +371,7 @@ class ConnectionManager:
                         f"WebSocket iletim hatası "
                         f"(User #{user_id}): {e}"
                     )
+
                     self.disconnect(
                         room_id,
                         user_id,
@@ -639,6 +640,7 @@ async def get_available_contacts(
             # -------------------------------------------------------------
             # Uzman -> Aktif aboneliği olan danışanlar
             # -------------------------------------------------------------
+
             if my_role in expert_roles:
 
                 query = """
@@ -675,6 +677,7 @@ async def get_available_contacts(
             # -------------------------------------------------------------
             # Danışan -> Aktif aboneliği olan uzmanlar
             # -------------------------------------------------------------
+
             else:
 
                 query = """
@@ -1195,6 +1198,116 @@ async def send_message_rest(
 
 
 # =========================================================================
+# MARK ROOM AS READ
+# =========================================================================
+
+@router.post("/rooms/{room_id}/read")
+@expert_router.post("/rooms/{room_id}/read")
+async def mark_room_as_read(
+    room_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Kullanıcının bulunduğu odadaki, karşı taraftan gelen
+    okunmamış mesajları okundu olarak işaretler.
+
+    Kullanıcı yalnızca kendi dahil olduğu chat_rooms odasında
+    mesajları okundu olarak işaretleyebilir.
+    """
+
+    with db_connection() as conn:
+        if not conn:
+            raise HTTPException(
+                status_code=500,
+                detail="Veritabanı bağlantı hatası."
+            )
+
+        try:
+            cur = conn.cursor(
+                cursor_factory=RealDictCursor
+            )
+
+            # -------------------------------------------------------------
+            # 1. Kullanıcının bu odaya erişimi var mı?
+            # -------------------------------------------------------------
+
+            cur.execute(
+                """
+                SELECT id
+                FROM chat_rooms
+                WHERE id = %s
+                  AND (
+                        client_id = %s
+                        OR expert_id = %s
+                      )
+                """,
+                (
+                    room_id,
+                    current_user_id,
+                    current_user_id
+                )
+            )
+
+            room = cur.fetchone()
+
+            if not room:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Bu mesaj odasına erişim yetkiniz bulunmuyor."
+                )
+
+            # -------------------------------------------------------------
+            # 2. Karşı taraftan gelen okunmamış mesajları okundu yap
+            # -------------------------------------------------------------
+
+            cur.execute(
+                """
+                UPDATE chat_messages
+                SET is_read = TRUE
+                WHERE room_id = %s
+                  AND sender_id != %s
+                  AND is_read = FALSE
+                """,
+                (
+                    room_id,
+                    current_user_id
+                )
+            )
+
+            updated_count = cur.rowcount
+
+            conn.commit()
+            cur.close()
+
+            return {
+                "status": "success",
+                "message": "Mesajlar okundu olarak işaretlendi.",
+                "updated_count": updated_count
+            }
+
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+
+            print(
+                f"Mesaj okundu işaretleme hatası: {e}"
+            )
+
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Mesajlar okunmuş olarak işaretlenirken "
+                    "hata oluştu."
+                )
+            )
+
+
+# =========================================================================
 # INITIATE CHAT
 # =========================================================================
 
@@ -1210,6 +1323,7 @@ async def initiate_chat(
     Kullanıcı sadece aktif uzman-danışan abonelik ilişkisi bulunan
     kişiyle sohbet başlatabilir.
     """
+
     target_id = (
         payload.get("professional_id")
         or payload.get("client_id")
@@ -1354,7 +1468,6 @@ async def initiate_chat(
                             OR end_date >= NOW()
                           )
                     ORDER BY end_date DESC NULLS LAST
-                    LIMIT 1
                     """,
                     (
                         target_id,

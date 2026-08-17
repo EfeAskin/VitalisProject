@@ -4,19 +4,19 @@ import React, {
   useState,
   useEffect,
   Suspense,
-  useCallback
+  useCallback,
 } from "react";
 import {
   useSearchParams,
   useRouter,
-  usePathname
+  usePathname,
 } from "next/navigation";
 import {
   Calendar,
   MessageSquare,
   Headphones,
   ShieldCheck,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 
 import AppointmentsTab from "./components/AppointmentsTab";
@@ -40,7 +40,7 @@ const getAuthToken = () => {
     "token",
     "jwt",
     "accessToken",
-    "auth_token"
+    "auth_token",
   ];
 
   for (const key of storageKeys) {
@@ -65,7 +65,7 @@ const getAuthToken = () => {
     "token",
     "jwt",
     "auth_token",
-    "accessToken"
+    "accessToken",
   ];
 
   for (const name of cookieNames) {
@@ -104,7 +104,8 @@ const getAuthHeaders = (
   const headers = {};
 
   if (contentType) {
-    headers["Content-Type"] = contentType;
+    headers["Content-Type"] =
+      contentType;
   }
 
   const token = getAuthToken();
@@ -137,15 +138,13 @@ function ContactContent() {
 
   // -----------------------------------------------------------------------
   // GERÇEK DİNAMİK SAYILAR
-  //
-  // null = henüz yüklenmedi / child component henüz bildirmedi
   // -----------------------------------------------------------------------
 
   const [unreadCounts, setUnreadCounts] =
     useState({
       appointments: null,
       messages: 0,
-      support: null
+      support: null,
     });
 
   // =========================================================================
@@ -161,12 +160,13 @@ function ContactContent() {
             method: "GET",
             headers: getAuthHeaders(),
             credentials: "include",
-            cache: "no-store"
+            cache: "no-store",
           }
         );
 
         if (res.ok) {
-          const data = await res.json();
+          const data =
+            await res.json();
 
           setCurrentUser(
             data.user || data
@@ -191,23 +191,39 @@ function ContactContent() {
   }, []);
 
   // =========================================================================
-  // MESAJ SAYISINI GERÇEK BACKEND'DEN HESAPLA
+  // EXPERT MESAJ SAYISINI GERÇEK BACKEND'DEN HESAPLA
+  // =========================================================================
+  //
+  // Expert tarafındaki backend logları:
+  //
+  // POST /api/v1/expert/messages/rooms/1/read
+  //
+  // Bu nedenle expert page'de client mesaj endpoint'i olan
+  // /api/v1/messages/chats kullanılmaz.
+  //
+  // Expert odaları:
+  // /api/v1/expert/messages/rooms
   // =========================================================================
 
   const fetchMessageCount =
     useCallback(async () => {
-      if (!currentUser?.id) {
+      const userId =
+        currentUser?.id ||
+        currentUser?._id ||
+        currentUser?.user_id;
+
+      if (!userId) {
         return;
       }
 
       try {
         const res = await fetch(
-          "/api/v1/messages/chats",
+          "/api/v1/expert/messages/rooms",
           {
             method: "GET",
             headers: getAuthHeaders(),
             credentials: "include",
-            cache: "no-store"
+            cache: "no-store",
           }
         );
 
@@ -215,20 +231,25 @@ function ContactContent() {
           return;
         }
 
-        const data = await res.json();
+        const data =
+          await res.json();
 
         if (
           data.status === "success"
         ) {
-          const chats =
-            data.chats || [];
+          const rooms =
+            data.rooms ||
+            data.chats ||
+            [];
 
           const totalUnread =
-            chats.reduce(
-              (total, chat) =>
+            rooms.reduce(
+              (total, room) =>
                 total +
                 Number(
-                  chat.unread_count || 0
+                  room.unread_count ||
+                    room.unreadCount ||
+                    0
                 ),
               0
             );
@@ -236,21 +257,99 @@ function ContactContent() {
           setUnreadCounts(
             (prev) => ({
               ...prev,
-              messages: totalUnread
+              messages:
+                totalUnread,
             })
           );
         }
       } catch (err) {
         console.error(
-          "Mesaj sayısı alınamadı:",
+          "Expert mesaj sayısı alınamadı:",
           err
         );
       }
     }, [currentUser]);
 
+  // İlk mesaj sayısını al
   useEffect(() => {
     fetchMessageCount();
   }, [fetchMessageCount]);
+
+  // =========================================================================
+  // MESAJ BİLDİRİMİNİ OTOMATİK YENİLE
+  // =========================================================================
+  //
+  // Mesaj /read endpoint'i backend'de unread_count'u değiştirdiğinde
+  // page üzerindeki badge'in de güncel kalmasını sağlar.
+  // =========================================================================
+
+  useEffect(() => {
+    if (!currentUser) {
+      return;
+    }
+
+    // İlk kontrol
+    fetchMessageCount();
+
+    if (activeTab !== "messages") {
+      return;
+    }
+
+    const intervalId =
+      setInterval(() => {
+        if (
+          typeof document !==
+            "undefined" &&
+          document.visibilityState ===
+            "visible"
+        ) {
+          fetchMessageCount();
+        }
+      }, 2000);
+
+    const handleVisibilityChange =
+      () => {
+        if (
+          document.visibilityState ===
+          "visible"
+        ) {
+          fetchMessageCount();
+        }
+      };
+
+    const handleWindowFocus =
+      () => {
+        fetchMessageCount();
+      };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    return () => {
+      clearInterval(intervalId);
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+    };
+  }, [
+    currentUser,
+    activeTab,
+    fetchMessageCount,
+  ]);
 
   // =========================================================================
   // URL TAB SENKRONİZASYONU
@@ -264,7 +363,7 @@ function ContactContent() {
       [
         "appointments",
         "messages",
-        "support"
+        "support",
       ].includes(tabParam)
     ) {
       setActiveTab(tabParam);
@@ -275,7 +374,9 @@ function ContactContent() {
   // TAB DEĞİŞTİRME
   // =========================================================================
 
-  const handleTabChange = (tabKey) => {
+  const handleTabChange = (
+    tabKey
+  ) => {
     setActiveTab(tabKey);
 
     const params =
@@ -288,9 +389,15 @@ function ContactContent() {
     router.push(
       `${pathname}?${params.toString()}`,
       {
-        scroll: false
+        scroll: false,
       }
     );
+
+    if (tabKey === "messages") {
+      setTimeout(() => {
+        fetchMessageCount();
+      }, 0);
+    }
   };
 
   // =========================================================================
@@ -303,9 +410,11 @@ function ContactContent() {
         (prev) => ({
           ...prev,
           appointments:
-            Number.isFinite(Number(count))
+            Number.isFinite(
+              Number(count)
+            )
               ? Number(count)
-              : 0
+              : 0,
         })
       );
     }, []);
@@ -316,9 +425,11 @@ function ContactContent() {
         (prev) => ({
           ...prev,
           support:
-            Number.isFinite(Number(count))
+            Number.isFinite(
+              Number(count)
+            )
               ? Number(count)
-              : 0
+              : 0,
         })
       );
     }, []);
@@ -331,6 +442,7 @@ function ContactContent() {
     <div className="relative min-h-screen bg-[#11142D] text-slate-100 font-sans pb-20 flex flex-col selection:bg-orange-500 selection:text-white overflow-hidden">
 
       {/* AMBİYANS IŞIKLARI */}
+
       <div className="absolute top-10 left-1/4 w-[500px] h-[500px] bg-orange-500/15 rounded-full blur-[140px] pointer-events-none -z-0" />
 
       <div className="absolute top-1/3 right-10 w-[450px] h-[450px] bg-blue-600/15 rounded-full blur-[140px] pointer-events-none -z-0" />
@@ -338,14 +450,17 @@ function ContactContent() {
       <div className="absolute bottom-10 left-10 w-[500px] h-[500px] bg-indigo-500/15 rounded-full blur-[150px] pointer-events-none -z-0" />
 
       {/* ÜST BANNER */}
+
       <div className="relative z-10 w-full px-4 sm:px-6 pt-8 pb-6 transition-all duration-300">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6 relative">
 
           {/* BAŞLIK */}
+
           <div className="space-y-2 text-center lg:text-left z-10 max-w-xl">
             <div className="flex items-center justify-center lg:justify-start gap-2">
               <span className="px-3.5 py-1 bg-gradient-to-r from-orange-500/20 to-amber-500/20 border border-orange-500/50 text-orange-300 text-[10px] font-heading font-black tracking-widest rounded-full uppercase flex items-center gap-1.5 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
                 <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
+
                 VITALIS EXPERT COMMAND CENTER
               </span>
             </div>
@@ -360,9 +475,11 @@ function ContactContent() {
           </div>
 
           {/* TAB SWITCHER */}
+
           <div className="relative flex bg-[#11142D] p-1.5 rounded-2xl w-full lg:w-[500px] shadow-inner border border-slate-700/80 z-10">
 
             {/* RANDEVULAR */}
+
             <button
               onClick={() =>
                 handleTabChange(
@@ -380,20 +497,25 @@ function ContactContent() {
               <span>RANDEVULAR</span>
 
               {unreadCounts.appointments !== null &&
-                unreadCounts.appointments > 0 && (
+                unreadCounts.appointments >
+                  0 && (
                   <span
                     className={`px-1.5 py-0.5 text-[9px] font-mono font-extrabold rounded-full ${
-                      activeTab === "appointments"
+                      activeTab ===
+                      "appointments"
                         ? "bg-white text-blue-700"
                         : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
                     }`}
                   >
-                    {unreadCounts.appointments}
+                    {
+                      unreadCounts.appointments
+                    }
                   </span>
                 )}
             </button>
 
             {/* MESAJLAR */}
+
             <button
               onClick={() =>
                 handleTabChange(
@@ -410,7 +532,8 @@ function ContactContent() {
 
               <span>MESAJLAR</span>
 
-              {unreadCounts.messages > 0 && (
+              {unreadCounts.messages >
+                0 && (
                 <span
                   className={`px-1.5 py-0.5 text-[9px] font-mono font-extrabold rounded-full ${
                     activeTab === "messages"
@@ -418,12 +541,15 @@ function ContactContent() {
                       : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                   }`}
                 >
-                  {unreadCounts.messages}
+                  {
+                    unreadCounts.messages
+                  }
                 </span>
               )}
             </button>
 
             {/* DESTEK */}
+
             <button
               onClick={() =>
                 handleTabChange(
@@ -441,15 +567,19 @@ function ContactContent() {
               <span>DESTEK</span>
 
               {unreadCounts.support !== null &&
-                unreadCounts.support > 0 && (
+                unreadCounts.support >
+                  0 && (
                   <span
                     className={`px-1.5 py-0.5 text-[9px] font-mono font-extrabold rounded-full ${
-                      activeTab === "support"
+                      activeTab ===
+                      "support"
                         ? "bg-white text-purple-700"
                         : "bg-purple-500/20 text-purple-300 border border-purple-500/40"
                     }`}
                   >
-                    {unreadCounts.support}
+                    {
+                      unreadCounts.support
+                    }
                   </span>
                 )}
             </button>
@@ -458,6 +588,7 @@ function ContactContent() {
       </div>
 
       {/* ANA İÇERİK */}
+
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 w-full flex-grow mt-2">
 
         {loadingUser ? (
@@ -472,9 +603,12 @@ function ContactContent() {
           </div>
         ) : (
           <>
-            {activeTab === "appointments" && (
+            {activeTab ===
+              "appointments" && (
               <AppointmentsTab
-                currentUser={currentUser}
+                currentUser={
+                  currentUser
+                }
                 onCountChange={
                   handleAppointmentsCount
                 }
@@ -483,23 +617,35 @@ function ContactContent() {
 
             {activeTab === "messages" && (
               <MessagesTab
-                currentUser={currentUser}
-                onUnreadCountChange={
-                  (count) =>
-                    setUnreadCounts(
-                      (prev) => ({
-                        ...prev,
-                        messages:
-                          Number(count) || 0
-                      })
-                    )
+                currentUser={
+                  currentUser
                 }
+                onUnreadCountChange={(
+                  count
+                ) => {
+                  setUnreadCounts(
+                    (prev) => ({
+                      ...prev,
+                      messages:
+                        Number(count) ||
+                        0,
+                    })
+                  );
+
+                  // Child component mesajı okuduğunda
+                  // page badge'ini backend ile tekrar doğrula.
+                  setTimeout(() => {
+                    fetchMessageCount();
+                  }, 100);
+                }}
               />
             )}
 
             {activeTab === "support" && (
               <SupportTab
-                currentUser={currentUser}
+                currentUser={
+                  currentUser
+                }
                 onCountChange={
                   handleSupportCount
                 }
