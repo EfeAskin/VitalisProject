@@ -13,6 +13,7 @@ from backend.routers import clientmarketplace
 
 from backend.routers import expertprograms
 from backend.routers import expertatama
+from backend.routers import messages
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -94,7 +95,8 @@ app.include_router(clientmarketplace.router)
 
 app.include_router(expertprograms.router)
 app.include_router(expertatama.router)
-
+app.include_router(messages.router)
+app.include_router(messages.expert_router)
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA
 # ==========================================
@@ -117,6 +119,7 @@ def read_root():
             "Dietitian Target Control",
             "Hydration & Meal Tracking",
             "Shared Specialist-Client Dashboard",
-            "Footer Services"
+            "Footer Services",
+            "Messages & Notifications"
         ]
     }
