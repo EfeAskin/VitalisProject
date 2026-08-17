@@ -32,7 +32,7 @@ class SchemaSync:
         logger.info("=" * 70)
 
         # ======================================================
-        # İlk Schema Okuma
+        # İLK SCHEMA OKUMA
         # ======================================================
 
         local_schema = DatabaseInspector(
@@ -55,17 +55,27 @@ class SchemaSync:
         # LOCAL -> NEON
         # ======================================================
 
-        logger.info("LOCAL -> NEON karşılaştırılıyor...")
+        logger.info(
+            "LOCAL -> NEON karşılaştırılıyor..."
+        )
 
-        changes = SchemaComparator(
+        local_to_neon_all_changes = SchemaComparator(
             local_schema,
             neon_schema
         ).compare()
 
-        if changes:
+        local_to_neon_changes = [
+            change
+            for change in local_to_neon_all_changes
+            if change.get("source") == "local"
+        ]
+
+        if local_to_neon_changes:
 
             logger.info(
-                f"{len(changes)} değişiklik bulundu."
+                f"LOCAL -> NEON için "
+                f"{len(local_to_neon_changes)} "
+                f"değişiklik bulundu."
             )
 
             MigrationEngine(
@@ -74,7 +84,7 @@ class SchemaSync:
 
                 target_connection=self.neon_conn,
 
-                changes=changes,
+                changes=local_to_neon_changes,
 
                 source_schema=local_ddl
 
@@ -82,10 +92,12 @@ class SchemaSync:
 
         else:
 
-            logger.info("Neon güncel.")
+            logger.info(
+                "Neon güncel."
+            )
 
         # ======================================================
-        # Migration sonrası tekrar oku
+        # MIGRATION SONRASI TEKRAR OKU
         # ======================================================
 
         local_schema = DatabaseInspector(
@@ -108,17 +120,27 @@ class SchemaSync:
         # NEON -> LOCAL
         # ======================================================
 
-        logger.info("NEON -> LOCAL karşılaştırılıyor...")
+        logger.info(
+            "NEON -> LOCAL karşılaştırılıyor..."
+        )
 
-        changes = SchemaComparator(
+        neon_to_local_all_changes = SchemaComparator(
             neon_schema,
             local_schema
         ).compare()
 
-        if changes:
+        neon_to_local_changes = [
+            change
+            for change in neon_to_local_all_changes
+            if change.get("source") == "local"
+        ]
+
+        if neon_to_local_changes:
 
             logger.info(
-                f"{len(changes)} değişiklik bulundu."
+                f"NEON -> LOCAL için "
+                f"{len(neon_to_local_changes)} "
+                f"değişiklik bulundu."
             )
 
             MigrationEngine(
@@ -127,7 +149,7 @@ class SchemaSync:
 
                 target_connection=self.local_conn,
 
-                changes=changes,
+                changes=neon_to_local_changes,
 
                 source_schema=neon_ddl
 
@@ -135,13 +157,17 @@ class SchemaSync:
 
         else:
 
-            logger.info("Local güncel.")
+            logger.info(
+                "Local güncel."
+            )
 
         # ======================================================
-        # Son Kontrol
+        # SON KONTROL
         # ======================================================
 
-        logger.info("Son doğrulama yapılıyor...")
+        logger.info(
+            "Son doğrulama yapılıyor..."
+        )
 
         final_local = DatabaseInspector(
             self.local_conn
@@ -164,7 +190,9 @@ class SchemaSync:
 
             for item in remaining:
 
-                logger.warning(str(item))
+                logger.warning(
+                    str(item)
+                )
 
         else:
 
@@ -176,4 +204,4 @@ class SchemaSync:
         logger.info("SCHEMA SYNC TAMAMLANDI")
         logger.info("=" * 70)
 
-        return len(remaining) == 0                          
+        return len(remaining) == 0

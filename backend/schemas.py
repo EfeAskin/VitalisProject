@@ -452,3 +452,66 @@ class MarketplaceListingUpdate(BaseModel):
     period: Optional[str] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+# ==========================================
+# 18. TICKETS TABLE SCHEMA
+# ==========================================
+class Ticket(BaseModel):
+    id: Optional[int] = None
+    ticket_code: str
+    user_id: Optional[int] = None
+    subject: str
+    category: str
+    priority: Optional[str] = "normal"
+    status: Optional[str] = "processing"
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 19. TICKET_MESSAGES TABLE SCHEMA
+# ==========================================
+class TicketMessage(BaseModel):
+    id: Optional[int] = None
+    ticket_id: Optional[int] = None
+    sender_id: Optional[int] = None
+    message_text: str
+    sent_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 20. CHAT_ROOMS TABLE SCHEMA
+# ==========================================
+class ChatRoom(BaseModel):
+    id: Optional[int] = None
+    client_id: Optional[int] = None
+    expert_id: Optional[int] = None
+    is_ai_chat: Optional[bool] = False
+    openai_thread_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 21. CHAT_MESSAGES TABLE SCHEMA
+# ==========================================
+class ChatMessage(BaseModel):
+    id: Optional[int] = None
+    room_id: Optional[int] = None
+    sender_id: Optional[int] = None
+    is_from_ai: Optional[bool] = False
+    message_text: str
+    is_read: Optional[bool] = False
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
