@@ -238,7 +238,7 @@ export default function MessagesTab({ currentUser = null }) {
   };
 
   // =========================================================================
-  // AKTİF SOHBET BİLGİSİNİ GÜNCELLE & OKUNDU İSTEĞİ
+  // AKTİF SOHBET BİLGİSİNİ GÜNCELLE
   // =========================================================================
 
   useEffect(() => {
@@ -264,9 +264,17 @@ export default function MessagesTab({ currentUser = null }) {
         isAi: false
       });
     }
+  }, [activeChat, chatList]);
 
-    markRoomAsRead(activeChat);
-  }, [activeChat, chatList, markRoomAsRead]);
+  // =========================================================================
+  // SADECE SOHBET ODASI DEĞİŞTİĞİNDE OKUNDU İSTEĞİ GÖNDER (SONSUZ DÖNGÜ ÖNLENDİ)
+  // =========================================================================
+
+  useEffect(() => {
+    if (activeChat && activeChat !== "ai") {
+      markRoomAsRead(activeChat);
+    }
+  }, [activeChat, markRoomAsRead]);
 
   // =========================================================================
   // AÇIK SOHBETTE MESAJ SAYISI DEĞİŞTİĞİNDE OTOMATİK OKUNDU İŞARETLEME

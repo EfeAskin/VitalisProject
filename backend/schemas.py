@@ -515,3 +515,66 @@ class ChatMessage(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Randevu Temel Şeması
+class AppointmentBase(BaseModel):
+    title: Optional[str] = "Birebir Görüşme"
+    appointment_date: str  # YYYY-MM-DD
+    time_slot: str  # '14:00 - 14:45'
+    appointment_type: str  # 'online' veya 'in_person'
+    notes: Optional[str] = None
+
+
+# Danışan Randevu Talebi Oluşturma Şeması
+class AppointmentCreateByClient(AppointmentBase):
+    expert_id: int
+
+
+# Uzman Doğrudan Randevu Planlama Şeması
+class AppointmentCreateByExpert(AppointmentBase):
+    client_id: int
+    meeting_link: Optional[str] = None  # Online ise Zoom/Teams linki
+    location_link: Optional[str] = None  # Yüz yüze ise Harita linki
+
+
+# Uzman Onay / Red / Durum Güncelleme Şeması
+class AppointmentStatusUpdate(BaseModel):
+    status: str  # 'approved', 'rejected', 'cancelled'
+    rejection_reason: Optional[str] = (
+        None  # Reddetme durumunda açıklama sebebi
+    )
+    meeting_link: Optional[str] = (
+        None  # Onaylarken online link eklenebilir
+    )
+    location_link: Optional[str] = (
+        None  # Onaylarken harita linki eklenebilir
+    )
+
+
+# Genel Link Güncelleme Şeması
+class AppointmentLinkUpdate(BaseModel):
+    meeting_link: Optional[str] = None
+    location_link: Optional[str] = None
+
+
+# Yanıt Şeması (Frontend'e Dönen)
+class AppointmentResponse(AppointmentBase):
+    id: int
+    client_id: int
+    expert_id: int
+    duration_minutes: int
+    status: str
+    rejection_reason: Optional[str] = None
+    meeting_link: Optional[str] = None
+    location_link: Optional[str] = None
+    created_by_role: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    # Birleştirilmiş detay bilgileri
+    client_name: Optional[str] = None
+    expert_name: Optional[str] = None
+    expert_title: Optional[str] = None
+
+    class Config:
+        from_attributes = True

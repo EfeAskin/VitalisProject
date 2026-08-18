@@ -191,167 +191,6 @@ function ContactContent() {
   }, []);
 
   // =========================================================================
-  // EXPERT MESAJ SAYISINI GERÇEK BACKEND'DEN HESAPLA
-  // =========================================================================
-  //
-  // Expert tarafındaki backend logları:
-  //
-  // POST /api/v1/expert/messages/rooms/1/read
-  //
-  // Bu nedenle expert page'de client mesaj endpoint'i olan
-  // /api/v1/messages/chats kullanılmaz.
-  //
-  // Expert odaları:
-  // /api/v1/expert/messages/rooms
-  // =========================================================================
-
-  const fetchMessageCount =
-    useCallback(async () => {
-      const userId =
-        currentUser?.id ||
-        currentUser?._id ||
-        currentUser?.user_id;
-
-      if (!userId) {
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          "/api/v1/expert/messages/rooms",
-          {
-            method: "GET",
-            headers: getAuthHeaders(),
-            credentials: "include",
-            cache: "no-store",
-          }
-        );
-
-        if (!res.ok) {
-          return;
-        }
-
-        const data =
-          await res.json();
-
-        if (
-          data.status === "success"
-        ) {
-          const rooms =
-            data.rooms ||
-            data.chats ||
-            [];
-
-          const totalUnread =
-            rooms.reduce(
-              (total, room) =>
-                total +
-                Number(
-                  room.unread_count ||
-                    room.unreadCount ||
-                    0
-                ),
-              0
-            );
-
-          setUnreadCounts(
-            (prev) => ({
-              ...prev,
-              messages:
-                totalUnread,
-            })
-          );
-        }
-      } catch (err) {
-        console.error(
-          "Expert mesaj sayısı alınamadı:",
-          err
-        );
-      }
-    }, [currentUser]);
-
-  // İlk mesaj sayısını al
-  useEffect(() => {
-    fetchMessageCount();
-  }, [fetchMessageCount]);
-
-  // =========================================================================
-  // MESAJ BİLDİRİMİNİ OTOMATİK YENİLE
-  // =========================================================================
-  //
-  // Mesaj /read endpoint'i backend'de unread_count'u değiştirdiğinde
-  // page üzerindeki badge'in de güncel kalmasını sağlar.
-  // =========================================================================
-
-  useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-
-    // İlk kontrol
-    fetchMessageCount();
-
-    if (activeTab !== "messages") {
-      return;
-    }
-
-    const intervalId =
-      setInterval(() => {
-        if (
-          typeof document !==
-            "undefined" &&
-          document.visibilityState ===
-            "visible"
-        ) {
-          fetchMessageCount();
-        }
-      }, 2000);
-
-    const handleVisibilityChange =
-      () => {
-        if (
-          document.visibilityState ===
-          "visible"
-        ) {
-          fetchMessageCount();
-        }
-      };
-
-    const handleWindowFocus =
-      () => {
-        fetchMessageCount();
-      };
-
-    document.addEventListener(
-      "visibilitychange",
-      handleVisibilityChange
-    );
-
-    window.addEventListener(
-      "focus",
-      handleWindowFocus
-    );
-
-    return () => {
-      clearInterval(intervalId);
-
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange
-      );
-
-      window.removeEventListener(
-        "focus",
-        handleWindowFocus
-      );
-    };
-  }, [
-    currentUser,
-    activeTab,
-    fetchMessageCount,
-  ]);
-
-  // =========================================================================
   // URL TAB SENKRONİZASYONU
   // =========================================================================
 
@@ -392,12 +231,6 @@ function ContactContent() {
         scroll: false,
       }
     );
-
-    if (tabKey === "messages") {
-      setTimeout(() => {
-        fetchMessageCount();
-      }, 0);
-    }
   };
 
   // =========================================================================
@@ -631,12 +464,6 @@ function ContactContent() {
                         0,
                     })
                   );
-
-                  // Child component mesajı okuduğunda
-                  // page badge'ini backend ile tekrar doğrula.
-                  setTimeout(() => {
-                    fetchMessageCount();
-                  }, 100);
                 }}
               />
             )}
