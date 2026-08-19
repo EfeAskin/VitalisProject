@@ -16,6 +16,7 @@ from backend.routers import expertatama
 from backend.routers import messages
 from backend.routers import tickets
 from backend.routers import appointment 
+from backend.routers import clientprograms
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -102,6 +103,8 @@ app.include_router(messages.expert_router)
 
 app.include_router(tickets.router) 
 app.include_router(appointment.router)
+
+app.include_router(clientprograms.router)  # <-- YENİ EKLENDİ
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA
 # ==========================================

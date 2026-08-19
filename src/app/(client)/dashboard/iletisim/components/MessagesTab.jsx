@@ -74,7 +74,7 @@ const getAuthHeaders = (currentUser, contentType = null) => {
   return headers;
 };
 
-export default function MessagesTab({ currentUser = null }) {
+export default function MessagesTab({ currentUser = null, initialTargetId = null }) {
   const [activeChat, setActiveChat] = useState("ai");
   const [messageText, setMessageText] = useState("");
   const [mobileChatOpen, setMobileChatOpen] = useState(true);
@@ -99,6 +99,19 @@ export default function MessagesTab({ currentUser = null }) {
 
   const socketRef = useRef(null);
   const chatContainerRef = useRef(null);
+  
+  // Refler ile state döngülerini kırma
+  const currentUserRef = useRef(currentUser);
+  const chatListRef = useRef(chatList);
+  const autoHandledTargetRef = useRef(null);
+
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  useEffect(() => {
+    chatListRef.current = chatList;
+  }, [chatList]);
 
   // Sohbet içindeki akışı aşağı kaydıran fonksiyon
   const scrollToBottom = useCallback(() => {
@@ -118,7 +131,7 @@ export default function MessagesTab({ currentUser = null }) {
   const markChatAsRead = useCallback(async (chatId) => {
     if (!chatId || chatId === "ai") return;
 
-    // Yerel state üzerinde okunmamış sayısını hemen sıfırla
+    // Yerel state üzerinde okunmamış sayısını sıfırla
     setChatList((prevList) =>
       prevList.map((chat) =>
         String(chat.chat_id) === String(chatId)
@@ -131,21 +144,22 @@ export default function MessagesTab({ currentUser = null }) {
     try {
       await fetch(`/api/v1/messages/rooms/${chatId}/read`, {
         method: "POST",
-        headers: getAuthHeaders(currentUser),
+        headers: getAuthHeaders(currentUserRef.current),
         credentials: "include",
       });
     } catch (err) {
       console.error("Okundu bilgisi gönderilemedi:", err);
     }
-  }, [currentUser]);
+  }, []);
 
   // 1. SOHBET LİSTESİNİ ÇEKME
   const fetchChatList = useCallback(async () => {
-    if (!currentUser?.id && !currentUser?._id && !currentUser?.user_id) return;
+    const usr = currentUserRef.current;
+    if (!usr?.id && !usr?._id && !usr?.user_id) return;
     try {
       const res = await fetch("/api/v1/messages/chats", { 
         method: "GET",
-        headers: getAuthHeaders(currentUser),
+        headers: getAuthHeaders(usr),
         credentials: "include" 
       });
       if (res.ok) {
@@ -157,11 +171,55 @@ export default function MessagesTab({ currentUser = null }) {
     } catch (err) {
       console.error("Sohbet listesi yüklenemedi:", err);
     }
-  }, [currentUser]);
+  }, []);
 
   useEffect(() => {
     fetchChatList();
   }, [fetchChatList]);
+
+  // 🎯 OTOMATİK SOHBET BAŞLATMA / ODAYA GEÇİŞ MEKANİZMASI (Tek Seferlik Tetiklenme)
+  useEffect(() => {
+    if (!initialTargetId || autoHandledTargetRef.current === initialTargetId) return;
+
+    const autoHandleTargetUser = async () => {
+      autoHandledTargetRef.current = initialTargetId;
+
+      const currentList = chatListRef.current;
+      const existingChat = currentList.find((c) => {
+        const counterpartId = c.counterpart?.id || c.counterpart?._id || c.counterpart?.user_id;
+        return String(counterpartId) === String(initialTargetId);
+      });
+
+      if (existingChat) {
+        setActiveChat(existingChat.chat_id);
+        markChatAsRead(existingChat.chat_id);
+        setMobileChatOpen(true);
+      } else {
+        try {
+          const res = await fetch("/api/v1/messages/initiate", {
+            method: "POST",
+            headers: getAuthHeaders(currentUserRef.current, "application/json"),
+            credentials: "include",
+            body: JSON.stringify({ target_id: initialTargetId })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === "success" && data.room_id) {
+              await fetchChatList();
+              setActiveChat(data.room_id);
+              markChatAsRead(data.room_id);
+              setMobileChatOpen(true);
+            }
+          }
+        } catch (err) {
+          console.error("Hedef kullanıcı ile sohbet başlatılamadı:", err);
+        }
+      }
+    };
+
+    autoHandleTargetUser();
+  }, [initialTargetId, fetchChatList, markChatAsRead]);
 
   // Active Chat Bilgisini Güncelleme
   useEffect(() => {
@@ -195,7 +253,7 @@ export default function MessagesTab({ currentUser = null }) {
     try {
       const res = await fetch("/api/v1/messages/available-contacts", {
         method: "GET",
-        headers: getAuthHeaders(currentUser),
+        headers: getAuthHeaders(currentUserRef.current),
         credentials: "include"
       });
 
@@ -217,7 +275,7 @@ export default function MessagesTab({ currentUser = null }) {
     try {
       const res = await fetch("/api/v1/messages/initiate", {
         method: "POST",
-        headers: getAuthHeaders(currentUser, "application/json"),
+        headers: getAuthHeaders(currentUserRef.current, "application/json"),
         credentials: "include",
         body: JSON.stringify({ target_id: targetUserId })
       });
@@ -261,13 +319,13 @@ export default function MessagesTab({ currentUser = null }) {
       try {
         const res = await fetch(`/api/v1/messages/rooms/${activeChat}`, { 
           method: "GET",
-          headers: getAuthHeaders(currentUser),
+          headers: getAuthHeaders(currentUserRef.current),
           credentials: "include" 
         });
         if (res.ok) {
           const data = await res.json();
           if (data.status === "success") {
-            const currentUserId = currentUser?.id || currentUser?._id || currentUser?.user_id;
+            const currentUserId = currentUserRef.current?.id || currentUserRef.current?._id || currentUserRef.current?.user_id;
             const mappedMsgs = data.messages.map((m) => ({
               id: m.id,
               sender: (m.sender_id && currentUserId && m.sender_id === currentUserId) || m.is_me ? "user" : "expert",
@@ -275,9 +333,6 @@ export default function MessagesTab({ currentUser = null }) {
               time: m.timestamp || (m.created_at ? new Date(m.created_at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "Şimdi")
             }));
             setMessages(mappedMsgs);
-            
-            // Sohbet geçmişi başarıyla yüklenince okundu işaretle
-            markChatAsRead(activeChat);
           }
         }
       } catch (err) {
@@ -289,10 +344,10 @@ export default function MessagesTab({ currentUser = null }) {
 
     fetchHistory();
 
-    const currentUserId = currentUser?.id || currentUser?._id || currentUser?.user_id;
+    const currentUserId = currentUserRef.current?.id || currentUserRef.current?._id || currentUserRef.current?.user_id;
 
     if (typeof window !== "undefined" && currentUserId) {
-      const token = getAuthToken(currentUser);
+      const token = getAuthToken(currentUserRef.current);
 
       const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const backendHost =
@@ -322,14 +377,13 @@ export default function MessagesTab({ currentUser = null }) {
               }
             ]);
 
-            // Sohbet listesindeki son mesajı ve okunmama durumunu anında güncelle
             setChatList((prevList) =>
               prevList.map((chat) => {
                 if (String(chat.chat_id) === String(activeChat)) {
                   return {
                     ...chat,
                     last_message: newMsgText,
-                    unread_count: 0 // Aktif sohbet açık olduğu için bildirim kalmaz
+                    unread_count: 0
                   };
                 }
                 return chat;
@@ -352,7 +406,7 @@ export default function MessagesTab({ currentUser = null }) {
         socketRef.current.close();
       }
     };
-  }, [activeChat, currentUser, markChatAsRead]);
+  }, [activeChat, markChatAsRead]);
 
   // 5. MESAJ GÖNDERME
   const handleSendMessage = async (e) => {
@@ -384,7 +438,6 @@ export default function MessagesTab({ currentUser = null }) {
       return;
     }
 
-    // Sol taraftaki son mesaj metnini anında güncelle
     setChatList((prev) =>
       prev.map((chat) =>
         String(chat.chat_id) === String(activeChat)
@@ -399,7 +452,7 @@ export default function MessagesTab({ currentUser = null }) {
       try {
         const res = await fetch(`/api/v1/messages/rooms/${activeChat}/send`, {
           method: "POST",
-          headers: getAuthHeaders(currentUser, "application/json"),
+          headers: getAuthHeaders(currentUserRef.current, "application/json"),
           credentials: "include",
           body: JSON.stringify({ message: currentText, message_text: currentText })
         });

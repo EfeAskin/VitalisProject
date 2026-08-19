@@ -258,17 +258,6 @@ function ContactContent() {
   // =========================================================================
   // MESAJ BİLDİRİMİNİ OTOMATİK YENİLE
   // =========================================================================
-  //
-  // MessagesTab içerisinde mesaj okunduğunda backend'deki unread_count
-  // değişiyor. Page üzerindeki badge ise kendi state'ini tuttuğu için
-  // tekrar backend'den okunmadığında eski sayı ekranda kalabiliyordu.
-  //
-  // Bu nedenle:
-  // - Mesajlar sekmesi açıkken düzenli kontrol edilir.
-  // - Sayfa tekrar görünür olduğunda anında kontrol edilir.
-  // - Browser focus olduğunda anında kontrol edilir.
-  // - Sekmeden çıkıldığında interval temizlenir.
-  // =========================================================================
 
   useEffect(() => {
     if (!currentUser) {
@@ -334,7 +323,7 @@ function ContactContent() {
   ]);
 
   // =========================================================================
-  // URL ?tab= PARAMETRESİNİ YAKALAMA & SENKRONİZASYON
+  // URL ?tab= VE ?target_id= PARAMETRELERİNİ YAKALAMA & SENKRONİZASYON
   // =========================================================================
 
   useEffect(() => {
@@ -573,6 +562,9 @@ function ContactContent() {
               <MessagesTab
                 currentUser={
                   currentUser
+                }
+                initialTargetId={
+                  searchParams.get("target_id")
                 }
                 onUnreadCountChange={(
                   count
