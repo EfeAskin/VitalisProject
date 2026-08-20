@@ -3,24 +3,34 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional, List
 import json
 from datetime import date
+from psycopg2.extras import RealDictCursor
 
 # Veritabanı bağlantı jeneratörü ve auth bağımlılıkları
 from backend.database import get_db_connection
 from backend.routers.auth import get_current_user
+
 
 router = APIRouter(
     prefix="/api/client",
     tags=["Client Workouts"]
 )
 
+
 # =========================================================
 # AUTH / AUTHORIZATION HELPERS
 # =========================================================
 
 def get_user_value(current_user, key, index=None):
-    """get_current_user() dict veya tuple/list döndürebildiği için her iki yapıyı da destekler."""
+    """
+    get_current_user() dict veya tuple/list döndürebildiği
+    için her iki yapıyı da destekler.
+    """
+
     if isinstance(current_user, dict):
         return current_user.get(key)
+
+    if hasattr(current_user, key):
+        return getattr(current_user, key)
 
     if hasattr(current_user, "get"):
         return current_user.get(key)
@@ -33,8 +43,15 @@ def get_user_value(current_user, key, index=None):
 
 
 def get_authenticated_user_id(current_user) -> int:
-    """DB'den doğrulanmış kullanıcının gerçek user.id değerini döndürür."""
-    user_id = get_user_value(current_user, "id", 0)
+    """
+    DB'den doğrulanmış kullanıcının gerçek user.id değerini döndürür.
+    """
+
+    user_id = get_user_value(
+        current_user,
+        "id",
+        0
+    )
 
     if user_id is None:
         raise HTTPException(
@@ -44,6 +61,7 @@ def get_authenticated_user_id(current_user) -> int:
 
     try:
         return int(user_id)
+
     except (TypeError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -52,19 +70,31 @@ def get_authenticated_user_id(current_user) -> int:
 
 
 def get_authenticated_user_role(current_user):
-    """Kullanıcının DB'den doğrulanmış rolünü döndürür."""
-    return get_user_value(current_user, "role", 10)
+    """
+    Kullanıcının DB'den doğrulanmış rolünü döndürür.
+    """
+
+    return get_user_value(
+        current_user,
+        "role",
+        1
+    )
 
 
 def require_client(current_user=Depends(get_current_user)):
-    """Client rolü kontrolü."""
+    """
+    Client rolü kontrolü.
+    """
+
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Kimlik doğrulaması gerekli",
         )
 
-    role = get_authenticated_user_role(current_user)
+    role = get_authenticated_user_role(
+        current_user
+    )
 
     if role != "client":
         raise HTTPException(
@@ -74,6 +104,10 @@ def require_client(current_user=Depends(get_current_user)):
 
     return current_user
 
+
+# =========================================================
+# REQUEST MODELS
+# =========================================================
 
 class ToggleExerciseRequest(BaseModel):
     exerciseId: int
@@ -91,152 +125,535 @@ class LogPresetRequest(BaseModel):
     day: Optional[str] = None
 
 
+class StepLogRequest(BaseModel):
+    steps: int
+
+
+# =========================================================
+# DATABASE ROW HELPER
+# =========================================================
+
 def get_row_val(row, key, index):
-    """Dict ya da Tuple dönen veritabanı satırından güvenli veri çekme yardımcısı."""
+    """
+    Dict ya da Tuple dönen veritabanı satırından
+    güvenli veri çekme yardımcısı.
+    """
+
     if isinstance(row, dict):
         return row.get(key)
 
-    elif isinstance(row, (tuple, list)) and len(row) > index:
+    if isinstance(row, (tuple, list)) and len(row) > index:
         return row[index]
 
     return None
 
 
 # =========================================================
-# ENDPOINTS
+# 1. HAFTALIK ANTRENMAN PROGRAMI
 # =========================================================
 
 @router.get("/workout-schedule")
 def get_client_workout_schedule(
-    client_id: Optional[int] = Query(None, description="Aktif danışan ID'si"),
+    client_id: Optional[int] = Query(
+        None,
+        description="Aktif danışan ID'si"
+    ),
     current_user: Any = Depends(get_current_user),
     conn: Any = Depends(get_db_connection)
 ):
     """
-    Danışanın haftalık antrenman programını ve günlere göre atanmış egzersizleri getirir.
-    Egzersizlerin tamamlanma durumunu veritabanından sorgular.
+    Danışanın haftalık antrenman programını ve günlere göre
+    atanmış egzersizleri getirir.
+
+    Ayrıca workout_templates.estimated_calories değerini
+    her güne estimated_calories olarak gönderir.
     """
+
     require_client(current_user)
-    auth_client_id = get_authenticated_user_id(current_user)
 
-    target_client_id = client_id if client_id is not None else auth_client_id
+    auth_client_id = get_authenticated_user_id(
+        current_user
+    )
 
-    cursor = conn.cursor()
+    target_client_id = (
+        client_id
+        if client_id is not None
+        else auth_client_id
+    )
+
+    # Güvenlik:
+    # Client kendi ID'si dışındaki kullanıcının verisini
+    # query parametresi ile çekemesin.
+    if target_client_id != auth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Başka bir danışanın antrenman programına erişemezsiniz"
+        )
+
+    cursor = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
 
     try:
-        # 1. Danışana atanan aktif programları ve şablon detaylarını getir
+
+        # =========================================================
+        # 1. DANIŞANA ATANAN AKTİF PROGRAMLARI GETİR
+        # =========================================================
+
         query = """
-            SELECT 
+            SELECT
                 wp.id AS program_id,
+                wp.client_id,
+                wp.trainer_id,
+                wp.template_id,
                 wp.program_details,
+                wp.status,
+                wp.created_at,
+
                 wt.id AS template_id,
                 wt.name AS template_name,
                 wt.description AS template_desc,
+                wt.difficulty_level,
+                wt.duration_minutes,
+                wt.target_muscles,
+
+                /*
+                 * BURASI ROZET İÇİN GEREKLİ
+                 */
+                COALESCE(
+                    wt.estimated_calories,
+                    0
+                ) AS estimated_calories,
+
                 wte.id AS template_exercise_id,
                 wte.sets,
                 wte.reps,
                 wte.notes,
                 wte.order_index,
+
                 e.id AS exercise_id,
                 e.name AS exercise_name,
-                e.video_url
+                e.video_url,
+                e.target_muscles AS exercise_target_muscles,
+                e.muscle_group,
+                e.description AS exercise_description
+
             FROM workout_programs wp
-            JOIN workout_templates wt ON wp.template_id = wt.id
-            JOIN workout_template_exercises wte ON wt.id = wte.template_id
-            JOIN exercises e ON wte.exercise_id = e.id
-            WHERE wp.client_id = %s AND wp.status = 'active'
-            ORDER BY wte.order_index ASC;
+
+            JOIN workout_templates wt
+                ON wp.template_id = wt.id
+
+            JOIN workout_template_exercises wte
+                ON wt.id = wte.template_id
+
+            JOIN exercises e
+                ON wte.exercise_id = e.id
+
+            WHERE
+                wp.client_id = %s
+                AND wp.status = 'active'
+
+            ORDER BY
+                wp.created_at DESC,
+                wte.order_index ASC,
+                wte.id ASC;
         """
 
-        cursor.execute(query, (target_client_id,))
-        rows = cursor.fetchall()
+        cursor.execute(
+            query,
+            (target_client_id,)
+        )
 
-        # 2. Tamamlanmış egzersiz durumlarını getir
+        rows = cursor.fetchall() or []
+
+        # =========================================================
+        # 2. TAMAMLANMIŞ EGZERSİZ DURUMLARINI GETİR
+        # =========================================================
+
         completed_query = """
-            SELECT template_exercise_id, day, completed
+            SELECT
+                template_exercise_id,
+                day,
+                completed
+
             FROM client_exercise_logs
+
             WHERE client_id = %s;
         """
 
-        cursor.execute(completed_query, (target_client_id,))
-        completed_rows = cursor.fetchall()
+        cursor.execute(
+            completed_query,
+            (target_client_id,)
+        )
+
+        completed_rows = (
+            cursor.fetchall() or []
+        )
 
         completed_map = {}
 
         for c_row in completed_rows:
-            ex_id = get_row_val(c_row, 'template_exercise_id', 0)
-            ex_day = get_row_val(c_row, 'day', 1)
-            is_done = get_row_val(c_row, 'completed', 2)
+
+            ex_id = get_row_val(
+                c_row,
+                "template_exercise_id",
+                0
+            )
+
+            ex_day = get_row_val(
+                c_row,
+                "day",
+                1
+            )
+
+            is_done = get_row_val(
+                c_row,
+                "completed",
+                2
+            )
 
             if ex_id is not None and ex_day:
-                completed_map[(ex_id, ex_day)] = bool(is_done)
 
-        # Haftalık şema taslağı
+                completed_map[
+                    (ex_id, ex_day)
+                ] = bool(is_done)
+
+        # =========================================================
+        # 3. HAFTALIK ŞEMA
+        # =========================================================
+
         schedule = {
-            'Pzt': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Sal': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Çar': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Per': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Cum': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Cmt': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
-            'Paz': {'target': 'Planlanmış Antrenman Yok', 'exercises': []},
+            "Pzt": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Sal": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Çar": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Per": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Cum": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Cmt": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            },
+
+            "Paz": {
+                "target": "Planlanmış Antrenman Yok",
+                "estimated_calories": 0,
+                "exercises": []
+            }
         }
 
-        # 3. Veritabanından gelen veriyi günlere göre grupla
-        for row in rows:
-            program_details = get_row_val(row, 'program_details', 1)
-            template_name = get_row_val(row, 'template_name', 3)
-            template_exercise_id = get_row_val(row, 'template_exercise_id', 5)
-            sets = get_row_val(row, 'sets', 6)
-            reps = get_row_val(row, 'reps', 7)
-            notes = get_row_val(row, 'notes', 8)
-            exercise_name = get_row_val(row, 'exercise_name', 11)
+        # =========================================================
+        # 4. VERİLERİ GÜNLERE GÖRE GRUPLA
+        # =========================================================
 
-            if isinstance(program_details, str):
+        for row in rows:
+
+            program_details = get_row_val(
+                row,
+                "program_details",
+                4
+            )
+
+            template_name = get_row_val(
+                row,
+                "template_name",
+                9
+            )
+
+            template_exercise_id = get_row_val(
+                row,
+                "template_exercise_id",
+                13
+            )
+
+            sets = get_row_val(
+                row,
+                "sets",
+                14
+            )
+
+            reps = get_row_val(
+                row,
+                "reps",
+                15
+            )
+
+            notes = get_row_val(
+                row,
+                "notes",
+                16
+            )
+
+            order_index = get_row_val(
+                row,
+                "order_index",
+                17
+            )
+
+            exercise_name = get_row_val(
+                row,
+                "exercise_name",
+                19
+            )
+
+            estimated_calories = get_row_val(
+                row,
+                "estimated_calories",
+                12
+            )
+
+            # -----------------------------------------------------
+            # estimated_calories güvenli integer'a çevriliyor
+            # -----------------------------------------------------
+
+            try:
+                estimated_calories = int(
+                    float(
+                        estimated_calories or 0
+                    )
+                )
+
+            except (
+                TypeError,
+                ValueError
+            ):
+                estimated_calories = 0
+
+            # -----------------------------------------------------
+            # program_details JSON olabilir
+            # -----------------------------------------------------
+
+            if isinstance(
+                program_details,
+                str
+            ):
+
                 try:
-                    program_details = json.loads(program_details)
+                    program_details = json.loads(
+                        program_details
+                    )
+
                 except json.JSONDecodeError:
                     program_details = {}
 
+            # -----------------------------------------------------
+            # assigned_days
+            # -----------------------------------------------------
+
             assigned_days = (
-                program_details.get("assigned_days", [])
-                if isinstance(program_details, dict)
+                program_details.get(
+                    "assigned_days",
+                    []
+                )
+                if isinstance(
+                    program_details,
+                    dict
+                )
                 else []
             )
 
+            # assigned_days yanlışlıkla string geldiyse
+            # güvenli hale getir
+            if isinstance(
+                assigned_days,
+                str
+            ):
+                assigned_days = [
+                    assigned_days
+                ]
+
+            if not isinstance(
+                assigned_days,
+                list
+            ):
+                assigned_days = []
+
+            # -----------------------------------------------------
+            # GÜNLERE DAĞIT
+            # -----------------------------------------------------
+
             for day in assigned_days:
-                if day in schedule:
-                    schedule[day]['target'] = template_name
 
-                    is_completed = completed_map.get(
-                        (template_exercise_id, day),
-                        False
-                    )
+                if day not in schedule:
+                    continue
 
-                    if not any(
-                        ex['id'] == template_exercise_id
-                        for ex in schedule[day]['exercises']
-                    ):
-                        schedule[day]['exercises'].append({
+                # -------------------------------------------------
+                # Gün başlığı
+                # -------------------------------------------------
+
+                schedule[day]["target"] = (
+                    template_name
+                    or "Antrenman Programı"
+                )
+
+                # -------------------------------------------------
+                # KALORİ
+                #
+                # Aynı template içindeki her egzersiz satırında
+                # aynı estimated_calories tekrar gelir.
+                #
+                # Bu yüzden direkt gün seviyesine yazıyoruz.
+                # Toplam egzersiz sayısıyla çarpmıyoruz.
+                # -------------------------------------------------
+
+                schedule[day][
+                    "estimated_calories"
+                ] = estimated_calories
+
+                # -------------------------------------------------
+                # TAMAMLANMA DURUMU
+                # -------------------------------------------------
+
+                is_completed = completed_map.get(
+                    (
+                        template_exercise_id,
+                        day
+                    ),
+                    False
+                )
+
+                # -------------------------------------------------
+                # AYNI EGZERSİZİ TEKRAR EKLEME
+                # -------------------------------------------------
+
+                already_exists = any(
+                    ex["id"] == template_exercise_id
+                    for ex in schedule[day]["exercises"]
+                )
+
+                if not already_exists:
+
+                    schedule[day][
+                        "exercises"
+                    ].append(
+                        {
                             "id": template_exercise_id,
-                            "name": exercise_name,
+
+                            "exercise_id": get_row_val(
+                                row,
+                                "exercise_id",
+                                18
+                            ),
+
+                            "name": (
+                                exercise_name
+                                or "Egzersiz"
+                            ),
+
                             "sets": (
                                 f"{sets} Set x {reps} Tekrar"
-                                if sets and reps
+                                if sets is not None
+                                and reps is not None
                                 else "Belirtilmedi"
                             ),
+
+                            "sets_count": sets,
+                            "reps": reps,
+
                             "notes": notes,
+
+                            "order_index": (
+                                order_index
+                                if order_index is not None
+                                else 0
+                            ),
+
+                            "video_url": get_row_val(
+                                row,
+                                "video_url",
+                                20
+                            ),
+
                             "completed": is_completed
-                        })
+                        }
+                    )
+
+        # =========================================================
+        # 5. EGZERSİZLERİ ORDER_INDEX'E GÖRE SIRALA
+        # =========================================================
+
+        for day_name in schedule:
+
+            schedule[day_name][
+                "exercises"
+            ].sort(
+                key=lambda ex: (
+                    ex.get(
+                        "order_index",
+                        0
+                    ),
+                    ex.get(
+                        "id",
+                        0
+                    )
+                )
+            )
+
+        # =========================================================
+        # 6. DEBUG
+        # =========================================================
+
+        print(
+            "[WORKOUT SCHEDULE SUCCESS] "
+            f"client_id={target_client_id}"
+        )
+
+        for debug_day, debug_data in schedule.items():
+
+            if (
+                debug_data["exercises"]
+                or debug_data["estimated_calories"] > 0
+            ):
+
+                print(
+                    f"  {debug_day}: "
+                    f"target={debug_data['target']}, "
+                    f"estimated_calories="
+                    f"{debug_data['estimated_calories']}, "
+                    f"exercise_count="
+                    f"{len(debug_data['exercises'])}"
+                )
+
+        # =========================================================
+        # 7. RESPONSE
+        # =========================================================
 
         return {
             "status": "success",
             "schedule": schedule
         }
 
+    except HTTPException:
+        raise
+
     except Exception as e:
+
         print(
-            f"[WORKOUT SCHEDULE ERROR] "
+            "[WORKOUT SCHEDULE ERROR] "
             f"client_id={target_client_id}, "
             f"error={repr(e)}"
         )
@@ -247,22 +664,37 @@ def get_client_workout_schedule(
         )
 
     finally:
-        cursor.close()
 
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+# =========================================================
+# 2. EGZERSİZ TAMAMLAMA / GERİ ALMA
+# =========================================================
 
 @router.post("/workout-schedule/toggle")
 def toggle_exercise_status(
     payload: ToggleExerciseRequest,
-    client_id: Optional[int] = Query(None, description="Aktif danışan ID'si"),
+    client_id: Optional[int] = Query(
+        None,
+        description="Aktif danışan ID'si"
+    ),
     current_user: Any = Depends(get_current_user),
     conn: Any = Depends(get_db_connection)
 ):
     """
-    Danışanın hareket tamamlama durumunu veritabanına kaydeder/günceller.
+    Danışanın hareket tamamlama durumunu
+    veritabanına kaydeder/günceller.
     """
+
     require_client(current_user)
 
-    auth_client_id = get_authenticated_user_id(current_user)
+    auth_client_id = get_authenticated_user_id(
+        current_user
+    )
 
     target_client_id = (
         client_id
@@ -270,10 +702,20 @@ def toggle_exercise_status(
         else auth_client_id
     )
 
+    if target_client_id != auth_client_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Başka bir danışanın verisini değiştiremezsiniz"
+        )
+
     cursor = conn.cursor()
 
     try:
-        # 1. Egzersiz durumunu upsert et
+
+        # =========================================================
+        # 1. EGZERSİZ DURUMUNU UPSERT ET
+        # =========================================================
+
         upsert_query = """
             INSERT INTO client_exercise_logs (
                 client_id,
@@ -289,11 +731,13 @@ def toggle_exercise_status(
                 %s,
                 CURRENT_TIMESTAMP
             )
+
             ON CONFLICT (
                 client_id,
                 template_exercise_id,
                 day
             )
+
             DO UPDATE SET
                 completed = EXCLUDED.completed,
                 updated_at = CURRENT_TIMESTAMP;
@@ -309,7 +753,10 @@ def toggle_exercise_status(
             )
         )
 
-        # 2. Günlük log tablosunda antrenman yapıldı bilgisini güncelle
+        # =========================================================
+        # 2. GÜNLÜK LOG
+        # =========================================================
+
         daily_query = """
             INSERT INTO client_daily_logs (
                 client_id,
@@ -321,10 +768,12 @@ def toggle_exercise_status(
                 CURRENT_DATE,
                 %s
             )
+
             ON CONFLICT (
                 client_id,
                 log_date
             )
+
             DO UPDATE SET
                 workout_done = EXCLUDED.workout_done;
         """
@@ -342,14 +791,15 @@ def toggle_exercise_status(
         return {
             "status": "success",
             "message": "Hareket durumu başarıyla güncellendi",
-            "data": payload
+            "data": payload.model_dump()
         }
 
     except Exception as e:
+
         conn.rollback()
 
         print(
-            f"[WORKOUT TOGGLE ERROR] "
+            "[WORKOUT TOGGLE ERROR] "
             f"client_id={target_client_id}, "
             f"exercise_id={payload.exerciseId}, "
             f"day={payload.day}, "
@@ -362,8 +812,16 @@ def toggle_exercise_status(
         )
 
     finally:
-        cursor.close()
 
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+# =========================================================
+# 3. HAZIR ANTRENMAN LOG
+# =========================================================
 
 @router.post("/workouts/log-preset")
 def log_preset_workout(
@@ -372,15 +830,20 @@ def log_preset_workout(
     conn: Any = Depends(get_db_connection)
 ):
     """
-    Hazır antrenman tamamlandığında gelen detaylı verileri kaydeder (404 hatasını çözer).
+    Hazır antrenman tamamlandığında gelen detaylı
+    verileri kaydeder.
     """
+
     require_client(current_user)
 
-    auth_client_id = get_authenticated_user_id(current_user)
+    auth_client_id = get_authenticated_user_id(
+        current_user
+    )
 
     cursor = conn.cursor()
 
     try:
+
         completed_json = json.dumps(
             payload.completed_exercises or []
         )
@@ -397,7 +860,9 @@ def log_preset_workout(
                 calories_burned,
                 log_date
             )
-            VALUES (
+
+            VALUES
+            (
                 %s,
                 %s,
                 %s,
@@ -428,15 +893,18 @@ def log_preset_workout(
                 log_date,
                 workout_done
             )
+
             VALUES (
                 %s,
                 CURRENT_DATE,
                 TRUE
             )
+
             ON CONFLICT (
                 client_id,
                 log_date
             )
+
             DO UPDATE SET
                 workout_done = TRUE;
         """
@@ -451,14 +919,15 @@ def log_preset_workout(
         return {
             "status": "success",
             "message": "Antrenman başarıyla tamamlandı olarak kaydedildi",
-            "data": payload
+            "data": payload.model_dump()
         }
 
     except Exception as e:
+
         conn.rollback()
 
         print(
-            f"[PRESET WORKOUT ERROR] "
+            "[PRESET WORKOUT ERROR] "
             f"client_id={auth_client_id}, "
             f"error={repr(e)}"
         )
@@ -469,8 +938,16 @@ def log_preset_workout(
         )
 
     finally:
-        cursor.close()
 
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+# =========================================================
+# 4. DANIŞANIN KOÇUNU GETİR
+# =========================================================
 
 @router.get("/my-coach")
 def get_assigned_coach(
@@ -478,15 +955,22 @@ def get_assigned_coach(
     conn: Any = Depends(get_db_connection)
 ):
     """
-    Danışanın aktif aboneliği üzerinden bağlı olduğu koç/uzman bilgilerini getirir.
+    Danışanın aktif aboneliği üzerinden bağlı olduğu
+    koç/uzman bilgilerini getirir.
     """
+
     require_client(current_user)
 
-    auth_client_id = get_authenticated_user_id(current_user)
+    auth_client_id = get_authenticated_user_id(
+        current_user
+    )
 
-    cursor = conn.cursor()
+    cursor = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
 
     try:
+
         query = """
             SELECT
                 u.id AS coach_id,
@@ -496,14 +980,22 @@ def get_assigned_coach(
                 u.profile_photo,
                 sp.title,
                 ss.package_name
+
             FROM specialist_subscriptions ss
+
             JOIN users u
                 ON ss.specialist_id = u.id
+
             LEFT JOIN specialist_profiles sp
                 ON u.id = sp.user_id
-            WHERE ss.client_id = %s
-              AND LOWER(ss.status) = 'active'
-            ORDER BY ss.created_at DESC
+
+            WHERE
+                ss.client_id = %s
+                AND LOWER(ss.status) = 'active'
+
+            ORDER BY
+                ss.created_at DESC
+
             LIMIT 1;
         """
 
@@ -515,6 +1007,7 @@ def get_assigned_coach(
         row = cursor.fetchone()
 
         if not row:
+
             return {
                 "assigned": False,
                 "coach": None
@@ -522,40 +1015,52 @@ def get_assigned_coach(
 
         coach_id = get_row_val(
             row,
-            'coach_id',
+            "coach_id",
             0
         )
 
         first_name = (
-            get_row_val(row, 'first_name', 1)
+            get_row_val(
+                row,
+                "first_name",
+                1
+            )
             or ""
         )
 
         last_name = (
-            get_row_val(row, 'last_name', 2)
+            get_row_val(
+                row,
+                "last_name",
+                2
+            )
             or ""
         )
 
         raw_role = (
-            get_row_val(row, 'role', 3)
+            get_row_val(
+                row,
+                "role",
+                3
+            )
             or ""
         )
 
         profile_photo = get_row_val(
             row,
-            'profile_photo',
+            "profile_photo",
             4
         )
 
         sp_title = get_row_val(
             row,
-            'title',
+            "title",
             5
         )
 
         package_name = get_row_val(
             row,
-            'package_name',
+            "package_name",
             6
         )
 
@@ -585,13 +1090,15 @@ def get_assigned_coach(
             sp_title
             or (
                 "Personal Trainer"
-                if str(raw_role).lower() in ["trainer", "pt"]
+                if str(raw_role).lower()
+                in ["trainer", "pt"]
                 else "Diyetisyen"
             )
         )
 
         return {
             "assigned": True,
+
             "coach": {
                 "id": coach_id,
                 "full_name": full_name,
@@ -604,24 +1111,32 @@ def get_assigned_coach(
         }
 
     except Exception as e:
+
         print(
-            f"[MY-COACH DB ERROR] "
+            "[MY-COACH DB ERROR] "
             f"client_id={auth_client_id}, "
             f"error={repr(e)}"
         )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Koç bilgileri alınırken veritabanı hatası: {str(e)}"
+            detail=(
+                "Koç bilgileri alınırken "
+                f"veritabanı hatası: {str(e)}"
+            )
         )
 
     finally:
-        cursor.close()
+
+        try:
+            cursor.close()
+        except Exception:
+            pass
 
 
-class StepLogRequest(BaseModel):
-    steps: int
-
+# =========================================================
+# 5. GÜNLÜK ADIM KAYDI
+# =========================================================
 
 @router.post("/daily/steps")
 def log_daily_steps(
@@ -629,12 +1144,18 @@ def log_daily_steps(
     current_user: Any = Depends(get_current_user),
     conn: Any = Depends(get_db_connection)
 ):
-    """Kullanıcının adım sayısını kaydeder ve yaktığı kaloriyi otomatik hesaplar."""
+    """
+    Kullanıcının adım sayısını kaydeder
+    ve yaktığı kaloriyi otomatik hesaplar.
+    """
+
     require_client(current_user)
 
-    client_id = get_authenticated_user_id(current_user)
+    client_id = get_authenticated_user_id(
+        current_user
+    )
 
-    # 1 Adım = ~0.04 kcal
+    # 1 Adım = yaklaşık 0.04 kcal
     calculated_calories = int(
         payload.steps * 0.04
     )
@@ -642,6 +1163,7 @@ def log_daily_steps(
     cursor = conn.cursor()
 
     try:
+
         query = """
             INSERT INTO client_daily_logs (
                 client_id,
@@ -649,16 +1171,19 @@ def log_daily_steps(
                 step_count,
                 step_calories
             )
+
             VALUES (
                 %s,
                 CURRENT_DATE,
                 %s,
                 %s
             )
+
             ON CONFLICT (
                 client_id,
                 log_date
             )
+
             DO UPDATE SET
                 step_count = EXCLUDED.step_count,
                 step_calories = EXCLUDED.step_calories;
@@ -682,10 +1207,11 @@ def log_daily_steps(
         }
 
     except Exception as e:
+
         conn.rollback()
 
         print(
-            f"[DAILY STEPS ERROR] "
+            "[DAILY STEPS ERROR] "
             f"client_id={client_id}, "
             f"steps={payload.steps}, "
             f"error={repr(e)}"
@@ -697,33 +1223,56 @@ def log_daily_steps(
         )
 
     finally:
-        cursor.close()
 
+        try:
+            cursor.close()
+        except Exception:
+            pass
+
+
+# =========================================================
+# 6. GÜNLÜK KALORİ ÖZETİ
+# =========================================================
 
 @router.get("/daily/calories-summary")
 def get_daily_calories_summary(
     current_user: Any = Depends(get_current_user),
     conn: Any = Depends(get_db_connection)
 ):
-    """Bugünkü toplam harcanan kaloriyi ve detaylı geçmiş dökümünü getirir."""
+    """
+    Bugünkü toplam harcanan kaloriyi ve detaylı
+    geçmiş dökümünü getirir.
+    """
+
     require_client(current_user)
 
-    client_id = get_authenticated_user_id(current_user)
+    client_id = get_authenticated_user_id(
+        current_user
+    )
 
-    cursor = conn.cursor()
+    cursor = conn.cursor(
+        cursor_factory=RealDictCursor
+    )
 
     try:
+
         # =========================================================
-        # 1. HAZIR ANTRENMANLARDAN GELEN KALORİLER
+        # 1. HAZIR ANTRENMAN KALORİLERİ
         # =========================================================
 
         cursor.execute(
             """
             SELECT
-                COALESCE(SUM(calories_burned), 0) AS total_calories
+                COALESCE(
+                    SUM(calories_burned),
+                    0
+                ) AS total_calories
+
             FROM client_workout_logs
-            WHERE client_id = %s
-              AND log_date = CURRENT_DATE;
+
+            WHERE
+                client_id = %s
+                AND log_date = CURRENT_DATE;
             """,
             (client_id,)
         )
@@ -738,27 +1287,45 @@ def get_daily_calories_summary(
 
         if preset_calories_raw is None:
             preset_calories = 0
+
         else:
+
             try:
                 preset_calories = int(
-                    float(preset_calories_raw)
+                    float(
+                        preset_calories_raw
+                    )
                 )
-            except (TypeError, ValueError):
+
+            except (
+                TypeError,
+                ValueError
+            ):
                 preset_calories = 0
 
-
         # =========================================================
-        # 2. ADIMDAN GELEN KALORİLER VE ADIM SAYISI
+        # 2. ADIM KALORİLERİ
         # =========================================================
 
         cursor.execute(
             """
             SELECT
-                COALESCE(step_count, 0) AS step_count,
-                COALESCE(step_calories, 0) AS step_calories
+                COALESCE(
+                    step_count,
+                    0
+                ) AS step_count,
+
+                COALESCE(
+                    step_calories,
+                    0
+                ) AS step_calories
+
             FROM client_daily_logs
-            WHERE client_id = %s
-              AND log_date = CURRENT_DATE
+
+            WHERE
+                client_id = %s
+                AND log_date = CURRENT_DATE
+
             LIMIT 1;
             """,
             (client_id,)
@@ -767,6 +1334,7 @@ def get_daily_calories_summary(
         step_row = cursor.fetchone()
 
         if step_row:
+
             step_count_raw = get_row_val(
                 step_row,
                 "step_count",
@@ -780,33 +1348,48 @@ def get_daily_calories_summary(
             )
 
             try:
+
                 step_count = int(
-                    float(step_count_raw or 0)
+                    float(
+                        step_count_raw or 0
+                    )
                 )
-            except (TypeError, ValueError):
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
                 step_count = 0
 
             try:
+
                 step_calories = int(
-                    float(step_calories_raw or 0)
+                    float(
+                        step_calories_raw or 0
+                    )
                 )
-            except (TypeError, ValueError):
+
+            except (
+                TypeError,
+                ValueError
+            ):
+
                 step_calories = 0
 
         else:
+
             step_count = 0
             step_calories = 0
 
-
         # =========================================================
-        # 3. VARSAYILAN / HESAPLANMIŞ BMR
+        # 3. BMR
         # =========================================================
 
         bmr = 1650
 
-
         # =========================================================
-        # 4. TOPLAM HARCANAN KALORİ
+        # 4. TOPLAM
         # =========================================================
 
         total_burned = (
@@ -815,7 +1398,6 @@ def get_daily_calories_summary(
             + int(step_calories)
         )
 
-
         # =========================================================
         # 5. RESPONSE
         # =========================================================
@@ -823,27 +1405,44 @@ def get_daily_calories_summary(
         return {
             "status": "success",
             "date": str(date.today()),
-            "total_burned": int(total_burned),
+
+            "total_burned": int(
+                total_burned
+            ),
+
             "breakdown": {
                 "bmr": int(bmr),
-                "workout_calories": int(preset_calories),
-                "steps": int(step_count),
-                "step_calories": int(step_calories)
+                "workout_calories": int(
+                    preset_calories
+                ),
+                "steps": int(
+                    step_count
+                ),
+                "step_calories": int(
+                    step_calories
+                )
             }
         }
 
     except Exception as e:
 
         print(
-            f"[CALORIES SUMMARY ERROR] "
+            "[CALORIES SUMMARY ERROR] "
             f"client_id={client_id}, "
             f"error={repr(e)}"
         )
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Kalori özeti alınırken veritabanı hatası: {str(e)}"
+            detail=(
+                "Kalori özeti alınırken "
+                f"veritabanı hatası: {str(e)}"
+            )
         )
 
     finally:
-        cursor.close()
+
+        try:
+            cursor.close()
+        except Exception:
+            pass
