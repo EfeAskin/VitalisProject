@@ -17,6 +17,7 @@ from backend.routers import messages
 from backend.routers import tickets
 from backend.routers import appointment 
 from backend.routers import clientprograms
+from backend.routers import client_programs
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -105,6 +106,9 @@ app.include_router(tickets.router)
 app.include_router(appointment.router)
 
 app.include_router(clientprograms.router)  # <-- YENİ EKLENDİ
+app.include_router(client_programs.router) 
+app.include_router(client_programs.workout_router)  # client_programs içindeki /api/client/workout alternatif yönlendiricisi
+
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA
 # ==========================================

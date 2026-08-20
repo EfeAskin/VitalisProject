@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 
 // Bileşenlerin İçe Aktarılması
@@ -14,10 +15,17 @@ import RecommendedPros from './components/RecommendedPros';
 import AIVitalisChat from './components/AIVitalisChat';
 import BodyAnalysisModal from './components/BodyAnalysisModal';
 
+// Yeni Eklenen Estetik Bileşenler
+import CaloriesBurnedCard from './components/CaloriesBurnedCard';
+import DailyStepsCard from './components/DailyStepsCard';
+
 export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Adım girildiğinde Kalori kartının otomatik yenilenmesini sağlayan tetikleyici
+  const [calorieRefreshKey, setCalorieRefreshKey] = useState(0);
 
   const [userData, setUserData] = useState({
     firstName: "",
@@ -133,6 +141,11 @@ export default function ClientDashboard() {
     setRefreshKey(prev => prev + 1);
   };
 
+  // Adım kaydedildiğinde harcanan kalori kartının anında güncellenmesi için handler
+  const handleStepLogged = () => {
+    setCalorieRefreshKey(prev => prev + 1);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#11142D] flex items-center justify-center">
@@ -154,6 +167,7 @@ export default function ClientDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
+          {/* Sol Kolon */}
           <div className="lg:col-span-3 space-y-6">
             <WelcomeCard name={userData.firstName ? `${userData.firstName} ${userData.lastName}`.trim() : ""} />
             <DailyTasks tasks={tasks} setTasks={setTasks} />
@@ -161,6 +175,7 @@ export default function ClientDashboard() {
             <CoachCard />
           </div>
 
+          {/* Orta Kolon */}
           <div className="lg:col-span-6 space-y-6">
             <NutritionTracker 
               macroData={macroData} 
@@ -175,8 +190,14 @@ export default function ClientDashboard() {
             />
           </div>
 
+          {/* Sağ Kolon */}
           <div className="lg:col-span-3 space-y-6">
             <UpcomingSession />
+
+            {/* Premium Harcanan Kalori ve Adım Takibi Kartları */}
+            <CaloriesBurnedCard refreshTrigger={calorieRefreshKey} />
+            <DailyStepsCard onStepLogged={handleStepLogged} />
+
             <RecommendedPros />
             <AIVitalisChat />
           </div>

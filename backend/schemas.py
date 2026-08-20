@@ -219,7 +219,7 @@ class MarketplaceListing(BaseModel):
 
 
 # ==========================================
-# 11. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA (GÜNCELLENDİ)
+# 11. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA
 # ==========================================
 class SpecialistSubscription(BaseModel):
     id: Optional[int] = None
@@ -231,7 +231,7 @@ class SpecialistSubscription(BaseModel):
     package_name: Optional[str] = None
     status: Optional[str] = "pending"
     goal: Optional[str] = None
-    program_name: Optional[List[str]] = []  # Artık birden fazla program ismi tutabilmesi için dizi yapıldı
+    program_name: Optional[List[str]] = []
     request_message: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -263,7 +263,7 @@ class NutritionProgram(BaseModel):
 class ExerciseBase(BaseModel):
     name: str
     muscle_group: str                         # Örn: 'Göğüs', 'Kol', 'Sırt'
-    target_muscles: List[str] = []            # Örn: ['Üst Göğüs', 'Orta Göğüs', 'Triceps'] (Çoklu Rozetler)
+    target_muscles: List[str] = []            # Örn: ['Üst Göğüs', 'Orta Göğüs', 'Triceps']
     difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
     video_url: Optional[str] = None           # YouTube Linki
     description: Optional[str] = None         # Egzersiz Açıklaması / Form Notları
@@ -295,6 +295,7 @@ class WorkoutTemplateCreate(BaseModel):
     difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
     target_muscles: List[str] = []            # Şablonun içerdiği tüm kas grupları rozetleri
     duration_minutes: Optional[int] = 60
+    estimated_calories: Optional[int] = 0     # Koçun antrenman için belirlediği tahmini kalori
     description: Optional[str] = None
     exercises: List[WorkoutTemplateExerciseItem] = []
 
@@ -306,6 +307,7 @@ class WorkoutTemplateResponse(BaseModel):
     difficulty_level: str
     target_muscles: List[str] = []            # Filtreleme için hedef kas rozet dizisi
     duration_minutes: Optional[int] = 60
+    estimated_calories: Optional[int] = 0     # Koçun antrenman için belirlediği tahmini kalori
     description: Optional[str] = None
     created_at: Optional[datetime] = None
     exercises: List[Dict[str, Any]] = []
@@ -379,18 +381,24 @@ class ClientDailyLog(BaseModel):
     protein_g: Optional[float] = None
     carbs_g: Optional[float] = None
     fat_g: Optional[float] = None
+    step_count: Optional[int] = 0             # Günlük atılan adım sayısı
+    step_calories: Optional[int] = 0          # Adımdan kazanılan kalori
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
 
+class StepLogRequest(BaseModel):
+    steps: int
+
+
 # ==========================================
-# 17. EXPERT ACTION & RESPONSE SCHEMAS (GÜNCELLENDİ)
+# 17. EXPERT ACTION & RESPONSE SCHEMAS
 # ==========================================
 class SubscriptionActionRequest(BaseModel):
     request_id: int
-    action: str  # 'accept' veya 'reject'
+    action: str                               # 'accept' veya 'reject'
     package_days: Optional[int] = 90
 
 
@@ -409,7 +417,7 @@ class ClientSummaryForExpert(BaseModel):
     daily_calories: Optional[int] = None
     package_name: str
     goal: Optional[str] = None
-    program_name: Optional[List[str]] = []  # Artık birden fazla atanmış program adını destekliyor
+    program_name: Optional[List[str]] = []
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str
@@ -516,48 +524,40 @@ class ChatMessage(BaseModel):
     class Config:
         from_attributes = True
 
-# Randevu Temel Şeması
+
+# ==========================================
+# 22. APPOINTMENTS TABLE SCHEMAS
+# ==========================================
 class AppointmentBase(BaseModel):
     title: Optional[str] = "Birebir Görüşme"
-    appointment_date: str  # YYYY-MM-DD
-    time_slot: str  # '14:00 - 14:45'
-    appointment_type: str  # 'online' veya 'in_person'
+    appointment_date: str                     # YYYY-MM-DD
+    time_slot: str                            # '14:00 - 14:45'
+    appointment_type: str                     # 'online' veya 'in_person'
     notes: Optional[str] = None
 
 
-# Danışan Randevu Talebi Oluşturma Şeması
 class AppointmentCreateByClient(AppointmentBase):
     expert_id: int
 
 
-# Uzman Doğrudan Randevu Planlama Şeması
 class AppointmentCreateByExpert(AppointmentBase):
     client_id: int
-    meeting_link: Optional[str] = None  # Online ise Zoom/Teams linki
-    location_link: Optional[str] = None  # Yüz yüze ise Harita linki
+    meeting_link: Optional[str] = None        # Online ise Zoom/Teams linki
+    location_link: Optional[str] = None       # Yüz yüze ise Harita linki
 
 
-# Uzman Onay / Red / Durum Güncelleme Şeması
 class AppointmentStatusUpdate(BaseModel):
-    status: str  # 'approved', 'rejected', 'cancelled'
-    rejection_reason: Optional[str] = (
-        None  # Reddetme durumunda açıklama sebebi
-    )
-    meeting_link: Optional[str] = (
-        None  # Onaylarken online link eklenebilir
-    )
-    location_link: Optional[str] = (
-        None  # Onaylarken harita linki eklenebilir
-    )
+    status: str                               # 'approved', 'rejected', 'cancelled'
+    rejection_reason: Optional[str] = None    # Reddetme durumunda açıklama sebebi
+    meeting_link: Optional[str] = None        # Onaylarken online link eklenebilir
+    location_link: Optional[str] = None       # Onaylarken harita linki eklenebilir
 
 
-# Genel Link Güncelleme Şeması
 class AppointmentLinkUpdate(BaseModel):
     meeting_link: Optional[str] = None
     location_link: Optional[str] = None
 
 
-# Yanıt Şeması (Frontend'e Dönen)
 class AppointmentResponse(AppointmentBase):
     id: int
     client_id: int
@@ -571,7 +571,6 @@ class AppointmentResponse(AppointmentBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    # Birleştirilmiş detay bilgileri
     client_name: Optional[str] = None
     expert_name: Optional[str] = None
     expert_title: Optional[str] = None
