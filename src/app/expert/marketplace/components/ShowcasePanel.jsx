@@ -27,7 +27,7 @@ const STAT_ICONS = {
   conversion: TrendingUp,
 };
 
-export default function ShowcasePanel({ onNavigate }) {
+export default function ShowcasePanel({ onNavigate, user }) {
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
 
@@ -50,33 +50,73 @@ export default function ShowcasePanel({ onNavigate }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_LISTING);
 
+  // Oturum açmış aktif kullanıcı ID'sini tespit etme yardımcısı
+  const getActiveUserId = () => {
+    let activeUserId = user?.id || user?.user_id || user?.specialist_id;
+    if (!activeUserId && typeof window !== "undefined") {
+      try {
+        const storedUser = localStorage.getItem("user") || localStorage.getItem("currentUser");
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          activeUserId = parsed.id || parsed.user_id || parsed.specialist_id;
+        }
+        if (!activeUserId) {
+          const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+          if (token) {
+            const base64Url = token.split(".")[1];
+            const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+            const decoded = JSON.parse(window.atob(base64));
+            activeUserId = decoded.id || decoded.user_id || decoded.sub;
+          }
+        }
+      } catch (e) {
+        console.error("Kullanıcı ID tespit hatası:", e);
+      }
+    }
+    return activeUserId || null;
+  };
+
   useEffect(() => {
     fetchMarketplaceData();
-  }, []);
+  }, [user]);
 
   const fetchMarketplaceData = async () => {
     setLoading(true);
+    const activeUserId = getActiveUserId();
+    const queryParam = activeUserId ? `?specialist_id=${activeUserId}&user_id=${activeUserId}` : "";
+
     try {
       const [profileRes, listingsRes] = await Promise.all([
-        fetch("http://localhost:8000/api/expert/marketplace/profile"),
-        fetch("http://localhost:8000/api/expert/marketplace/listings"),
+        fetch(`http://localhost:8000/api/expert/marketplace/profile${queryParam}`),
+        fetch(`http://localhost:8000/api/expert/marketplace/listings${queryParam}`),
       ]);
 
       if (profileRes.ok) {
         const data = await profileRes.json();
-        setFullName(data.profile.full_name || "Uzman");
-        setTitle(data.profile.title || "Personal Trainer");
-        setBio(data.profile.bio || "");
-        setSpecialties(data.profile.specialties || []);
-        setIsAccepting(data.profile.is_accepting_clients);
-        setRating(data.profile.rating || 5.0);
-        setReviewCount(data.profile.review_count || 0);
+        const profileObj = data.profile || data;
+
+        setFullName(profileObj.full_name || profileObj.fullName || profileObj.name || user?.name || "");
+        setTitle(profileObj.title || profileObj.profession || user?.title || "");
+        setBio(profileObj.bio || "");
+        setSpecialties(profileObj.specialties || []);
+        setIsAccepting(
+          profileObj.is_accepting_clients ??
+          profileObj.isAcceptingClients ??
+          profileObj.acceptingClients ??
+          true
+        );
+        setRating(profileObj.rating ?? 5.0);
+        setReviewCount(profileObj.review_count ?? profileObj.reviewCount ?? 0);
         setStats(data.stats || []);
       }
 
       if (listingsRes.ok) {
         const listingsData = await listingsRes.json();
-        setListings(listingsData);
+        const normalizedListings = (Array.isArray(listingsData) ? listingsData : []).map((item) => ({
+          ...item,
+          active: item.active ?? item.is_active ?? true,
+        }));
+        setListings(normalizedListings);
       }
     } catch (err) {
       console.error("Veri çekme hatası:", err);
@@ -87,14 +127,20 @@ export default function ShowcasePanel({ onNavigate }) {
 
   const handleSaveProfile = async (updatedBio, updatedSpecialties, updatedAccepting) => {
     setSavingProfile(true);
+    const activeUserId = getActiveUserId();
+    const queryParam = activeUserId ? `?specialist_id=${activeUserId}&user_id=${activeUserId}` : "";
+
     try {
-      const res = await fetch("http://localhost:8000/api/expert/marketplace/profile", {
+      const res = await fetch(`http://localhost:8000/api/expert/marketplace/profile${queryParam}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          specialist_id: activeUserId,
+          user_id: activeUserId,
           bio: updatedBio !== undefined ? updatedBio : bio,
           specialties: updatedSpecialties !== undefined ? updatedSpecialties : specialties,
           is_accepting_clients: updatedAccepting !== undefined ? updatedAccepting : isAccepting,
+          isAcceptingClients: updatedAccepting !== undefined ? updatedAccepting : isAccepting,
         }),
       });
 
@@ -136,9 +182,9 @@ export default function ShowcasePanel({ onNavigate }) {
 
   const openEditForm = (listing) => {
     setForm({
-      title: listing.title,
-      price: listing.price,
-      period: listing.period,
+      title: listing.title || "",
+      price: listing.price || "",
+      period: listing.period || "Aylık",
       description: listing.description || "",
     });
     setEditingId(listing.id);
@@ -154,14 +200,19 @@ export default function ShowcasePanel({ onNavigate }) {
   const saveListing = async () => {
     if (!form.title.trim() || !form.price.toString().trim()) return;
 
+    const activeUserId = getActiveUserId();
+    const queryParam = activeUserId ? `?specialist_id=${activeUserId}&user_id=${activeUserId}` : "";
+
     try {
       const numericPrice = parseFloat(form.price.toString().replace(".", "").replace(",", "."));
 
       if (editingId) {
-        const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${editingId}`, {
+        const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${editingId}${queryParam}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            specialist_id: activeUserId,
+            user_id: activeUserId,
             title: form.title,
             price: numericPrice,
             period: form.period,
@@ -171,13 +222,16 @@ export default function ShowcasePanel({ onNavigate }) {
 
         if (res.ok) {
           const updated = await res.json();
-          setListings(listings.map((l) => (l.id === editingId ? updated : l)));
+          const normalized = { ...updated, active: updated.active ?? updated.is_active ?? true };
+          setListings(listings.map((l) => (l.id === editingId ? normalized : l)));
         }
       } else {
-        const res = await fetch("http://localhost:8000/api/expert/marketplace/listings", {
+        const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings${queryParam}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            specialist_id: activeUserId,
+            user_id: activeUserId,
             title: form.title,
             price: numericPrice,
             period: form.period,
@@ -187,7 +241,8 @@ export default function ShowcasePanel({ onNavigate }) {
 
         if (res.ok) {
           const created = await res.json();
-          setListings([created, ...listings]);
+          const normalized = { ...created, active: created.active ?? created.is_active ?? true };
+          setListings([normalized, ...listings]);
         }
       }
 
@@ -198,16 +253,26 @@ export default function ShowcasePanel({ onNavigate }) {
   };
 
   const toggleListingActive = async (id, currentActive) => {
+    const activeUserId = getActiveUserId();
+    const queryParam = activeUserId ? `?specialist_id=${activeUserId}&user_id=${activeUserId}` : "";
+
     try {
-      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}`, {
+      const nextActive = !currentActive;
+      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}${queryParam}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !currentActive }),
+        body: JSON.stringify({
+          specialist_id: activeUserId,
+          user_id: activeUserId,
+          is_active: nextActive,
+          active: nextActive,
+        }),
       });
 
       if (res.ok) {
         const updated = await res.json();
-        setListings(listings.map((l) => (l.id === id ? updated : l)));
+        const normalized = { ...updated, active: updated.active ?? updated.is_active ?? nextActive };
+        setListings(listings.map((l) => (l.id === id ? normalized : l)));
       }
     } catch (err) {
       console.error("Durum değiştirme hatası:", err);
@@ -217,8 +282,11 @@ export default function ShowcasePanel({ onNavigate }) {
   const deleteListing = async (id) => {
     if (!confirm("Bu ilanı kalıcı olarak silmek istediğinize emin misiniz?")) return;
 
+    const activeUserId = getActiveUserId();
+    const queryParam = activeUserId ? `?specialist_id=${activeUserId}&user_id=${activeUserId}` : "";
+
     try {
-      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}`, {
+      const res = await fetch(`http://localhost:8000/api/expert/marketplace/listings/${id}${queryParam}`, {
         method: "DELETE",
       });
 
@@ -232,8 +300,11 @@ export default function ShowcasePanel({ onNavigate }) {
   };
 
   const getInitials = (name) => {
-    if (!name) return "ÖG";
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
+    if (!name || typeof name !== "string") return "";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 0 || !parts[0]) return "";
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   if (loading) {
@@ -272,11 +343,15 @@ export default function ShowcasePanel({ onNavigate }) {
               {getInitials(fullName)}
             </div>
 
-            <h3 className="font-heading text-white font-extrabold text-lg tracking-tight">{fullName}</h3>
+            <h3 className="font-heading text-white font-extrabold text-lg tracking-tight">
+              {fullName}
+            </h3>
 
-            <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest mt-1 bg-orange-500/10 px-3 py-0.5 rounded-full border border-orange-500/20 shadow-[0_0_10px_rgba(234,88,12,0.08)]">
-              {title}
-            </span>
+            {title && (
+              <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest mt-1 bg-orange-500/10 px-3 py-0.5 rounded-full border border-orange-500/20 shadow-[0_0_10px_rgba(234,88,12,0.08)]">
+                {title}
+              </span>
+            )}
 
             <div className="flex items-center gap-1.5 mt-3">
               {[...Array(5)].map((_, i) => (
@@ -437,7 +512,7 @@ export default function ShowcasePanel({ onNavigate }) {
 
             return (
               <div
-                key={label}
+                key={label || index}
                 className={`relative overflow-hidden bg-slate-800/50 backdrop-blur-2xl border ${statTheme.border} rounded-2xl p-4.5 ${statTheme.glow} transition-all duration-300 group`}
               >
                 <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-white/[0.025] blur-3xl pointer-events-none" />

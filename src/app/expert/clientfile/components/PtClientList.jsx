@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   User,
   Phone,
@@ -13,14 +13,79 @@ import {
   Dumbbell,
   ShieldCheck,
   Users,
+  Loader2,
 } from "lucide-react";
 
 export default function PtClientList({ clients = [], onSelectClient }) {
   const [selectedPopupClient, setSelectedPopupClient] = useState(null);
+  const [fetchedClients, setFetchedClients] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Specialist / User ID'sini localStorage'dan otomatik yakalama fonksiyonu
+  const getStoredSpecialistId = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const directId =
+        localStorage.getItem("user_id") ||
+        localStorage.getItem("specialist_id") ||
+        localStorage.getItem("id");
+      if (directId) return directId;
+
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        return userObj.id || userObj.user_id || userObj.specialist_id || null;
+      }
+    } catch (e) {
+      console.error("LocalStorage okunurken hata oluştu:", e);
+    }
+    return null;
+  };
+
+  // Parent bileşenden veri gelmediyse veya boş geldiyse API isteğini otomatik tetikle
+  useEffect(() => {
+    const fetchClientsIfNeeded = async () => {
+      const specId = getStoredSpecialistId();
+      if (!specId) return;
+
+      setIsLoading(true);
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        let res;
+        try {
+          res = await fetch(`${baseUrl}/api/expert-clients/dashboard/${specId}`);
+        } catch {
+          res = await fetch(`/api/expert-clients/dashboard/${specId}`);
+        }
+
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data && data.active_clients) {
+            setFetchedClients(data.active_clients);
+          } else if (Array.isArray(data)) {
+            setFetchedClients(data);
+          }
+        }
+      } catch (err) {
+        console.error("Danışanlar otomatik getirilirken hata:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!clients || clients.length === 0) {
+      fetchClientsIfNeeded();
+    }
+  }, [clients]);
+
+  // Öncelikli olarak props'tan gelen clients'ı, yoksa fetch edilen veriyi kullan
+  const dataSource = useMemo(() => {
+    return Array.isArray(clients) && clients.length > 0 ? clients : fetchedClients;
+  }, [clients, fetchedClients]);
 
   // Danışanları user_id / client_id / id bazında gruplayarak tekil kart haline getir
   const groupedClients = useMemo(() => {
-    if (!Array.isArray(clients) || clients.length === 0) return [];
+    if (!Array.isArray(dataSource) || dataSource.length === 0) return [];
 
     const map = new Map();
 
@@ -29,38 +94,64 @@ export default function PtClientList({ clients = [], onSelectClient }) {
       const raw = c.assigned_programs || c.programs || c.program_name;
       if (!raw) return [];
 
-      const list = Array.isArray(raw) ? raw : [raw];
+      let list = [];
+      if (typeof raw === "string") {
+        try {
+          const parsed = JSON.parse(raw);
+          list = Array.isArray(parsed) ? parsed : [raw];
+        } catch {
+          list = [raw];
+        }
+      } else if (Array.isArray(raw)) {
+        list = raw;
+      } else {
+        list = [raw];
+      }
 
       return list
         .flat(Infinity)
         .map((p) => {
+          if (!p) return "";
           if (typeof p === "string") return p.trim();
-          if (p && typeof p === "object") return (p.name || p.program_name || "").trim();
-          return "";
+          if (typeof p === "object") return (p.name || p.program_name || p.title || "").trim();
+          return String(p).trim();
         })
         .filter((p) => p && p !== "Henüz Program Atanmadı");
     };
 
     // Paket isimlerini düzleştiren yardımcı fonksiyon
     const extractPackageNames = (c) => {
-      const raw = c.active_packages || c.active_package || c.package_name;
+      const raw = c.active_packages || c.active_package || c.package_name || c.requested_package;
       if (!raw) return [];
 
-      const list = Array.isArray(raw) ? raw : [raw];
+      let list = [];
+      if (typeof raw === "string") {
+        try {
+          const parsed = JSON.parse(raw);
+          list = Array.isArray(parsed) ? parsed : [raw];
+        } catch {
+          list = [raw];
+        }
+      } else if (Array.isArray(raw)) {
+        list = raw;
+      } else {
+        list = [raw];
+      }
 
       return list
         .flat(Infinity)
         .map((p) => {
+          if (!p) return "";
           if (typeof p === "string") return p.trim();
-          if (p && typeof p === "object") return (p.name || p.package_name || "").trim();
-          return "";
+          if (typeof p === "object") return (p.name || p.package_name || p.title || "").trim();
+          return String(p).trim();
         })
         .filter(Boolean);
     };
 
-    clients.forEach((c) => {
+    dataSource.forEach((c) => {
       const clientId = c.client_id || c.id || c.user_id;
-      if (!clientId) return;
+      if (clientId === undefined || clientId === null) return;
 
       const currentPkgs = extractPackageNames(c);
       const currentProgs = extractProgramNames(c);
@@ -102,7 +193,7 @@ export default function PtClientList({ clients = [], onSelectClient }) {
     });
 
     return Array.from(map.values());
-  }, [clients]);
+  }, [dataSource]);
 
   const getFallbackAvatar = (firstName, lastName) => {
     const fullName = `${firstName || "Danışan"} ${lastName || ""}`.trim();
@@ -110,6 +201,18 @@ export default function PtClientList({ clients = [], onSelectClient }) {
       fullName
     )}&background=ea580c&color=fff&bold=true`;
   };
+
+  // Yükleme durumu göstergesi
+  if (isLoading && (!groupedClients || groupedClients.length === 0)) {
+    return (
+      <div className="relative overflow-hidden bg-[#1A1F45] border border-orange-500/30 rounded-3xl p-12 text-center space-y-4 backdrop-blur-2xl shadow-[0_0_30px_rgba(249,115,22,0.15)] flex flex-col items-center justify-center min-h-[250px]">
+        <Loader2 size={36} className="text-orange-500 animate-spin" />
+        <p className="text-sm font-heading font-bold text-slate-300">
+          Aktif Danışan Verileri Yükleniyor...
+        </p>
+      </div>
+    );
+  }
 
   if (!groupedClients || groupedClients.length === 0) {
     return (
@@ -161,7 +264,7 @@ export default function PtClientList({ clients = [], onSelectClient }) {
                   <div className="relative shrink-0">
                     <img
                       src={
-                        client.avatar && client.avatar.trim() !== ""
+                        client.avatar && typeof client.avatar === "string" && client.avatar.trim() !== ""
                           ? client.avatar
                           : fallback
                       }
@@ -241,9 +344,12 @@ export default function PtClientList({ clients = [], onSelectClient }) {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    onSelectClient(client.client_id || client.id)
-                  }
+                  onClick={() => {
+                    const targetId = client.client_id || client.id || client.user_id;
+                    if (typeof onSelectClient === "function") {
+                      onSelectClient(targetId);
+                    }
+                  }}
                   className="px-3 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-heading font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all duration-200 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] cursor-pointer"
                 >
                   <span>Dosyaya Git</span>
@@ -277,6 +383,7 @@ export default function PtClientList({ clients = [], onSelectClient }) {
               <img
                 src={
                   selectedPopupClient.avatar &&
+                  typeof selectedPopupClient.avatar === "string" &&
                   selectedPopupClient.avatar.trim() !== ""
                     ? selectedPopupClient.avatar
                     : getFallbackAvatar(
@@ -406,9 +513,11 @@ export default function PtClientList({ clients = [], onSelectClient }) {
               type="button"
               onClick={() => {
                 const targetId =
-                  selectedPopupClient.client_id || selectedPopupClient.id;
+                  selectedPopupClient.client_id || selectedPopupClient.id || selectedPopupClient.user_id;
                 setSelectedPopupClient(null);
-                onSelectClient(targetId);
+                if (typeof onSelectClient === "function") {
+                  onSelectClient(targetId);
+                }
               }}
               className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-heading font-bold text-xs rounded-xl transition-all duration-200 shadow-[0_0_25px_rgba(249,115,22,0.35)] hover:shadow-[0_0_35px_rgba(249,115,22,0.5)] cursor-pointer"
             >

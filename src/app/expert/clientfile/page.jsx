@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PtClientList from "./components/PtClientList";
 import NewRequests from "./components/NewRequests";
@@ -14,22 +14,7 @@ function ClientFileContent() {
   const currentTab = searchParams.get("tab") || "list";
   const selectedClientId = searchParams.get("id");
 
-  const [specialistId, setSpecialistId] = useState(4);
-
-  useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        if (user && user.id) {
-          setSpecialistId(user.id);
-        }
-      } catch (e) {
-        console.error("User session parse hatası:", e);
-      }
-    }
-  }, []);
-
+  const [specialistId, setSpecialistId] = useState(null);
   const [clients, setClients] = useState([]);
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,27 +25,42 @@ function ClientFileContent() {
     return uniqueIds.size;
   }, [clients]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/expert-clients/dashboard/${specialistId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setClients(data.active_clients || []);
-          setRequests(data.pending_requests || []);
-        }
-      } catch (error) {
-        console.error("Dashboard verileri çekilirken hata oluştu:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Oturum açan kullanıcının verilerini güvenli ve senkronize çekme
+  const fetchDashboardData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const userJson = localStorage.getItem("user");
+      let activeUserId = null;
 
-    if (specialistId) {
-      fetchDashboardData();
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        activeUserId = user?.id || null;
+      }
+
+      if (!activeUserId) {
+        console.warn("Oturum açmış kullanıcı ID'si bulunamadı.");
+        setIsLoading(false);
+        return;
+      }
+
+      setSpecialistId(activeUserId);
+
+      const response = await fetch(`/api/expert-clients/dashboard/${activeUserId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data.active_clients || []);
+        setRequests(data.pending_requests || []);
+      }
+    } catch (error) {
+      console.error("Dashboard verileri çekilirken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [specialistId]);
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData, currentTab]);
 
   const handleAcceptRequest = async (request) => {
     const reqId = request.request_id || request.id;
@@ -103,6 +103,7 @@ function ClientFileContent() {
           },
           ...prev
         ]);
+        fetchDashboardData();
       }
     } catch (err) {
       console.error("API kabul isteği hatası:", err);
@@ -122,6 +123,7 @@ function ClientFileContent() {
 
       if (res.ok) {
         setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== requestId));
+        fetchDashboardData();
       }
     } catch (err) {
       console.error("API reddetme isteği hatası:", err);
@@ -139,7 +141,7 @@ function ClientFileContent() {
   return (
     <div className="relative w-full space-y-8 selection:bg-orange-500 selection:text-white">
 
-      {/* 🚀 ÜST HEADER & TAB NAVİGASYON BARI (Opaklık ve Derinlik Artırıldı) */}
+      {/* 🚀 ÜST HEADER & TAB NAVİGASYON BARI */}
       <div className="relative z-10 bg-[#131738]/95 border border-slate-700/80 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_15px_35px_rgba(0,0,0,0.4)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         {/* Sol Başlık & İkon Alanı */}
         <div className="flex items-center gap-4">

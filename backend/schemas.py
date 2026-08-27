@@ -181,7 +181,87 @@ class ClientMealLogCreate(BaseModel):
 
 
 # ==========================================
-# 9. SPECIALIST_PROFILES TABLE SCHEMA
+# 9. FOODS TABLE SCHEMA
+# ==========================================
+class FoodBase(BaseModel):
+    dietitian_id: Optional[int] = None
+    name: str
+    category: Optional[str] = None
+    portion_label: Optional[str] = "100g"
+    portion_amount: Optional[float] = 100.0
+    unit: Optional[str] = "g"
+    calories: Optional[float] = 0.0
+    protein: Optional[float] = 0.0
+    carbs: Optional[float] = 0.0
+    fat: Optional[float] = 0.0
+
+
+class FoodCreate(FoodBase):
+    pass
+
+
+class FoodUpdate(BaseModel):
+    dietitian_id: Optional[int] = None
+    name: Optional[str] = None
+    category: Optional[str] = None
+    portion_label: Optional[str] = None
+    portion_amount: Optional[float] = None
+    unit: Optional[str] = None
+    calories: Optional[float] = None
+    protein: Optional[float] = None
+    carbs: Optional[float] = None
+    fat: Optional[float] = None
+
+
+class Food(FoodBase):
+    id: int
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 10. DIET_TEMPLATES TABLE SCHEMA
+# ==========================================
+class DietTemplateBase(BaseModel):
+    dietitian_id: Optional[int] = None
+    title: str
+    target_calories: Optional[int] = 2000
+    goal: Optional[str] = None
+    target_protein_g: Optional[float] = 0.0
+    target_carbs_g: Optional[float] = 0.0
+    target_fat_g: Optional[float] = 0.0
+    general_notes: Optional[Any] = None
+    day_types: Optional[Any] = []
+
+
+class DietTemplateCreate(DietTemplateBase):
+    pass
+
+
+class DietTemplateUpdate(BaseModel):
+    title: Optional[str] = None
+    target_calories: Optional[int] = None
+    goal: Optional[str] = None
+    target_protein_g: Optional[float] = None
+    target_carbs_g: Optional[float] = None
+    target_fat_g: Optional[float] = None
+    general_notes: Optional[Any] = None
+    day_types: Optional[Any] = None
+
+
+class DietTemplate(DietTemplateBase):
+    id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# 11. SPECIALIST_PROFILES TABLE SCHEMA
 # ==========================================
 class SpecialistProfile(BaseModel):
     id: Optional[int] = None
@@ -201,7 +281,7 @@ class SpecialistProfile(BaseModel):
 
 
 # ==========================================
-# 10. MARKETPLACE_LISTINGS TABLE SCHEMA
+# 12. MARKETPLACE_LISTINGS TABLE SCHEMA
 # ==========================================
 class MarketplaceListing(BaseModel):
     id: Optional[int] = None
@@ -219,7 +299,7 @@ class MarketplaceListing(BaseModel):
 
 
 # ==========================================
-# 11. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA
+# 13. SPECIALIST_SUBSCRIPTIONS TABLE SCHEMA
 # ==========================================
 class SpecialistSubscription(BaseModel):
     id: Optional[int] = None
@@ -243,7 +323,7 @@ class SpecialistSubscription(BaseModel):
 
 
 # ==========================================
-# 12. NUTRITION_PROGRAMS TABLE SCHEMA
+# 14. NUTRITION_PROGRAMS TABLE SCHEMA
 # ==========================================
 class NutritionProgram(BaseModel):
     id: Optional[int] = None
@@ -257,7 +337,7 @@ class NutritionProgram(BaseModel):
 
 
 # ==========================================
-# 13. WORKOUT & EXERCISE LIBRARY SCHEMAS
+# 15. WORKOUT & EXERCISE LIBRARY SCHEMAS
 # ==========================================
 
 class ExerciseBase(BaseModel):
@@ -331,7 +411,7 @@ class WorkoutProgram(BaseModel):
 
 
 # ==========================================
-# 14. SHARED DASHBOARD INTEGRATION SCHEMA
+# 16. SHARED DASHBOARD INTEGRATION SCHEMA
 # ==========================================
 class SharedClientDashboard(BaseModel):
     client_info: User
@@ -349,7 +429,7 @@ class SharedClientDashboard(BaseModel):
 
 
 # ==========================================
-# 15. EXPERT_NOTES TABLE SCHEMA
+# 17. EXPERT_NOTES TABLE SCHEMA
 # ==========================================
 class ExpertNote(BaseModel):
     id: Optional[int] = None
@@ -368,7 +448,7 @@ class ExpertNoteCreate(BaseModel):
 
 
 # ==========================================
-# 16. CLIENT_DAILY_LOGS TABLE SCHEMA
+# 18. CLIENT_DAILY_LOGS TABLE SCHEMA
 # ==========================================
 class ClientDailyLog(BaseModel):
     id: Optional[int] = None
@@ -394,7 +474,7 @@ class StepLogRequest(BaseModel):
 
 
 # ==========================================
-# 17. EXPERT ACTION & RESPONSE SCHEMAS
+# 19. EXPERT ACTION & RESPONSE SCHEMAS
 # ==========================================
 class SubscriptionActionRequest(BaseModel):
     request_id: int
@@ -463,7 +543,7 @@ class MarketplaceListingUpdate(BaseModel):
 
 
 # ==========================================
-# 18. TICKETS TABLE SCHEMA
+# 20. TICKETS TABLE SCHEMA
 # ==========================================
 class Ticket(BaseModel):
     id: Optional[int] = None
@@ -481,7 +561,7 @@ class Ticket(BaseModel):
 
 
 # ==========================================
-# 19. TICKET_MESSAGES TABLE SCHEMA
+# 21. TICKET_MESSAGES TABLE SCHEMA
 # ==========================================
 class TicketMessage(BaseModel):
     id: Optional[int] = None
@@ -495,7 +575,7 @@ class TicketMessage(BaseModel):
 
 
 # ==========================================
-# 20. CHAT_ROOMS TABLE SCHEMA
+# 22. CHAT_ROOMS TABLE SCHEMA
 # ==========================================
 class ChatRoom(BaseModel):
     id: Optional[int] = None
@@ -510,7 +590,7 @@ class ChatRoom(BaseModel):
 
 
 # ==========================================
-# 21. CHAT_MESSAGES TABLE SCHEMA
+# 23. CHAT_MESSAGES TABLE SCHEMA
 # ==========================================
 class ChatMessage(BaseModel):
     id: Optional[int] = None
@@ -526,7 +606,7 @@ class ChatMessage(BaseModel):
 
 
 # ==========================================
-# 22. APPOINTMENTS TABLE SCHEMAS
+# 24. APPOINTMENTS TABLE SCHEMAS
 # ==========================================
 class AppointmentBase(BaseModel):
     title: Optional[str] = "Birebir Görüşme"

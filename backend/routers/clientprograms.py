@@ -1383,10 +1383,89 @@ def get_daily_calories_summary(
             step_calories = 0
 
         # =========================================================
-        # 3. BMR
+        # 3. BMR (DİNAMİK HESAPLAMA)
         # =========================================================
 
-        bmr = 1650
+        bmr = None
+
+        # Öncelik A: body_analyses tablosunda hesaplanmış BMR varsa al
+        cursor.execute(
+            """
+            SELECT
+                bmr
+            FROM body_analyses
+            WHERE user_id = %s
+            ORDER BY id DESC
+            LIMIT 1;
+            """,
+            (client_id,)
+        )
+
+        measurement_row = cursor.fetchone()
+
+        if measurement_row:
+            bmr_from_db = get_row_val(
+                measurement_row,
+                "bmr",
+                None
+            )
+            if bmr_from_db is not None:
+                try:
+                    parsed_bmr = int(float(bmr_from_db))
+                    if parsed_bmr > 0:
+                        bmr = parsed_bmr
+                except (TypeError, ValueError):
+                    bmr = None
+
+        # Öncelik B: body_analyses'te BMR yoksa users tablosundan fiziksel verileri çek ve Mifflin-St Jeor ile hesapla
+        if bmr is None or bmr <= 0:
+            cursor.execute(
+                """
+                SELECT
+                    age,
+                    gender,
+                    height,
+                    weight
+                FROM users
+                WHERE id = %s
+                LIMIT 1;
+                """,
+                (client_id,)
+            )
+
+            user_row = cursor.fetchone()
+
+            if user_row:
+                age_val = get_row_val(user_row, "age", 0)
+                gender_val = get_row_val(user_row, "gender", "")
+                height_val = get_row_val(user_row, "height", 0)
+                weight_val = get_row_val(user_row, "weight", 0)
+
+                try:
+                    w = float(weight_val or 0)
+                    h = float(height_val or 0)
+                    a = int(age_val or 0)
+                    g = str(gender_val or "").lower().strip()
+
+                    if w > 0 and h > 0 and a > 0:
+                        if "erkek" in g or g == "male":
+                            s_factor = 5
+                        elif "kadın" in g or "kadin" in g or g == "female":
+                            s_factor = -161
+                        else:
+                            s_factor = -78
+
+                        calc_bmr = (10 * w) + (6.25 * h) - (5 * a) + s_factor
+                        bmr = int(round(calc_bmr))
+                    else:
+                        bmr = 1650
+                except (TypeError, ValueError):
+                    bmr = 1650
+            else:
+                bmr = 1650
+
+        if bmr is None or bmr <= 0:
+            bmr = 1650
 
         # =========================================================
         # 4. TOPLAM

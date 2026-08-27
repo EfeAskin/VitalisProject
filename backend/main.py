@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # Geliştirdiğimiz tüm router'ları eksiksiz içeri aktarıyoruz
-from backend.routers import auth, shared, user, footer, dietitian, meals, clientprofile, body_analysis, nutrition
+from backend.routers import auth, expertdietprogram, shared, user, footer, dietitian, meals, clientprofile, body_analysis, nutrition
 from backend.routers.water import router as water_router
 from backend.routers import expertprofile
 from backend.routers import expertclient
@@ -18,6 +18,7 @@ from backend.routers import tickets
 from backend.routers import appointment 
 from backend.routers import clientprograms
 from backend.routers import client_programs
+from backend.routers import expertdietprogram
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -108,6 +109,7 @@ app.include_router(appointment.router)
 app.include_router(clientprograms.router)  # <-- YENİ EKLENDİ
 app.include_router(client_programs.router) 
 app.include_router(client_programs.workout_router)  # client_programs içindeki /api/client/workout alternatif yönlendiricisi
+app.include_router(expertdietprogram.router)
 
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA
