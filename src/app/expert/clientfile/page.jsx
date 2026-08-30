@@ -7,6 +7,48 @@ import NewRequests from "./components/NewRequests";
 import ClientDetailView from "./components/ClientDetailView";
 import { Users, UserPlus, FolderOpen, Loader2, ShieldCheck, Sparkles } from "lucide-react";
 
+// LocalStorage ve JWT Token içerisinden kullanıcı ID'sini güvenli bir şekilde çıkartan yardımcı fonksiyon
+const extractUserId = () => {
+  if (typeof window === "undefined") return 0;
+  
+  try {
+    // 1. Öncelik: Token içindeki JWT Payload çözümleme
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    if (token) {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        const tokenId = payload.id || payload.user_id || payload.sub;
+        if (tokenId && !isNaN(Number(tokenId))) {
+          return Number(tokenId);
+        }
+      }
+    }
+
+    // 2. Öncelik: LocalStorage üzerindeki user nesneleri
+    const userJson = localStorage.getItem("user") || localStorage.getItem("auth_user") || localStorage.getItem("userData");
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      const uid =
+        user?.id ||
+        user?.user_id ||
+        user?.specialist_id ||
+        user?.expert_id ||
+        user?.userId ||
+        user?.user?.id ||
+        (typeof user === "number" || (typeof user === "string" && !isNaN(Number(user))) ? Number(user) : null);
+
+      if (uid && !isNaN(Number(uid))) {
+        return Number(uid);
+      }
+    }
+  } catch (error) {
+    console.error("Kullanıcı ID çıkarma hatası:", error);
+  }
+
+  return 0; // Bulunamadıysa 0 döndürür, backend JWT token ile kendisi tespit eder
+};
+
 function ClientFileContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -21,7 +63,10 @@ function ClientFileContent() {
 
   // BENZERSİZ (UNIQUE) DANIŞAN SAYISI HESAPLAMA
   const uniqueClientsCount = useMemo(() => {
-    const uniqueIds = new Set(clients.map((c) => String(c.id || c.client_id)));
+    if (!Array.isArray(clients) || clients.length === 0) return 0;
+    const uniqueIds = new Set(
+      clients.map((c) => String(c.id || c.client_id || c.subscription_id))
+    );
     return uniqueIds.size;
   }, [clients]);
 
@@ -29,27 +74,31 @@ function ClientFileContent() {
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const userJson = localStorage.getItem("user");
-      let activeUserId = null;
-
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        activeUserId = user?.id || null;
-      }
-
-      if (!activeUserId) {
-        console.warn("Oturum açmış kullanıcı ID'si bulunamadı.");
-        setIsLoading(false);
-        return;
-      }
+      const activeUserId = extractUserId();
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
 
       setSpecialistId(activeUserId);
 
-      const response = await fetch(`/api/expert-clients/dashboard/${activeUserId}`);
+      // Authorization header eklendi
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // activeUserId 0 olsa dahi istek atılır, backend Authorization token'ından kullanıcıyı doğrular
+      const response = await fetch(`/api/expert-clients/dashboard/${activeUserId || 0}`, {
+        method: "GET",
+        headers: headers
+      });
+
       if (response.ok) {
         const data = await response.json();
         setClients(data.active_clients || []);
         setRequests(data.pending_requests || []);
+      } else {
+        console.error("Dashboard verileri alınamadı. HTTP Hata Kodu:", response.status);
       }
     } catch (error) {
       console.error("Dashboard verileri çekilirken hata oluştu:", error);
@@ -65,9 +114,13 @@ function ClientFileContent() {
   const handleAcceptRequest = async (request) => {
     const reqId = request.request_id || request.id;
     try {
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           request_id: parseInt(reqId, 10),
           action: "accept",
@@ -112,9 +165,13 @@ function ClientFileContent() {
 
   const handleRejectRequest = async (requestId) => {
     try {
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           request_id: parseInt(requestId, 10),
           action: "reject"

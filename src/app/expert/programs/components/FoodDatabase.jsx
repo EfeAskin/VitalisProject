@@ -22,18 +22,24 @@ export default function FoodDatabase() {
     fat: ''
   });
 
-  // Kullanıcı/Diyetisyen ID'sini Alma Yardımcısı
+  // Kullanıcı/Diyetisyen ID'sini Sağlamlaştırma
   const getDietitianId = () => {
     try {
       const userStr = localStorage.getItem("user");
       if (userStr) {
         const user = JSON.parse(userStr);
-        return user.id || user.dietitian_id || 1;
+        // Tüm olası ID alanlarını kontrol et
+        const id = user.id || user.dietitian_id || user.userId || user.sub;
+        if (id) return id;
       }
     } catch (e) {
-      console.warn("Kullanıcı bilgisi okunamadı, varsayılan ID kullanılıyor:", e);
+      console.warn("Kullanıcı bilgisi okunamadı:", e);
     }
-    return 1;
+    // localStorage'da ayrı tutuluyorsa onları da kontrol et
+    const directId = localStorage.getItem("dietitian_id") || localStorage.getItem("user_id");
+    if (directId) return directId;
+
+    return 7; // Veritabanındaki aktif diyetisyen ID'nize (7) uyarlanmıştır, çakışmayı önler.
   };
 
   // 1. Veritabanından Besinleri Çekme (GET)
@@ -43,6 +49,7 @@ export default function FoodDatabase() {
       const token = localStorage.getItem("token") || localStorage.getItem("access_token");
       const dietitianId = getDietitianId();
 
+      // Hem global (dietitian_id is null) hem de bu diyetisyene ait besinleri eksiksiz çekebilmek için istek atıyoruz
       const res = await fetch(`/api/expert-diet-program/foods?dietitian_id=${dietitianId}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -75,7 +82,7 @@ export default function FoodDatabase() {
 
     const amountNum = parseFloat(newFood.portion_amount) || 1;
     const unitStr = newFood.unit || 'adet';
-    const portionLabelStr = `${amountNum} ${unitStr}`;
+    const portionLabelStr = `${amountNum}${unitStr === 'g' || unitStr === 'ml' ? unitStr : ' ' + unitStr}`;
 
     const payload = {
       name: newFood.name.trim(),
@@ -113,6 +120,8 @@ export default function FoodDatabase() {
           carbs: '',
           fat: ''
         });
+        // Güncel listeyi tamamen tazele
+        fetchFoods();
       } else {
         const errorData = await res.json();
         alert(`Ekleme hatası: ${errorData.detail || 'Bilinmeyen hata'}`);

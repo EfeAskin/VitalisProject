@@ -1,8 +1,7 @@
 import json
-
+from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 
 from backend.database import get_db_connection
@@ -21,26 +20,26 @@ router = APIRouter(
 
 class AssignWorkoutRequest(BaseModel):
     template_id: int
-    client_ids: List[int]
-    assigned_days: List[str]
+    client_ids: Optional[List[int]] = Field(default=None, description="Danışan ID listesi")
+    client_id: Optional[int] = Field(default=None, description="Tekil danışan ID'si")
+    assigned_days: List[str] = Field(default_factory=list, description="Seçilen antrenman günleri")
 
 
 # ============================================================
 # HELPER
 # ============================================================
 
-def get_current_user_id(current_user):
+def get_current_user_id(current_user) -> int:
     """
     auth.py içerisindeki get_current_user fonksiyonundan dönen
-    kullanıcı nesnesinden kullanıcı ID'sini güvenli şekilde alır.
+    kullanıcı nesnesinden kullanıcı ID'sini güvenli şekilde ve tamsayı olarak alır.
     """
+    user_id = None
 
     if isinstance(current_user, dict):
         user_id = current_user.get("id")
-
     elif isinstance(current_user, (tuple, list)):
         user_id = current_user[0] if current_user else None
-
     else:
         user_id = getattr(current_user, "id", None)
 
@@ -50,7 +49,13 @@ def get_current_user_id(current_user):
             detail="Oturum açmış kullanıcı doğrulanamadı."
         )
 
-    return user_id
+    try:
+        return int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Kullanıcı kimlik formatı geçersiz."
+        )
 
 
 # ============================================================
@@ -60,7 +65,7 @@ def get_current_user_id(current_user):
 @router.get("/my-active-clients")
 def get_my_active_clients(
     current_user=Depends(
-        RoleChecker(["trainer", "dietitian"])
+        RoleChecker(["trainer", "dietitian", "TRAINER", "DIETITIAN"])
     ),
     db=Depends(get_db_connection)
 ):
@@ -126,7 +131,7 @@ def get_my_active_clients(
             (current_user_id,)
         )
 
-        clients = cursor.fetchall()
+        clients = cursor.fetchall() or []
 
         formatted_clients = []
 
@@ -196,27 +201,13 @@ def get_my_active_clients(
 def assign_workout_to_clients(
     data: AssignWorkoutRequest,
     current_user=Depends(
-        RoleChecker(["trainer", "dietitian"])
+        RoleChecker(["trainer", "dietitian", "TRAINER", "DIETITIAN"])
     ),
     db=Depends(get_db_connection)
 ):
     """
     Seçilen antrenman şablonunu giriş yapan uzmanın
     aktif danışanlarına atar.
-
-    İşlemler:
-
-    1. Giriş yapan uzman doğrulanır.
-    2. Workout template bulunur.
-    3. Template'in trainer_id değeri giriş yapan uzmanla
-       karşılaştırılır.
-    4. Seçilen client_id değerlerinin gerçekten bu uzmana
-       aktif aboneliği olduğu kontrol edilir.
-    5. workout_programs kayıtları oluşturulur.
-    6. İlgili specialist_subscriptions kayıtlarının
-       program_name alanına yeni program dizi olarak eklenir.
-    7. Tüm işlemler başarılıysa commit edilir.
-    8. Herhangi bir hata olursa rollback yapılır.
     """
 
     cursor = None
@@ -228,28 +219,42 @@ def assign_workout_to_clients(
         )
 
         # ====================================================
-        # REQUEST VALIDATION
+        # REQUEST VALIDATION & ID UNIFICATION
         # ====================================================
 
-        if not data.client_ids:
+        raw_client_ids = []
+        if data.client_ids and isinstance(data.client_ids, list):
+            raw_client_ids.extend(data.client_ids)
+        if data.client_id is not None:
+            raw_client_ids.append(data.client_id)
 
+        if not raw_client_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="En az bir danışan seçilmelidir."
             )
 
         if not data.assigned_days:
-
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="En az bir antrenman günü seçilmelidir."
             )
 
-        # Aynı danışanın request içerisinde birden
-        # fazla kez gönderilmesini engelle.
-        client_ids = list(
-            dict.fromkeys(data.client_ids)
-        )
+        # ID'leri benzersiz yap ve güvenli tamsayı dönüştürmesi uygula
+        client_ids = []
+        for cid in raw_client_ids:
+            try:
+                val = int(cid)
+                if val not in client_ids:
+                    client_ids.append(val)
+            except (ValueError, TypeError):
+                continue
+
+        if not client_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Geçersiz danışan ID'si gönderildi."
+            )
 
         cursor = db.cursor(
             cursor_factory=RealDictCursor
@@ -274,28 +279,28 @@ def assign_workout_to_clients(
         template = cursor.fetchone()
 
         if not template:
-
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Antrenman şablonu bulunamadı."
             )
 
-        template_trainer_id = template.get(
-            "trainer_id"
-        )
+        raw_template_trainer_id = template.get("trainer_id")
+        
+        template_trainer_id = None
+        if raw_template_trainer_id is not None:
+            try:
+                template_trainer_id = int(raw_template_trainer_id)
+            except (ValueError, TypeError):
+                template_trainer_id = None
 
         # ====================================================
         # TEMPLATE OWNERSHIP CHECK
         # ====================================================
 
-        if template_trainer_id != current_user_id:
-
+        if template_trainer_id is not None and template_trainer_id != current_user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Bu antrenman şablonunu kullanma "
-                    "yetkiniz bulunmamaktadır."
-                )
+                detail="Bu antrenman şablonunu kullanma yetkiniz bulunmamaktadır."
             )
 
         template_name = (
@@ -303,7 +308,7 @@ def assign_workout_to_clients(
             or "Antrenman Programı"
         )
 
-        trainer_id = template_trainer_id
+        trainer_id = template_trainer_id or current_user_id
 
         # ====================================================
         # PROGRAM DETAILS
@@ -339,27 +344,24 @@ def assign_workout_to_clients(
             )
         )
 
-        active_subscription_rows = cursor.fetchall()
+        active_subscription_rows = cursor.fetchall() or []
 
         active_client_ids = {
-            row["client_id"]
+            int(row["client_id"])
             for row in active_subscription_rows
+            if row.get("client_id") is not None
         }
 
         unauthorized_client_ids = [
-            client_id
-            for client_id in client_ids
-            if client_id not in active_client_ids
+            cid
+            for cid in client_ids
+            if cid not in active_client_ids
         ]
 
         if unauthorized_client_ids:
-
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Seçilen danışanlardan bazıları "
-                    "bu uzmana aktif olarak abone değil."
-                )
+                detail="Seçilen danışanlardan bazıları bu uzmana aktif olarak abone değil."
             )
 
         # ====================================================
@@ -368,7 +370,7 @@ def assign_workout_to_clients(
 
         assigned_count = 0
 
-        for client_id in client_ids:
+        for cid in client_ids:
 
             # ------------------------------------------------
             # WORKOUT PROGRAM
@@ -398,7 +400,7 @@ def assign_workout_to_clients(
                 )
                 """,
                 (
-                    client_id,
+                    cid,
                     trainer_id,
                     data.template_id,
                     program_details_json
@@ -406,7 +408,7 @@ def assign_workout_to_clients(
             )
 
             # ------------------------------------------------
-            # SPECIALIST SUBSCRIPTION (ARRAY APPEND)
+            # SPECIALIST SUBSCRIPTION (SAFE ARRAY APPEND)
             # ------------------------------------------------
 
             cursor.execute(
@@ -415,7 +417,7 @@ def assign_workout_to_clients(
                 SET
                     program_name = CASE
                         WHEN program_name IS NULL THEN ARRAY[%s]::text[]
-                        WHEN NOT (%s = ANY(program_name)) THEN ARRAY_APPEND(program_name, %s)
+                        WHEN NOT (%s = ANY(program_name::text[])) THEN ARRAY_APPEND(program_name::text[], %s)
                         ELSE program_name
                     END,
                     updated_at = NOW()
@@ -428,7 +430,7 @@ def assign_workout_to_clients(
                     template_name,
                     template_name,
                     template_name,
-                    client_id,
+                    cid,
                     current_user_id
                 )
             )
@@ -453,12 +455,14 @@ def assign_workout_to_clients(
 
     except HTTPException:
 
-        db.rollback()
+        if db:
+            db.rollback()
         raise
 
     except Exception as e:
 
-        db.rollback()
+        if db:
+            db.rollback()
 
         print(
             f"[Expert Assignment] "

@@ -418,7 +418,7 @@ function ProgramsContent() {
             protein: finalProt,
             carbs: finalCarbs,
             fat: finalFat,
-            duration: t.duration_days || t.duration || t.days_count || 7,
+            duration: t.duration_days || t.duration || t.days_count || (Array.isArray(rawMeals) && rawMeals.length > 0 ? rawMeals.length : 7),
             meals: rawMeals,
             description: t.description || t.notes || ""
           };
@@ -868,9 +868,10 @@ function ProgramsContent() {
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedWorkoutForAssign(
-                            workout
-                          );
+                          setSelectedWorkoutForAssign({
+                            ...workout,
+                            isDiet: false
+                          });
 
                           setIsAssignModalOpen(true);
                         }}

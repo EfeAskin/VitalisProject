@@ -16,36 +16,26 @@ router = APIRouter(
 )
 
 
-# =========================================================
-# AUTH / AUTHORIZATION HELPERS
-# =========================================================
-
 def get_user_value(current_user, key, index=None):
     if isinstance(current_user, dict):
         return current_user.get(key)
-
     if hasattr(current_user, key):
         return getattr(current_user, key)
-
     if hasattr(current_user, "get"):
         return current_user.get(key)
-
     if isinstance(current_user, (tuple, list)) and index is not None:
         if len(current_user) > index:
             return current_user[index]
-
     return None
 
 
 def get_authenticated_user_id(current_user) -> int:
     user_id = get_user_value(current_user, "id", 0)
-
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Geçersiz kullanıcı kimliği",
         )
-
     try:
         return int(user_id)
     except (TypeError, ValueError):
@@ -53,10 +43,6 @@ def get_authenticated_user_id(current_user) -> int:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Geçersiz kullanıcı kimliği",
         )
-
-
-def get_authenticated_user_role(current_user):
-    return get_user_value(current_user, "role", 1)
 
 
 def parse_jsonb_field(val):
@@ -73,10 +59,6 @@ def parse_jsonb_field(val):
 
 
 def calculate_day_types_totals(day_types: Any) -> Dict[str, float]:
-    """
-    JSONB day_types altındaki meals -> options -> items verilerini tarayarak
-    toplam kalori ve makroları dinamik hesaplar.
-    """
     totals = {
         "calculated_calories": 0.0,
         "calculated_protein_g": 0.0,
@@ -98,7 +80,6 @@ def calculate_day_types_totals(day_types: Any) -> Dict[str, float]:
             if not isinstance(meal, dict):
                 continue
             
-            # 1. Yöntem: meal.options -> items yapısı
             options = meal.get("options", [])
             if isinstance(options, list) and len(options) > 0:
                 for opt in options:
@@ -113,7 +94,6 @@ def calculate_day_types_totals(day_types: Any) -> Dict[str, float]:
                                 totals["calculated_carbs_g"] += float(item.get("carbs") or 0)
                                 totals["calculated_fat_g"] += float(item.get("fat") or 0)
             
-            # 2. Yöntem: Doğrudan meal.items yapısı
             items = meal.get("items", [])
             if isinstance(items, list) and len(items) > 0:
                 for item in items:
@@ -123,7 +103,6 @@ def calculate_day_types_totals(day_types: Any) -> Dict[str, float]:
                         totals["calculated_carbs_g"] += float(item.get("carbs") or 0)
                         totals["calculated_fat_g"] += float(item.get("fat") or 0)
 
-    # Yuvarlama işlemleri
     totals["calculated_calories"] = round(totals["calculated_calories"], 2)
     totals["calculated_protein_g"] = round(totals["calculated_protein_g"], 2)
     totals["calculated_carbs_g"] = round(totals["calculated_carbs_g"], 2)
@@ -132,9 +111,77 @@ def calculate_day_types_totals(day_types: Any) -> Dict[str, float]:
     return totals
 
 
-# ==========================================
-# PYDANTIC SCHEMA DEFINITIONS
-# ==========================================
+def process_template_foods(cursor, dietitian_id: int, day_types: List[Dict[str, Any]]):
+    """
+    Şablon kaydedilirken veya güncellenirken, öğünlerde yer alan besinleri tarar.
+    Eğer besin veritabanında (foods) yoksa veya yeni girilmişse dietitian_id ile kaydeder.
+    """
+    if not isinstance(day_types, list):
+        return
+
+    for day in day_types:
+        if not isinstance(day, dict):
+            continue
+        meals = day.get("meals", [])
+        for meal in meals:
+            if not isinstance(meal, dict):
+                continue
+            options = meal.get("options", [])
+            if not isinstance(options, list):
+                continue
+            for opt in options:
+                if not isinstance(opt, dict):
+                    continue
+                items = opt.get("items", [])
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    food_name = (item.get("foodName") or "").strip()
+                    if not food_name:
+                        continue
+                    
+                    category = item.get("category") or "all"
+                    amount = float(item.get("amount") or 100)
+                    unit = item.get("unit") or "g"
+                    calories = float(item.get("calories") or 0)
+                    protein = float(item.get("protein") or 0)
+                    carbs = float(item.get("carbs") or 0)
+                    fat = float(item.get("fat") or 0)
+
+                    # Bu besin bu diyetisyen için zaten kayıtlı mı kontrol et
+                    cursor.execute(
+                        """
+                        SELECT id FROM public.foods 
+                        WHERE dietitian_id = %s AND LOWER(name) = LOWER(%s);
+                        """,
+                        (dietitian_id, food_name)
+                    )
+                    existing = cursor.fetchone()
+
+                    if not existing:
+                        # Kayıtlı değilse otomatik ekle
+                        cursor.execute(
+                            """
+                            INSERT INTO public.foods 
+                            (dietitian_id, name, category, portion_label, portion_amount, unit, calories, protein, carbs, fat)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                            """,
+                            (
+                                dietitian_id,
+                                food_name,
+                                category,
+                                f"{amount}{unit}",
+                                amount,
+                                unit,
+                                calories,
+                                protein,
+                                carbs,
+                                fat
+                            )
+                        )
+
 
 class FoodCreateUpdate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
@@ -194,14 +241,29 @@ class DietTemplateResponse(BaseModel):
     updated_at: Any
 
 
-# ==========================================
-# 1. BESİN VERİTABANI ENDPOINT'LERİ (foods)
-# ==========================================
+class AssignDietProgramRequest(BaseModel):
+    template_id: int = Field(..., description="Atanacak diyet şablonu ID'si")
+    client_ids: Optional[List[int]] = Field(default=None, description="Programın atanacağı danışan ID listesi")
+    client_id: Optional[int] = Field(default=None, description="Tekil danışan ID'si")
+    dietitian_id: Optional[int] = Field(default=None, description="Diyetisyen ID'si")
+    assigned_days: Optional[List[str]] = Field(default_factory=list, description="Seçilen günler")
+    start_date: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class NutritionProgramResponse(BaseModel):
+    id: int
+    client_id: int
+    dietitian_id: int
+    program_details: Dict[str, Any]
+    created_at: Any
+    updated_at: Any
+
 
 @router.get("/foods", response_model=List[FoodResponse])
 def get_foods(
-    dietitian_id: Optional[int] = Query(None, description="Diyetisyene özel besinleri de çekmek için id"),
-    category: Optional[str] = Query('all', description="Kategori filtresi: protein, carbs, fat, dairy, veg_fruit"),
+    dietitian_id: Optional[int] = Query(None, description="Diyetisyene özel besinleri çekmek için id"),
+    category: Optional[str] = Query('all', description="Kategori filtresi"),
     search: Optional[str] = Query(None, description="Besin adı ile arama"),
     conn: Any = Depends(get_db_connection)
 ):
@@ -246,7 +308,6 @@ def get_foods(
                 "created_at": r[11].isoformat() if r[11] else None
             })
         return foods
-
     except Exception as e:
         logger.error(f"Error fetching foods: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Besin veritabanı çekilirken hata oluştu: {str(e)}")
@@ -305,10 +366,6 @@ def create_custom_food(
         cursor.close()
 
 
-# ==========================================
-# 2. DİYET ŞABLONLARI ENDPOINT'LERİ (diet_templates)
-# ==========================================
-
 @router.get("/templates", response_model=List[DietTemplateResponse])
 def get_diet_templates(
     dietitian_id: int = Query(..., description="Diyetisyene ait şablonları çekmek için ID"),
@@ -352,7 +409,6 @@ def get_diet_templates(
                 "updated_at": r[11].isoformat() if r[11] else None
             })
         return templates
-
     except Exception as e:
         logger.error(f"Error fetching diet templates: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Diyet şablonları çekilirken hata oluştu: {str(e)}")
@@ -418,6 +474,9 @@ def create_diet_template(
 ):
     cursor = conn.cursor(cursor_factory=DictCursor)
     try:
+        # Şablondaki özel/yeni besinleri otomatik olarak foods veritabanına kaydet
+        process_template_foods(cursor, payload.dietitian_id, payload.dayTypes)
+
         query = """
             INSERT INTO public.diet_templates 
             (dietitian_id, title, target_calories, goal, target_protein_g, target_carbs_g, target_fat_g, general_notes, day_types)
@@ -482,6 +541,9 @@ def update_diet_template(
         cursor.execute("SELECT id FROM public.diet_templates WHERE id = %s;", (template_id,))
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Güncellenecek diyet şablonu bulunamadı.")
+
+        # Güncelleme sırasında da yeni besinleri kontrol edip foods tablosuna ekle
+        process_template_foods(cursor, payload.dietitian_id, payload.dayTypes)
 
         query = """
             UPDATE public.diet_templates
@@ -573,5 +635,158 @@ def delete_diet_template(
         conn.rollback()
         logger.error(f"Error deleting diet template {template_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Şablon silinirken hata oluştu: {str(e)}")
+    finally:
+        cursor.close()
+
+
+@router.post("/assign", response_model=List[NutritionProgramResponse], status_code=status.HTTP_201_CREATED)
+def assign_diet_program(
+    payload: AssignDietProgramRequest,
+    conn: Any = Depends(get_db_connection)
+):
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    try:
+        target_clients = []
+        if payload.client_ids and isinstance(payload.client_ids, list):
+            target_clients.extend(payload.client_ids)
+        if payload.client_id and payload.client_id not in target_clients:
+            target_clients.append(payload.client_id)
+
+        if not target_clients:
+            raise HTTPException(status_code=400, detail="Lütfen atama yapılacak en az bir danışan seçin.")
+
+        cursor.execute("""
+            SELECT id, title, target_calories, goal, target_protein_g, target_carbs_g, target_fat_g, general_notes, day_types, dietitian_id
+            FROM public.diet_templates
+            WHERE id = %s;
+        """, (payload.template_id,))
+        template = cursor.fetchone()
+
+        if not template:
+            raise HTTPException(status_code=404, detail="Atanacak diyet şablonu bulunamadı.")
+
+        dietitian_id = payload.dietitian_id or template[9]
+        if not dietitian_id:
+            raise HTTPException(status_code=400, detail="Diyetisyen ID bilgisi bulunamadı.")
+
+        notes = parse_jsonb_field(template[7])
+        day_types = parse_jsonb_field(template[8])
+
+        template_days = [d.get("name") for d in day_types if isinstance(d, dict) and d.get("name")]
+        assigned_days = payload.assigned_days if (payload.assigned_days and len(payload.assigned_days) > 0) else template_days
+
+        program_details = {
+            "template_id": template[0],
+            "template_title": template[1],
+            "target_calories": template[2],
+            "goal": template[3],
+            "target_protein_g": float(template[4]) if template[4] is not None else 0.0,
+            "target_carbs_g": float(template[5]) if template[5] is not None else 0.0,
+            "target_fat_g": float(template[6]) if template[6] is not None else 0.0,
+            "general_notes": notes,
+            "day_types": day_types,
+            "assigned_days": assigned_days,
+            "start_date": payload.start_date,
+            "assignment_notes": payload.notes
+        }
+        program_details_json = json.dumps(program_details, ensure_ascii=False)
+
+        created_programs = []
+        for client_id in target_clients:
+            insert_query = """
+                INSERT INTO public.nutrition_programs
+                (client_id, dietitian_id, program_details, created_at, updated_at)
+                VALUES (%s, %s, %s::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                RETURNING id, client_id, dietitian_id, program_details, created_at, updated_at;
+            """
+            cursor.execute(insert_query, (client_id, dietitian_id, program_details_json))
+            row = cursor.fetchone()
+
+            created_programs.append({
+                "id": row[0],
+                "client_id": row[1],
+                "dietitian_id": row[2],
+                "program_details": parse_jsonb_field(row[3]),
+                "created_at": row[4].isoformat() if row[4] else None,
+                "updated_at": row[5].isoformat() if row[5] else None
+            })
+
+        conn.commit()
+        return created_programs
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error assigning diet program: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Diyet programı atanırken hata oluştu: {str(e)}")
+    finally:
+        cursor.close()
+
+
+@router.get("/assigned-programs", response_model=List[NutritionProgramResponse])
+def get_assigned_programs(
+    dietitian_id: Optional[int] = Query(None, description="Diyetisyen ID"),
+    client_id: Optional[int] = Query(None, description="Danışan ID"),
+    conn: Any = Depends(get_db_connection)
+):
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    try:
+        query = "SELECT id, client_id, dietitian_id, program_details, created_at, updated_at FROM public.nutrition_programs WHERE 1=1"
+        params = []
+
+        if dietitian_id is not None:
+            query += " AND dietitian_id = %s"
+            params.append(dietitian_id)
+
+        if client_id is not None:
+            query += " AND client_id = %s"
+            params.append(client_id)
+
+        query += " ORDER BY updated_at DESC;"
+
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+
+        programs = []
+        for r in rows:
+            programs.append({
+                "id": r[0],
+                "client_id": r[1],
+                "dietitian_id": r[2],
+                "program_details": parse_jsonb_field(r[3]),
+                "created_at": r[4].isoformat() if r[4] else None,
+                "updated_at": r[5].isoformat() if r[5] else None
+            })
+        return programs
+    except Exception as e:
+        logger.error(f"Error fetching assigned diet programs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Atanmış diyet programları çekilirken hata oluştu: {str(e)}")
+    finally:
+        cursor.close()
+
+
+@router.delete("/assigned-programs/{program_id}", status_code=status.HTTP_200_OK)
+def delete_assigned_program(
+    program_id: int,
+    dietitian_id: int = Query(...),
+    conn: Any = Depends(get_db_connection)
+):
+    cursor = conn.cursor(cursor_factory=DictCursor)
+    try:
+        query = "DELETE FROM public.nutrition_programs WHERE id = %s AND dietitian_id = %s RETURNING id;"
+        cursor.execute(query, (program_id, dietitian_id))
+        deleted_row = cursor.fetchone()
+        conn.commit()
+
+        if not deleted_row:
+            raise HTTPException(status_code=404, detail="Silinecek atanmış program bulunamadı veya yetkiniz yok.")
+
+        return {"message": "Atanmış diyet programı başarıyla kaldırıldı.", "id": program_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error deleting assigned diet program {program_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Atanmış program silinirken hata oluştu: {str(e)}")
     finally:
         cursor.close()
