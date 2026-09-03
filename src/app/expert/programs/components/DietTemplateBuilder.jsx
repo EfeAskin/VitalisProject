@@ -229,7 +229,7 @@ export default function DietTemplateBuilder({
         const mappedFoods = rawFoods.map((item) => ({
           id: item.id || `food-${Math.random()}`,
           name: item.name || "",
-          category: item.category || "all",
+          category: item.category || "protein",
           amount: Number(item.portion_amount ?? item.amount ?? 100),
           unit: item.unit || "g",
           calories: Number(item.calories) || 0,
@@ -280,13 +280,13 @@ export default function DietTemplateBuilder({
         const mappedDays = existingDayTypes.map((day, idx) => ({
           ...day,
           name: day.name && !day.name.includes("Gün") ? day.name : WEEK_DAYS[idx % 7],
-          meals: (day.meals || []).map((m, mIdx) => ({
+          meals: (day.meals || []).map((m) => ({
             ...m,
             options: (m.options || []).map((opt) => ({
               ...opt,
               items: (opt.items || []).map((it) => ({
                 ...it,
-                category: it.category || "protein", // Kategori yoksa varsayılan
+                category: it.category || "protein",
               })),
             })),
           })),
@@ -627,6 +627,21 @@ export default function DietTemplateBuilder({
                       let cbPG = item.carbsPerGram ?? 0;
                       let fPG = item.fatPerGram ?? 0;
 
+                      if (cPG === 0 && pPG === 0 && cbPG === 0 && fPG === 0) {
+                        const oldGrams = (parseFloat(item.amount) || 100) * getUnitWeight(item.unit || "g");
+                        if (oldGrams > 0) {
+                          cPG = (Number(item.calories) || 0) / oldGrams;
+                          pPG = (Number(item.protein) || 0) / oldGrams;
+                          cbPG = (Number(item.carbs) || 0) / oldGrams;
+                          fPG = (Number(item.fat) || 0) / oldGrams;
+                        }
+                      }
+
+                      updatedItem.caloriesPerGram = cPG;
+                      updatedItem.proteinPerGram = pPG;
+                      updatedItem.carbsPerGram = cbPG;
+                      updatedItem.fatPerGram = fPG;
+
                       updatedItem.calories = Math.round(totalGrams * cPG * 10) / 10;
                       updatedItem.protein = Math.round(totalGrams * pPG * 10) / 10;
                       updatedItem.carbs = Math.round(totalGrams * cbPG * 10) / 10;
@@ -775,99 +790,312 @@ export default function DietTemplateBuilder({
 
   return (
     <div className="fixed inset-0 top-[64px] z-50 flex items-center justify-center bg-[#11142D]/90 backdrop-blur-xl p-1.5 sm:p-2 overflow-hidden">
-      <div className="bg-[#141832] border border-emerald-500/30 w-full max-w-6xl h-full max-h-[calc(100vh-68px)] rounded-2xl shadow-xl overflow-hidden flex flex-col">
-        <div className="px-6 py-3 bg-[#161b38] border-b border-slate-700 flex justify-between items-center shrink-0">
+      <div className="bg-[#141832] border border-emerald-500/30 w-full max-w-6xl h-full max-h-[calc(100vh-68px)] rounded-2xl sm:rounded-3xl shadow-[0_0_60px_rgba(16,185,129,0.18)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        
+        {/* Modal Başlığı */}
+        <div className="px-6 py-3 bg-[#161b38] border-b border-slate-700/80 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/40">
+            <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 rounded-2xl border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
               <Utensils size={18} />
             </div>
             <div>
-              <h2 className="text-base font-black text-white">
-                {initialData ? "Diyet Şablonunu Düzenle" : "Yeni Diyet & Beslenme Mimarı"}
-              </h2>
-              <p className="text-[11px] text-slate-300 font-medium">Danışan şablonlarını yönetin.</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-white tracking-wide">
+                  {initialData ? "Diyet Şablonunu Düzenle" : "Yeni Diyet & Beslenme Mimarı"}
+                </h2>
+                <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded-full border border-emerald-500/40">
+                  Diyetisyen Pro
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 font-medium mt-0.5">
+                Danışanlarınıza özel seçenekli öğünler, dinamik makrolar ve diyet kuralları tasarlayın.
+              </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
             type="button"
-            className="p-2 text-slate-400 hover:text-white rounded-xl bg-[#11142D] border border-slate-700"
+            disabled={isSaving}
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-[#11142D] border border-slate-700 hover:border-emerald-500/50 transition-all hover:scale-105"
           >
             <X size={18} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 sm:p-5 overflow-y-auto space-y-4 custom-scrollbar flex-1">
-          {/* Üst Bilgiler */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5 bg-[#161b38]/50 p-3.5 rounded-2xl border border-slate-700">
+          
+          {/* Üst Bilgiler & Ayarlar */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5 bg-[#161b38]/50 p-3.5 rounded-2xl border border-slate-700/60">
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Plan Başlığı</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                <BookOpen size={14} className="text-emerald-400" />
+                Plan Başlığı
+              </label>
               <input
                 type="text"
                 required
                 placeholder="Plan başlığı"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-400"
+                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/30 transition-all placeholder-slate-500"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Hedef Kalori (kcal)</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                <Flame size={14} className="text-orange-400" />
+                Hedef Kalori (kcal)
+              </label>
               <input
                 type="number"
                 required
+                min={500}
+                max={10000}
                 value={targetCalories}
                 onChange={(e) => setTargetCalories(Number(e.target.value))}
-                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-extrabold text-orange-400 rounded-xl border border-slate-700 focus:outline-none"
+                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-extrabold text-orange-400 rounded-xl border border-slate-700 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30 transition-all"
               />
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Hedef & Konsept</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                <SlidersHorizontal size={14} className="text-teal-400" />
+                Hedef & Konsept
+              </label>
               <select
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
-                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700"
+                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700 focus:outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-500/30 transition-all cursor-pointer"
               >
                 {Object.keys(DIET_CONCEPTS).map((key) => (
-                  <option key={key} value={key}>{DIET_CONCEPTS[key].label}</option>
+                  <option key={key} value={key}>
+                    {DIET_CONCEPTS[key].label}
+                  </option>
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-200 mb-1.5">Sapma Toleransı</label>
+              <label className="block text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                <AlertCircle size={14} className="text-indigo-400" />
+                Sapma Toleransı (±%)
+              </label>
               <select
                 value={tolerancePercent}
                 onChange={(e) => setTolerancePercent(Number(e.target.value))}
-                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-indigo-300 rounded-xl border border-slate-700"
+                className="w-full px-3.5 py-2 bg-[#11142D] text-xs font-semibold text-indigo-300 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30 transition-all cursor-pointer font-mono"
               >
                 <option value={3}>±%3</option>
                 <option value={5}>±%5</option>
                 <option value={10}>±%10</option>
+                <option value={15}>±%15</option>
               </select>
             </div>
           </div>
 
-          {/* Hızlı Besin Arama */}
-          <div className="bg-[#161b38]/60 p-3 rounded-2xl border border-slate-700 space-y-2">
-            <div className="flex justify-between items-center">
-              <h4 className="text-xs font-black text-white uppercase flex items-center gap-2">
-                Hızlı Besin Ekleme Veritabanı {isLoadingFoods && <Loader2 size={13} className="animate-spin text-emerald-400" />}
-              </h4>
-              <div className="flex items-center gap-1 overflow-x-auto pb-1">
-                {PRESET_FOOD_CATEGORIES.map((cat) => (
+          {/* KALORİ VE MAKRO ÖZET KARTLARI (YÜZDELİKLER VE İLERLEME BARLARI) */}
+          <div className="bg-gradient-to-r from-[#161b38] via-[#141832] to-[#161b38] p-3 rounded-2xl border border-emerald-500/25 shadow-[0_4px_25px_rgba(0,0,0,0.3)] grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* KALORİ */}
+            <div className="p-3 rounded-xl bg-[#11142D]/90 border border-slate-700/80 flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Flame size={12} className="text-orange-400" />
+                  KALORİ
+                </span>
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border font-mono ${
+                    calStatus.inRange
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  }`}
+                >
+                  {calStatus.formatted}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline justify-between">
+                <span className="text-base font-black text-white">
+                  {activeDayTotals.calories}
+                </span>
+                <span className="text-[11px] text-slate-300 font-bold">
+                  / {targetCalories} kcal
+                </span>
+              </div>
+              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    calStatus.inRange
+                      ? "bg-gradient-to-r from-orange-500 to-amber-400"
+                      : "bg-rose-500"
+                  }`}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (activeDayTotals.calories / (targetCalories || 1)) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* PROTEİN */}
+            <div className="p-3 rounded-xl bg-[#11142D]/90 border border-slate-700/80 flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Beef size={12} className="text-rose-400" />
+                  PROTEİN
+                </span>
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border font-mono ${
+                    pStatus.inRange
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  }`}
+                >
+                  {pStatus.formatted}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline justify-between">
+                <span className="text-base font-black text-rose-400">
+                  {activeDayTotals.protein}g
+                </span>
+                <span className="text-[11px] text-slate-300 font-bold">
+                  / {targetMacros.proteinGrams}g
+                </span>
+              </div>
+              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    pStatus.inRange ? "bg-rose-500" : "bg-rose-700"
+                  }`}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (activeDayTotals.protein / (targetMacros.proteinGrams || 1)) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* KARBONHİDRAT */}
+            <div className="p-3 rounded-xl bg-[#11142D]/90 border border-slate-700/80 flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Wheat size={12} className="text-amber-400" />
+                  KARB
+                </span>
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border font-mono ${
+                    cStatus.inRange
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  }`}
+                >
+                  {cStatus.formatted}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline justify-between">
+                <span className="text-base font-black text-amber-400">
+                  {activeDayTotals.carbs}g
+                </span>
+                <span className="text-[11px] text-slate-300 font-bold">
+                  / {targetMacros.carbsGrams}g
+                </span>
+              </div>
+              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    cStatus.inRange ? "bg-amber-400" : "bg-rose-500"
+                  }`}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (activeDayTotals.carbs / (targetMacros.carbsGrams || 1)) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* YAĞ */}
+            <div className="p-3 rounded-xl bg-[#11142D]/90 border border-slate-700/80 flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider flex items-center gap-1">
+                  <Droplet size={12} className="text-cyan-400" />
+                  YAĞ
+                </span>
+                <span
+                  className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border font-mono ${
+                    fStatus.inRange
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-rose-500/20 text-rose-300 border-rose-500/40"
+                  }`}
+                >
+                  {fStatus.formatted}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline justify-between">
+                <span className="text-base font-black text-cyan-400">
+                  {activeDayTotals.fat}g
+                </span>
+                <span className="text-[11px] text-slate-300 font-bold">
+                  / {targetMacros.fatGrams}g
+                </span>
+              </div>
+              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    fStatus.inRange ? "bg-cyan-400" : "bg-rose-500"
+                  }`}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (activeDayTotals.fat / (targetMacros.fatGrams || 1)) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Hızlı Besin Ekleme Veritabanı */}
+          <div className="bg-[#161b38]/60 p-3 rounded-2xl border border-slate-700/80 space-y-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Sparkles size={15} className="text-emerald-400" />
+                <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                  Hızlı Besin Ekleme Veritabanı
+                  {isLoadingFoods && (
+                    <Loader2 size={13} className="animate-spin text-emerald-400" />
+                  )}
+                </h4>
+                {selectedMealId && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    Hedef:{" "}
+                    {currentDay?.meals?.find((m) => m.id === selectedMealId)?.name || "Seçili Öğün"}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-1 sm:pb-0">
+                {PRESET_FOOD_CATEGORIES.map((category) => (
                   <button
-                    key={cat.id}
+                    key={category.id}
                     type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                      selectedCategory === cat.id ? "bg-emerald-500 text-white" : "bg-[#11142D] text-slate-300 border border-slate-700"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all shrink-0 ${
+                      selectedCategory === category.id
+                        ? "bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                        : "bg-[#11142D] text-slate-300 hover:text-white border border-slate-700"
                     }`}
                   >
-                    {cat.label}
+                    {category.label}
                   </button>
                 ))}
               </div>
             </div>
+
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -875,54 +1103,88 @@ export default function DietTemplateBuilder({
                 placeholder="Besin ara..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700 focus:outline-none"
+                className="w-full pl-9 pr-3 py-1.5 bg-[#11142D] text-xs font-semibold text-white rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-400 placeholder-slate-500"
               />
             </div>
-            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-              {filteredPresetFoods.map((food) => (
-                <button
-                  key={food.id}
-                  type="button"
-                  onClick={() => handleAddItemToActiveOption(selectedMealId, food)}
-                  className="group flex items-center gap-1.5 px-2.5 py-1 bg-[#11142D] hover:bg-emerald-950 border border-slate-700 rounded-lg text-xs"
-                >
-                  <span className="font-bold text-slate-200">{food.name}</span>
-                  <span className="text-[10px] text-slate-400">({food.amount}{food.unit} • {food.calories}kcal)</span>
-                  <Plus size={12} className="text-emerald-400" />
-                </button>
-              ))}
+
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar pt-1">
+              {filteredPresetFoods.length > 0 ? (
+                filteredPresetFoods.map((food) => (
+                  <button
+                    key={food.id}
+                    type="button"
+                    onClick={() => handleAddItemToActiveOption(selectedMealId, food)}
+                    className="group flex items-center gap-1.5 px-2.5 py-1 bg-[#11142D] hover:bg-emerald-950/80 border border-slate-700 hover:border-emerald-500/50 rounded-lg transition-all text-xs"
+                  >
+                    <span className="font-bold text-slate-200 group-hover:text-emerald-300">
+                      {food.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      ({food.amount}{food.unit} • {food.calories}kcal)
+                    </span>
+                    <Plus size={12} className="text-emerald-400 ml-0.5 group-hover:scale-125 transition-transform" />
+                  </button>
+                ))
+              ) : (
+                <div className="text-[11px] text-slate-400 py-1 italic">
+                  Aramanıza uygun besin bulunamadı.
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Günler ve Öğünler */}
+          {/* Günler ve Öğün Mimarı */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-700">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-700/80">
               {dayTypes.map((day, index) => (
                 <div
                   key={day.id || index}
                   onClick={() => setActiveDayIndex(index)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-t-xl font-bold text-xs cursor-pointer border-t border-x ${
-                    activeDayIndex === index ? "bg-[#161b38] border-emerald-500 text-white" : "bg-[#11142D] border-slate-800 text-slate-400"
+                  className={`group relative flex items-center gap-2 px-3.5 py-2 rounded-t-xl font-bold text-xs cursor-pointer border-t border-x transition-all shrink-0 ${
+                    activeDayIndex === index
+                      ? "bg-[#161b38] border-emerald-500/50 text-white"
+                      : "bg-[#11142D]/60 border-slate-800 text-slate-400 hover:text-slate-200"
                   }`}
                 >
-                  <span>{day.name}</span>
+                  <Layers
+                    size={14}
+                    className={activeDayIndex === index ? "text-emerald-400" : "text-slate-500"}
+                  />
+                  <span className="text-xs font-black text-white">{day.name}</span>
                   {dayTypes.length > 1 && (
-                    <button type="button" onClick={(e) => handleRemoveDayType(index, e)}>
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemoveDayType(index, e)}
+                      className="text-slate-500 hover:text-rose-400 p-0.5 transition-colors ml-1"
+                    >
                       <X size={13} />
                     </button>
                   )}
                 </div>
               ))}
+
               {canAddMoreDays && (
-                <button type="button" onClick={handleAddDayType} className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-xl text-xs font-bold">
-                  + Yeni Gün Ekle
+                <button
+                  type="button"
+                  onClick={handleAddDayType}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30 text-xs font-bold transition-all shrink-0 ml-1"
+                >
+                  <Plus size={14} />
+                  Yeni Gün Ekle
                 </button>
               )}
-              <button type="button" onClick={handleAddMeal} className="px-3 py-1.5 bg-teal-500/10 text-teal-300 rounded-xl text-xs font-bold">
-                + Yeni Öğün Ekle
+
+              <button
+                type="button"
+                onClick={handleAddMeal}
+                className="flex items-center gap-1 px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 rounded-xl border border-teal-500/30 text-xs font-bold transition-all shrink-0 ml-1 shadow-[0_0_12px_rgba(20,184,166,0.15)]"
+              >
+                <Plus size={14} />
+                Yeni Öğün Ekle
               </button>
             </div>
 
+            {/* Öğün Listesi */}
             <div className="space-y-4">
               {currentDay?.meals?.map((meal) => {
                 const isSelected = selectedMealId === meal.id;
@@ -933,171 +1195,398 @@ export default function DietTemplateBuilder({
                   <div
                     key={meal.id}
                     onClick={() => setSelectedMealId(meal.id)}
-                    className={`p-4 rounded-2xl border ${isSelected ? "bg-[#161b38] border-emerald-500/50" : "bg-[#141832] border-slate-800"}`}
+                    className={`p-4 rounded-2xl border transition-all ${
+                      isSelected
+                        ? "bg-[#161b38] border-emerald-500/50 shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+                        : "bg-[#141832]/80 border-slate-800 hover:border-slate-700"
+                    }`}
                   >
-                    <div className="flex justify-between items-center mb-3 pb-2.5 border-b border-slate-700">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 pb-2.5 border-b border-slate-700/60">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Utensils size={16} className="text-emerald-400 shrink-0" />
                         <input
                           type="text"
                           value={meal.name}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            const value = e.target.value;
                             setDayTypes((prev) =>
-                              prev.map((d, dIdx) =>
-                                dIdx !== activeDayIndex ? d : {
-                                  ...d,
-                                  meals: d.meals.map((m) => m.id === meal.id ? { ...m, name: val } : m),
-                                }
+                              prev.map((day, dayIndex) =>
+                                dayIndex !== activeDayIndex
+                                  ? day
+                                  : {
+                                      ...day,
+                                      meals: day.meals.map((item) =>
+                                        item.id === meal.id ? { ...item, name: value } : item
+                                      ),
+                                    }
                               )
                             );
                           }}
-                          className="bg-[#11142D] border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold text-white w-36"
+                          className="bg-[#11142D] border border-slate-700 focus:border-emerald-400 px-2.5 py-1 rounded-lg text-xs font-black text-white w-36 focus:outline-none"
                         />
+
+                        <div className="flex items-center gap-1 bg-[#11142D] border border-slate-700 px-2 py-1 rounded-lg">
+                          <Clock size={12} className="text-slate-400" />
+                          <input
+                            type="text"
+                            value={meal.time || "08:30"}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setDayTypes((prev) =>
+                                prev.map((day, dayIndex) =>
+                                  dayIndex !== activeDayIndex
+                                    ? day
+                                    : {
+                                        ...day,
+                                        meals: day.meals.map((item) =>
+                                          item.id === meal.id ? { ...item, time: value } : item
+                                        ),
+                                      }
+                                )
+                              );
+                            }}
+                            className="bg-transparent border-none text-[11px] font-mono text-slate-300 w-12 focus:outline-none"
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => handleAddOptionToMeal(meal.id)} className="px-2.5 py-1 text-[11px] font-bold bg-teal-500/10 text-teal-300 rounded-lg">
-                          + Alternatif Ekle
+
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleAddOptionToMeal(meal.id)}
+                          className="px-2.5 py-1 text-[11px] font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-lg transition-all flex items-center gap-1"
+                        >
+                          <Plus size={12} />
+                          Alternatif Seçenek Ekle
                         </button>
-                        <button type="button" onClick={() => handleRemoveMeal(meal.id)} className="text-slate-400 hover:text-rose-400">
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMeal(meal.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
 
-                    {/* Besin Tablosu */}
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="text-[10px] font-bold uppercase text-slate-400 border-b border-slate-700">
-                            <th className="py-1.5 px-2">Besin Adı</th>
-                            <th className="py-1.5 px-2 w-32">Kategori (DDL)</th>
-                            <th className="py-1.5 px-2 w-20">Miktar</th>
-                            <th className="py-1.5 px-2 w-20">Birim</th>
-                            <th className="py-1.5 px-2 w-20 text-right">Kcal</th>
-                            <th className="py-1.5 px-2 w-16 text-right">Prot</th>
-                            <th className="py-1.5 px-2 w-16 text-right">Karb</th>
-                            <th className="py-1.5 px-2 w-16 text-right">Yağ</th>
-                            <th className="py-1.5 px-2 w-8" />
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800 text-xs">
-                          {activeOpt.items?.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-800/30">
-                              {/* Besin Adı */}
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="text"
-                                  value={item.foodName || ""}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "foodName", e.target.value)}
-                                  placeholder="Besin adı"
-                                  className="bg-transparent border-none text-white w-full focus:outline-none"
-                                />
-                              </td>
-                              {/* Kategori DDL (İstediğiniz Açılır Menü Alanı) */}
-                              <td className="py-1.5 px-2">
-                                <select
-                                  value={item.category || "protein"}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "category", e.target.value)}
-                                  className="w-full bg-[#11142D] border border-slate-700 rounded px-1.5 py-1 text-xs text-emerald-300 font-semibold focus:outline-none"
-                                >
-                                  <option value="protein">Yüksek Protein</option>
-                                  <option value="carbs">Kompleks Karb</option>
-                                  <option value="fat">Sağlıklı Yağ</option>
-                                  <option value="dairy">Süt & Süt Ürünleri</option>
-                                  <option value="veg_fruit">Sebze & Meyve</option>
-                                </select>
-                              </td>
-                              {/* Miktar */}
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="number"
-                                  value={item.amount}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "amount", e.target.value)}
-                                  className="w-16 bg-[#11142D] border border-slate-700 rounded px-1 text-center text-white"
-                                />
-                              </td>
-                              {/* Birim */}
-                              <td className="py-1.5 px-2">
-                                <select
-                                  value={item.unit || "g"}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "unit", e.target.value)}
-                                  className="bg-[#11142D] border border-slate-700 rounded px-1 text-slate-300"
-                                >
-                                  <option value="g">g</option>
-                                  <option value="ml">ml</option>
-                                  <option value="adet">adet</option>
-                                  <option value="dilim">dilim</option>
-                                  <option value="porsiyon">porsiyon</option>
-                                </select>
-                              </td>
-                              {/* Kalori */}
-                              <td className="py-1.5 px-2 text-right">
-                                <input
-                                  type="number"
-                                  value={item.calories ?? 0}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "calories", e.target.value)}
-                                  className="w-16 bg-[#11142D] border border-slate-700 rounded px-1 text-right text-orange-400 font-bold"
-                                />
-                              </td>
-                              {/* Protein */}
-                              <td className="py-1.5 px-2 text-right">
-                                <input
-                                  type="number"
-                                  value={item.protein ?? 0}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "protein", e.target.value)}
-                                  className="w-14 bg-[#11142D] border border-slate-700 rounded px-1 text-right text-rose-400"
-                                />
-                              </td>
-                              {/* Karb */}
-                              <td className="py-1.5 px-2 text-right">
-                                <input
-                                  type="number"
-                                  value={item.carbs ?? 0}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "carbs", e.target.value)}
-                                  className="w-14 bg-[#11142D] border border-slate-700 rounded px-1 text-right text-amber-400"
-                                />
-                              </td>
-                              {/* Yağ */}
-                              <td className="py-1.5 px-2 text-right">
-                                <input
-                                  type="number"
-                                  value={item.fat ?? 0}
-                                  onChange={(e) => handleUpdateItem(meal.id, item.id, "fat", e.target.value)}
-                                  className="w-14 bg-[#11142D] border border-slate-700 rounded px-1 text-right text-cyan-400"
-                                />
-                              </td>
-                              <td className="py-1.5 px-2 text-center">
-                                <button type="button" onClick={() => handleRemoveItem(meal.id, item.id)} className="text-slate-500 hover:text-rose-400">
-                                  <X size={13} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    {/* Alternatif Seçenek Sekmeleri */}
+                    <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1">
+                      {meal.options?.map((option, optionIndex) => (
+                        <div
+                          key={option.id || optionIndex}
+                          onClick={() => handleSelectOptionTab(meal.id, optionIndex)}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                            activeOptIdx === optionIndex
+                              ? "bg-emerald-500 text-white shadow-md"
+                              : "bg-[#11142D] text-slate-400 border border-slate-700 hover:text-slate-200"
+                          }`}
+                        >
+                          <span>{option.title || `Seçenek ${optionIndex + 1}`}</span>
+                          {meal.options.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveOptionFromMeal(meal.id, optionIndex);
+                              }}
+                              className="hover:text-rose-200 ml-1"
+                            >
+                              <X size={12} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleAddItemToActiveOption(meal.id)}
-                      className="w-full py-1.5 border border-dashed border-slate-700 hover:border-emerald-500 text-slate-400 hover:text-emerald-300 rounded-xl text-xs font-bold mt-2"
-                    >
-                      + Manuel Öğün Öğesi Ekle
-                    </button>
+                    {/* Besin Tablosu (Kategori DDL Dahil) */}
+                    <div className="space-y-2">
+                      {activeOpt.items?.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="text-[10px] font-bold uppercase text-slate-400 border-b border-slate-700/60">
+                                <th className="py-1.5 px-2">Besin Adı</th>
+                                <th className="py-1.5 px-2 w-32">Kategori (DDL)</th>
+                                <th className="py-1.5 px-2 w-20">Miktar</th>
+                                <th className="py-1.5 px-2 w-20">Birim</th>
+                                <th className="py-1.5 px-2 w-20 text-right">Kcal</th>
+                                <th className="py-1.5 px-2 w-16 text-right">Prot(g)</th>
+                                <th className="py-1.5 px-2 w-16 text-right">Karb(g)</th>
+                                <th className="py-1.5 px-2 w-16 text-right">Yağ(g)</th>
+                                <th className="py-1.5 px-2 w-8 text-center" />
+                              </tr>
+                            </thead>
+
+                            <tbody className="divide-y divide-slate-800/60 text-xs">
+                              {activeOpt.items.map((item) => (
+                                <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
+                                  {/* Besin Adı */}
+                                  <td className="py-1.5 px-2 font-semibold text-white">
+                                    <input
+                                      type="text"
+                                      value={item.foodName || ""}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "foodName", e.target.value)
+                                      }
+                                      placeholder="Besin adı..."
+                                      className="bg-transparent border-none focus:outline-none w-full text-xs text-white"
+                                    />
+                                  </td>
+
+                                  {/* Kategori DDL */}
+                                  <td className="py-1.5 px-2">
+                                    <select
+                                      value={item.category || "protein"}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "category", e.target.value)
+                                      }
+                                      className="w-full bg-[#11142D] border border-slate-700 rounded px-1.5 py-1 text-xs text-emerald-300 font-semibold focus:outline-none focus:border-emerald-400 cursor-pointer"
+                                    >
+                                      <option value="protein">Yüksek Protein</option>
+                                      <option value="carbs">Kompleks Karb</option>
+                                      <option value="fat">Sağlıklı Yağ</option>
+                                      <option value="dairy">Süt & Süt Ürünleri</option>
+                                      <option value="veg_fruit">Sebze & Meyve</option>
+                                    </select>
+                                  </td>
+
+                                  {/* Miktar */}
+                                  <td className="py-1.5 px-2">
+                                    <input
+                                      type="number"
+                                      value={item.amount}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "amount", e.target.value)
+                                      }
+                                      className="w-16 bg-[#11142D] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-center text-white font-mono focus:outline-none focus:border-emerald-400"
+                                    />
+                                  </td>
+
+                                  {/* Birim */}
+                                  <td className="py-1.5 px-2">
+                                    <select
+                                      value={item.unit || "g"}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "unit", e.target.value)
+                                      }
+                                      className="bg-[#11142D] border border-slate-700 rounded px-1 py-0.5 text-xs text-slate-300 focus:outline-none cursor-pointer"
+                                    >
+                                      <option value="g">g</option>
+                                      <option value="ml">ml</option>
+                                      <option value="adet">adet</option>
+                                      <option value="dilim">dilim</option>
+                                      <option value="tbsp">Yemek Kş.</option>
+                                      <option value="tsp">Tatlı Kş.</option>
+                                      <option value="avuç">avuç</option>
+                                      <option value="porsiyon">porsiyon</option>
+                                      <option value="kase">kase</option>
+                                    </select>
+                                  </td>
+
+                                  {/* Kcal */}
+                                  <td className="py-1.5 px-2 text-right">
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      min="0"
+                                      value={item.calories ?? 0}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "calories", e.target.value)
+                                      }
+                                      className="w-16 bg-[#11142D] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-right text-orange-400 font-bold font-mono focus:outline-none focus:border-orange-400"
+                                    />
+                                  </td>
+
+                                  {/* Protein */}
+                                  <td className="py-1.5 px-2 text-right">
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      min="0"
+                                      value={item.protein ?? 0}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "protein", e.target.value)
+                                      }
+                                      className="w-14 bg-[#11142D] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-right text-rose-400 font-mono focus:outline-none focus:border-rose-400"
+                                    />
+                                  </td>
+
+                                  {/* Karbonhidrat */}
+                                  <td className="py-1.5 px-2 text-right">
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      min="0"
+                                      value={item.carbs ?? 0}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "carbs", e.target.value)
+                                      }
+                                      className="w-14 bg-[#11142D] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-right text-amber-400 font-mono focus:outline-none focus:border-amber-400"
+                                    />
+                                  </td>
+
+                                  {/* Yağ */}
+                                  <td className="py-1.5 px-2 text-right">
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      min="0"
+                                      value={item.fat ?? 0}
+                                      onChange={(e) =>
+                                        handleUpdateItem(meal.id, item.id, "fat", e.target.value)
+                                      }
+                                      className="w-14 bg-[#11142D] border border-slate-700 rounded px-1.5 py-0.5 text-xs text-right text-cyan-400 font-mono focus:outline-none focus:border-cyan-400"
+                                    />
+                                  </td>
+
+                                  {/* Sil */}
+                                  <td className="py-1.5 px-2 text-center">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveItem(meal.id, item.id)}
+                                      className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                                    >
+                                      <X size={13} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-3 border border-dashed border-slate-800 rounded-xl text-xs text-slate-500">
+                          Bu seçeneğe henüz besin eklenmedi.
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddItemToActiveOption(meal.id)}
+                        className="w-full py-1.5 border border-dashed border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-500/5 text-slate-400 hover:text-emerald-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 mt-2"
+                      >
+                        <Plus size={14} />
+                        Manuel Öğün Öğesi Ekle
+                      </button>
+                    </div>
                   </div>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={handleAddMeal}
+                className="w-full py-3 border-2 border-dashed border-teal-500/40 hover:border-teal-400 bg-teal-500/5 hover:bg-teal-500/10 text-teal-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Plus size={16} />
+                Aktif Güne Yeni Öğün Ekle
+              </button>
             </div>
           </div>
 
-          {/* Kaydet Butonu */}
-          <div className="pt-2 border-t border-slate-800 flex justify-end gap-3">
-            <button type="button" onClick={onClose} disabled={isSaving} className="px-5 py-2.5 bg-[#11142D] text-slate-300 font-bold text-xs rounded-xl border border-slate-700">
+          {/* Diyet Kuralları & Genel Notlar */}
+          <div className="bg-[#161b38]/50 p-4 rounded-2xl border border-slate-700/60 space-y-3">
+            <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <CheckSquare size={15} className="text-emerald-400" />
+              Diyet Kuralları & Genel Notlar
+            </h4>
+
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_DIET_NOTES.map((note, index) => {
+                const isChecked = generalNotes.includes(note);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => togglePresetNote(note)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 text-left ${
+                      isChecked
+                        ? "bg-emerald-500/20 border border-emerald-500/50 text-emerald-300"
+                        : "bg-[#11142D] border border-slate-700 text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <CheckCircle2
+                      size={13}
+                      className={isChecked ? "text-emerald-400" : "text-slate-600"}
+                    />
+                    <span>{note}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <input
+                type="text"
+                placeholder="Ek tavsiye veya kural yazın..."
+                value={customNoteInput}
+                onChange={(e) => setCustomNoteInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCustomNote();
+                  }
+                }}
+                className="flex-1 px-3 py-1.5 bg-[#11142D] text-xs text-white rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-400 placeholder-slate-500"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomNote}
+                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-all"
+              >
+                Ekle
+              </button>
+            </div>
+
+            {generalNotes.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-slate-800">
+                {generalNotes.map((note, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center text-xs bg-[#11142D] px-3 py-1.5 rounded-lg border border-slate-800"
+                  >
+                    <span className="text-slate-200 font-medium">• {note}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNote(index)}
+                      className="text-slate-500 hover:text-rose-400 p-0.5"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Alt Aksiyon Butonları */}
+          <div className="pt-2 border-t border-slate-800 flex justify-end gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSaving}
+              className="px-5 py-2.5 bg-[#11142D] hover:bg-slate-800 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition-all"
+            >
               Vazgeç
             </button>
-            <button type="submit" disabled={isSaving} className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs rounded-xl shadow-lg flex items-center gap-2">
-              {isSaving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
-              Diyet Şablonunu Kaydet
+
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-xs rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all flex items-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Kaydediliyor...
+                </>
+              ) : (
+                <>
+                  <Check size={15} />
+                  Diyet Şablonunu Kaydet
+                </>
+              )}
             </button>
           </div>
         </form>

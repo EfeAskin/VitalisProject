@@ -1,6 +1,6 @@
-from pydantic import BaseModel, Field, EmailStr
-from typing import Any, Dict, List, Optional
 from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # ==========================================
 # 1. USERS TABLE SCHEMA
@@ -25,8 +25,7 @@ class User(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProfileUpdate(BaseModel):
@@ -43,26 +42,32 @@ class UserProfileUpdate(BaseModel):
     profile_photo: Optional[str] = None
 
 
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
+
 # ==========================================
 # 2. BODY_ANALYSES TABLE SCHEMA
 # ==========================================
+
 class BodyAnalysis(BaseModel):
     id: Optional[int] = None
     user_id: Optional[int] = None
-    weight: Optional[float] = None  
-    neck: Optional[float] = None    
-    waist: Optional[float] = None   
-    hip: Optional[float] = None    
+    weight: Optional[float] = None
+    neck: Optional[float] = None
+    waist: Optional[float] = None
+    hip: Optional[float] = None
     body_fat: Optional[float] = None
     bmr: Optional[float] = None
     bmi: Optional[float] = None
     ideal_weight: Optional[float] = None
     lbm: Optional[float] = None
     measured_at: Optional[datetime] = None
+    month_key: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 # ==========================================
 # 3. WATER_LOGS TABLE SCHEMA
@@ -74,8 +79,7 @@ class WaterLog(BaseModel):
     water_consumed: Optional[float] = 0.0
     log_date: Optional[date] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -89,8 +93,7 @@ class DailyTaskLog(BaseModel):
     checked: Optional[bool] = False
     task_date: Optional[date] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -103,8 +106,7 @@ class WorkoutLog(BaseModel):
     completed: Optional[bool] = False
     log_date: Optional[date] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -112,7 +114,7 @@ class WorkoutLog(BaseModel):
 # ==========================================
 class OnboardingAssessment(BaseModel):
     id: Optional[int] = None
-    client_id: Optional[int] = None  
+    client_id: Optional[int] = None
     gender: str
     activity_level: str
     goal: str
@@ -125,11 +127,10 @@ class OnboardingAssessment(BaseModel):
     body_fat: Optional[float] = None
     lbm: Optional[float] = None
     bmr: Optional[float] = None
-    bmi: Optional[float] = None      
+    bmi: Optional[float] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -150,8 +151,7 @@ class DietitianTarget(BaseModel):
     dietitian_note: Optional[str] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -167,8 +167,7 @@ class ClientMealLog(BaseModel):
     fat: Optional[float] = 0.0
     logged_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClientMealLogCreate(BaseModel):
@@ -217,8 +216,7 @@ class Food(FoodBase):
     id: int
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -233,7 +231,7 @@ class DietTemplateBase(BaseModel):
     target_carbs_g: Optional[float] = 0.0
     target_fat_g: Optional[float] = 0.0
     general_notes: Optional[Any] = None
-    day_types: Optional[Any] = []
+    day_types: Optional[Any] = Field(default_factory=list)
 
 
 class DietTemplateCreate(DietTemplateBase):
@@ -256,8 +254,7 @@ class DietTemplate(DietTemplateBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -268,7 +265,7 @@ class SpecialistProfile(BaseModel):
     user_id: int
     title: Optional[str] = "Uzman Koç"
     bio: Optional[str] = ""
-    specialties: Optional[List[str]] = []
+    specialties: Optional[List[str]] = Field(default_factory=list)
     is_accepting_clients: Optional[bool] = True
     rating: Optional[float] = 5.0
     review_count: Optional[int] = 0
@@ -276,8 +273,7 @@ class SpecialistProfile(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -294,8 +290,7 @@ class MarketplaceListing(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -311,15 +306,14 @@ class SpecialistSubscription(BaseModel):
     package_name: Optional[str] = None
     status: Optional[str] = "pending"
     goal: Optional[str] = None
-    program_name: Optional[List[str]] = []
+    program_name: Optional[List[str]] = Field(default_factory=list)
     request_message: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -332,8 +326,7 @@ class NutritionProgram(BaseModel):
     program_details: Dict[str, Any]
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -343,7 +336,7 @@ class NutritionProgram(BaseModel):
 class ExerciseBase(BaseModel):
     name: str
     muscle_group: str                         # Örn: 'Göğüs', 'Kol', 'Sırt'
-    target_muscles: List[str] = []            # Örn: ['Üst Göğüs', 'Orta Göğüs', 'Triceps']
+    target_muscles: List[str] = Field(default_factory=list) # Örn: ['Üst Göğüs', 'Orta Göğüs', 'Triceps']
     difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
     video_url: Optional[str] = None           # YouTube Linki
     description: Optional[str] = None         # Egzersiz Açıklaması / Form Notları
@@ -358,8 +351,7 @@ class Exercise(ExerciseBase):
     trainer_id: Optional[int] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkoutTemplateExerciseItem(BaseModel):
@@ -373,11 +365,11 @@ class WorkoutTemplateExerciseItem(BaseModel):
 class WorkoutTemplateCreate(BaseModel):
     name: str
     difficulty_level: str                     # 'Başlangıç', 'Orta', 'İleri'
-    target_muscles: List[str] = []            # Şablonun içerdiği tüm kas grupları rozetleri
+    target_muscles: List[str] = Field(default_factory=list) # Şablonun içerdiği tüm kas grupları rozetleri
     duration_minutes: Optional[int] = 60
     estimated_calories: Optional[int] = 0     # Koçun antrenman için belirlediği tahmini kalori
     description: Optional[str] = None
-    exercises: List[WorkoutTemplateExerciseItem] = []
+    exercises: List[WorkoutTemplateExerciseItem] = Field(default_factory=list)
 
 
 class WorkoutTemplateResponse(BaseModel):
@@ -385,15 +377,14 @@ class WorkoutTemplateResponse(BaseModel):
     trainer_id: int
     name: str
     difficulty_level: str
-    target_muscles: List[str] = []            # Filtreleme için hedef kas rozet dizisi
+    target_muscles: List[str] = Field(default_factory=list) # Filtreleme için hedef kas rozet dizisi
     duration_minutes: Optional[int] = 60
     estimated_calories: Optional[int] = 0     # Koçun antrenman için belirlediği tahmini kalori
     description: Optional[str] = None
     created_at: Optional[datetime] = None
-    exercises: List[Dict[str, Any]] = []
+    exercises: List[Dict[str, Any]] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkoutProgram(BaseModel):
@@ -401,13 +392,12 @@ class WorkoutProgram(BaseModel):
     client_id: Optional[int] = None
     trainer_id: Optional[int] = None
     template_id: Optional[int] = None
-    program_details: Dict[str, Any] = {}
+    program_details: Dict[str, Any] = Field(default_factory=dict)
     status: Optional[str] = "active"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -417,15 +407,14 @@ class SharedClientDashboard(BaseModel):
     client_info: User
     assessment: Optional[OnboardingAssessment] = None
     diet_targets: Optional[DietitianTarget] = None
-    logged_meals_today: List[ClientMealLog] = []
+    logged_meals_today: List[ClientMealLog] = Field(default_factory=list)
     water_log_today: Optional[WaterLog] = None
-    daily_tasks_today: List[DailyTaskLog] = []
-    workout_progress_week: List[WorkoutLog] = []
+    daily_tasks_today: List[DailyTaskLog] = Field(default_factory=list)
+    workout_progress_week: List[WorkoutLog] = Field(default_factory=list)
     nutrition_program: Optional[NutritionProgram] = None
     workout_program: Optional[WorkoutProgram] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -438,8 +427,7 @@ class ExpertNote(BaseModel):
     note_text: str
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExpertNoteCreate(BaseModel):
@@ -465,8 +453,7 @@ class ClientDailyLog(BaseModel):
     step_calories: Optional[int] = 0          # Adımdan kazanılan kalori
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StepLogRequest(BaseModel):
@@ -497,7 +484,7 @@ class ClientSummaryForExpert(BaseModel):
     daily_calories: Optional[int] = None
     package_name: str
     goal: Optional[str] = None
-    program_name: Optional[List[str]] = []
+    program_name: Optional[List[str]] = Field(default_factory=list)
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str
@@ -556,8 +543,7 @@ class Ticket(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -570,8 +556,7 @@ class TicketMessage(BaseModel):
     message_text: str
     sent_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -585,8 +570,7 @@ class ChatRoom(BaseModel):
     openai_thread_id: Optional[str] = None
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -601,8 +585,7 @@ class ChatMessage(BaseModel):
     is_read: Optional[bool] = False
     created_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -655,5 +638,4 @@ class AppointmentResponse(AppointmentBase):
     expert_name: Optional[str] = None
     expert_title: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

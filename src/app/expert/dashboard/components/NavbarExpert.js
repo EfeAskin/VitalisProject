@@ -152,9 +152,9 @@ export default function NavbarExpert() {
       return (
         <div className="hidden sm:flex items-center gap-1.5 ml-2.5 select-none shrink-0">
           <span className="bg-[#EA580C] text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase flex items-center gap-1 shadow-sm">
-            <Sparkles size={9} /> EXPERT PT
+            <Sparkles size={9} /> Antrenör
           </span>
-          <div className="w-5 h-5 rounded-full bg-orange-50 text-[#EA580C] flex items-center justify-center shadow-sm" title="Kişisel Antrenör">
+          <div className="w-6 h-6 rounded-full bg-orange-50 text-[#EA580C] flex items-center justify-center shadow-sm" title="Kişisel Antrenör">
             <Dumbbell size={10} className="rotate-45" />
           </div>
         </div>
@@ -164,9 +164,9 @@ export default function NavbarExpert() {
       return (
         <div className="hidden sm:flex items-center gap-1.5 ml-2.5 select-none shrink-0">
           <span className="bg-emerald-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase flex items-center gap-1 shadow-sm">
-            <Sparkles size={9} /> EXPERT DİYETİSYEN
+            <Sparkles size={9} /> DİYETİSYEN
           </span>
-          <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm" title="Diyetisyen">
+          <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm" title="Diyetisyen">
             <Apple size={10} />
           </div>
         </div>

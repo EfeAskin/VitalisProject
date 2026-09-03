@@ -8,6 +8,7 @@ import DailyTasks from './components/DailyTasks';
 import WaterTracker from './components/WaterTracker';
 import CoachCard from './components/CoachCard';
 import NutritionTracker from './components/NutritionTracker';
+import ClientDietProgram from './components/clientdietprogram';
 import WeeklyWorkout from './components/WeeklyWorkout';
 import WeightChart from './components/WeightChart';
 import UpcomingSession from './components/UpcomingSession';
@@ -28,6 +29,7 @@ export default function ClientDashboard() {
   const [calorieRefreshKey, setCalorieRefreshKey] = useState(0);
 
   const [userData, setUserData] = useState({
+    id: null,
     firstName: "",
     lastName: "",
     role: "client"
@@ -39,11 +41,12 @@ export default function ClientDashboard() {
     const token = localStorage.getItem("access_token");
     
     if (cachedFirst) {
-      setUserData({
+      setUserData(prev => ({
+        ...prev,
         firstName: cachedFirst,
         lastName: cachedLast,
         role: localStorage.getItem("role") || "client"
-      });
+      }));
     }
 
     async function fetchUserData() {
@@ -65,16 +68,19 @@ export default function ClientDashboard() {
 
           const firstName = userObj.first_name || userObj.firstName || "";
           const lastName = userObj.last_name || userObj.lastName || "";
+          const userId = userObj.id || userObj.user_id || null;
 
-          if (firstName) {
+          if (firstName || userId) {
             setUserData({
+              id: userId,
               firstName: firstName,
               lastName: lastName,
               role: userObj.role || "client"
             });
 
-            localStorage.setItem("first_name", firstName);
-            localStorage.setItem("last_name", lastName);
+            if (firstName) localStorage.setItem("first_name", firstName);
+            if (lastName) localStorage.setItem("last_name", lastName);
+            if (userId) localStorage.setItem("user_id", userId);
           }
         }
       } catch (err) {
@@ -141,7 +147,6 @@ export default function ClientDashboard() {
     setRefreshKey(prev => prev + 1);
   };
 
-  // Adım kaydedildiğinde harcanan kalori kartının anında güncellenmesi için handler
   const handleStepLogged = () => {
     setCalorieRefreshKey(prev => prev + 1);
   };
@@ -182,8 +187,14 @@ export default function ClientDashboard() {
               setMacroData={setMacroData} 
               onAddKcal={() => {}} 
             />
+
+            <ClientDietProgram clientId={userData.id} />
+
             <WeeklyWorkout workoutProgress={workoutProgress} setWorkoutProgress={setWorkoutProgress} />
+            
+            {/* userId parametresi eklendi */}
             <WeightChart 
+              userId={userData.id}
               weightHistory={weightHistory} 
               onOpenModal={() => setMeasurementModal(true)} 
               refreshKey={refreshKey}
@@ -194,7 +205,6 @@ export default function ClientDashboard() {
           <div className="lg:col-span-3 space-y-6">
             <UpcomingSession />
 
-            {/* Premium Harcanan Kalori ve Adım Takibi Kartları */}
             <CaloriesBurnedCard refreshTrigger={calorieRefreshKey} />
             <DailyStepsCard onStepLogged={handleStepLogged} />
 
@@ -205,7 +215,9 @@ export default function ClientDashboard() {
         </div>
       </main>
 
+      {/* userId parametresi eklendi */}
       <BodyAnalysisModal 
+        userId={userData.id}
         isOpen={measurementModal} 
         onClose={() => setMeasurementModal(false)} 
         onSave={updateMeasurementGraph} 

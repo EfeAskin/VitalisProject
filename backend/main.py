@@ -19,6 +19,7 @@ from backend.routers import appointment
 from backend.routers import clientprograms
 from backend.routers import client_programs
 from backend.routers import expertdietprogram
+from backend.routers import expertdashboard
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -110,6 +111,7 @@ app.include_router(clientprograms.router)  # <-- YENİ EKLENDİ
 app.include_router(client_programs.router) 
 app.include_router(client_programs.workout_router)  # client_programs içindeki /api/client/workout alternatif yönlendiricisi
 app.include_router(expertdietprogram.router)
+app.include_router(expertdashboard.router)
 
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA

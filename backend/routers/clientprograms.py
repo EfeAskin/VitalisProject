@@ -267,14 +267,15 @@ def get_client_workout_schedule(
         rows = cursor.fetchall() or []
 
         # =========================================================
-        # 2. TAMAMLANMIŞ EGZERSİZ DURUMLARINI GETİR
+        # 2. TAMAMLANMIŞ EGZERSİZ DURUMLARINI VE TARİHLERİNİ GETİR
         # =========================================================
 
         completed_query = """
             SELECT
                 template_exercise_id,
                 day,
-                completed
+                completed,
+                updated_at
 
             FROM client_exercise_logs
 
@@ -312,11 +313,27 @@ def get_client_workout_schedule(
                 2
             )
 
+            updated_at_val = get_row_val(
+                c_row,
+                "updated_at",
+                3
+            )
+
+            updated_at_str = None
+            if updated_at_val:
+                if hasattr(updated_at_val, "isoformat"):
+                    updated_at_str = updated_at_val.isoformat()
+                else:
+                    updated_at_str = str(updated_at_val)
+
             if ex_id is not None and ex_day:
 
                 completed_map[
                     (ex_id, ex_day)
-                ] = bool(is_done)
+                ] = {
+                    "completed": bool(is_done),
+                    "updated_at": updated_at_str
+                }
 
         # =========================================================
         # 3. HAFTALIK ŞEMA
@@ -512,12 +529,6 @@ def get_client_workout_schedule(
 
                 # -------------------------------------------------
                 # KALORİ
-                #
-                # Aynı template içindeki her egzersiz satırında
-                # aynı estimated_calories tekrar gelir.
-                #
-                # Bu yüzden direkt gün seviyesine yazıyoruz.
-                # Toplam egzersiz sayısıyla çarpmıyoruz.
                 # -------------------------------------------------
 
                 schedule[day][
@@ -525,16 +536,19 @@ def get_client_workout_schedule(
                 ] = estimated_calories
 
                 # -------------------------------------------------
-                # TAMAMLANMA DURUMU
+                # TAMAMLANMA DURUMU VE TARİH BİLGİSİ
                 # -------------------------------------------------
 
-                is_completed = completed_map.get(
+                completed_info = completed_map.get(
                     (
                         template_exercise_id,
                         day
                     ),
-                    False
+                    {"completed": False, "updated_at": None}
                 )
+
+                is_completed = completed_info["completed"]
+                updated_at_str = completed_info["updated_at"]
 
                 # -------------------------------------------------
                 # AYNI EGZERSİZİ TEKRAR EKLEME
@@ -588,7 +602,8 @@ def get_client_workout_schedule(
                                 20
                             ),
 
-                            "completed": is_completed
+                            "completed": is_completed,
+                            "updated_at": updated_at_str
                         }
                     )
 

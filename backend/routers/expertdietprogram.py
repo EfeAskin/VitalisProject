@@ -575,10 +575,50 @@ def update_diet_template(
             payload.dietitian_id
         ))
         updated_row = cursor.fetchone()
-        conn.commit()
 
         if not updated_row:
             raise HTTPException(status_code=403, detail="Bu şablonu güncelleme yetkiniz yok.")
+
+        # --- CANLI SENKRONİZASYON: Bu şablona bağlı atanmış tüm danışan programlarını (nutrition_programs) güncelle ---
+        cursor.execute(
+            """
+            SELECT id, program_details 
+            FROM public.nutrition_programs 
+            WHERE diet_template_id = %s OR (program_details->>'template_id')::int = %s;
+            """,
+            (template_id, template_id)
+        )
+        assigned_programs = cursor.fetchall() or []
+
+        for prog in assigned_programs:
+            prog_id = prog[0]
+            prog_details = parse_jsonb_field(prog[1])
+            if not isinstance(prog_details, dict):
+                prog_details = {}
+
+            # Danışan programındaki şablon bazlı alanları güncelle
+            prog_details["template_title"] = payload.title
+            prog_details["goal"] = payload.goal
+            prog_details["target_calories"] = payload.targetCalories
+            prog_details["target_protein_g"] = float(payload.targetProteinGrams or 0.0)
+            prog_details["target_carbs_g"] = float(payload.targetCarbsGrams or 0.0)
+            prog_details["target_fat_g"] = float(payload.targetFatGrams or 0.0)
+            prog_details["general_notes"] = payload.generalNotes
+            prog_details["day_types"] = payload.dayTypes
+
+            updated_details_json = json.dumps(prog_details, ensure_ascii=False)
+
+            cursor.execute(
+                """
+                UPDATE public.nutrition_programs
+                SET program_details = %s::jsonb,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+                """,
+                (updated_details_json, prog_id)
+            )
+
+        conn.commit()
 
         notes = parse_jsonb_field(updated_row[8])
         days = parse_jsonb_field(updated_row[9])
@@ -603,6 +643,7 @@ def update_diet_template(
             "updated_at": updated_row[11].isoformat() if updated_row[11] else None
         }
     except HTTPException:
+        conn.rollback()
         raise
     except Exception as e:
         conn.rollback()
@@ -695,11 +736,11 @@ def assign_diet_program(
         for client_id in target_clients:
             insert_query = """
                 INSERT INTO public.nutrition_programs
-                (client_id, dietitian_id, program_details, created_at, updated_at)
-                VALUES (%s, %s, %s::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                (client_id, dietitian_id, diet_template_id, program_details, created_at, updated_at)
+                VALUES (%s, %s, %s, %s::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING id, client_id, dietitian_id, program_details, created_at, updated_at;
             """
-            cursor.execute(insert_query, (client_id, dietitian_id, program_details_json))
+            cursor.execute(insert_query, (client_id, dietitian_id, template[0], program_details_json))
             row = cursor.fetchone()
 
             created_programs.append({

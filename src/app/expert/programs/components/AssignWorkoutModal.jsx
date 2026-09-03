@@ -13,6 +13,75 @@ const DAYS_OF_WEEK = [
   { id: 'Paz', label: 'Pazar' },
 ];
 
+const mapToDayId = (val) => {
+  if (val === null || val === undefined) return null;
+  const s = String(val).trim().toLowerCase();
+
+  if (s === 'pzt' || s.startsWith('pazartes') || s === 'monday' || s === 'mon' || s === '1') return 'Pzt';
+  if (s === 'sal' || s.startsWith('sal') || s === 'tuesday' || s === 'tue' || s === '2') return 'Sal';
+  if (s === 'çar' || s === 'car' || s.startsWith('çarş') || s.startsWith('cars') || s === 'wednesday' || s === 'wed' || s === '3') return 'Çar';
+  if (s === 'per' || s.startsWith('perş') || s.startsWith('pers') || s === 'thursday' || s === 'thu' || s === '4') return 'Per';
+  if (s === 'cum' || (s.startsWith('cum') && !s.startsWith('cumart')) || s === 'friday' || s === 'fri' || s === '5') return 'Cum';
+  if (s === 'cmt' || s.startsWith('cumart') || s === 'saturday' || s === 'sat' || s === '6') return 'Cmt';
+  if (s === 'paz' || (s.startsWith('pazar') && !s.startsWith('pazartes')) || s === 'sunday' || s === 'sun' || s === '7' || s === '0') return 'Paz';
+
+  const found = DAYS_OF_WEEK.find(d => d.id.toLowerCase() === s || d.label.toLowerCase() === s);
+  return found ? found.id : null;
+};
+
+// Obje içerisindeki gün verilerini derinlemesine (recursive) tarayan yardımcı fonksiyon
+const extractDaysFromTemplate = (tpl) => {
+  if (!tpl) return [];
+
+  const foundDays = [];
+
+  const traverse = (o) => {
+    if (!o || typeof o !== 'object') return;
+
+    if (Array.isArray(o)) {
+      o.forEach(traverse);
+      return;
+    }
+
+    // JSON string parsing kontrolü
+    for (const [key, val] of Object.entries(o)) {
+      let parsedVal = val;
+      if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+        try { parsedVal = JSON.parse(val); } catch (e) {}
+      }
+
+      const keyLower = key.toLowerCase();
+      if (['day', 'day_name', 'day_type', 'day_label', 'days', 'day_types', 'assigned_days', 'daily_plans', 'schedule', 'meals'].includes(keyLower)) {
+        if (typeof parsedVal === 'string' || typeof parsedVal === 'number') {
+          const mapped = mapToDayId(parsedVal);
+          if (mapped) foundDays.push(mapped);
+        } else if (Array.isArray(parsedVal)) {
+          parsedVal.forEach(item => {
+            if (typeof item === 'string' || typeof item === 'number') {
+              const mapped = mapToDayId(item);
+              if (mapped) foundDays.push(mapped);
+            } else if (typeof item === 'object' && item !== null) {
+              const d = item.day || item.day_name || item.day_type || item.name || item.label || item.title || item.key;
+              if (d) {
+                const mapped = mapToDayId(d);
+                if (mapped) foundDays.push(mapped);
+              }
+              traverse(item);
+            }
+          });
+        } else if (typeof parsedVal === 'object' && parsedVal !== null) {
+          traverse(parsedVal);
+        }
+      } else if (typeof parsedVal === 'object' && parsedVal !== null) {
+        traverse(parsedVal);
+      }
+    }
+  };
+
+  traverse(tpl);
+  return [...new Set(foundDays)];
+};
+
 const getAuthHeaders = () => {
   if (typeof window === "undefined") return { 'Content-Type': 'application/json' };
 
@@ -44,9 +113,20 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
     if (isOpen) {
       fetchActiveClients();
       setSelectedClients([]);
-      setSelectedDays([]);
+
+      if (isDiet && workoutTemplate) {
+        const detectedDays = extractDaysFromTemplate(workoutTemplate);
+
+        if (detectedDays.length > 0) {
+          setSelectedDays(detectedDays);
+        } else {
+          setSelectedDays(['Pzt']);
+        }
+      } else {
+        setSelectedDays([]);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, workoutTemplate, isDiet]);
 
   const fetchActiveClients = async () => {
     try {
@@ -72,6 +152,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
   };
 
   const toggleDaySelection = (dayId) => {
+    if (isDiet) return;
     setSelectedDays(prev => 
       prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
     );
@@ -83,7 +164,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
       return;
     }
     if (selectedDays.length === 0) {
-      alert("Lütfen programın uygulanacağı en az bir gün seçin.");
+      alert("Şablonda tanımlı atanacak gün bulunamadı.");
       return;
     }
 
@@ -99,7 +180,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
       };
 
       let primaryUrl = isDiet
-        ? '/api/expert-diet-program/assign'
+        ? '/api/expert/assign-diet'
         : '/api/expert/assign-workout';
 
       let res = await fetch(primaryUrl, {
@@ -109,7 +190,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
       });
 
       if (!res.ok && isDiet) {
-        const fallbackUrls = ['/api/expert/assign-diet', '/api/expert/assign-workout'];
+        const fallbackUrls = ['/api/expert-diet-program/assign', '/api/expert/assign-workout'];
         for (const url of fallbackUrls) {
           if (res.ok) break;
           res = await fetch(url, {
@@ -222,7 +303,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
           {/* Gün Seçimi */}
           <div>
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 block">
-              2. Haftanın Hangi Günleri Yapılacak?
+              2. {isDiet ? "Şablonda Yer Alan Günler (Otomatik Atanır)" : "Haftanın Hangi Günleri Yapılacak?"}
             </label>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {DAYS_OF_WEEK.map(day => {
@@ -231,13 +312,14 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
                   <button
                     key={day.id}
                     type="button"
+                    disabled={isDiet}
                     onClick={() => toggleDaySelection(day.id)}
                     className={`py-3 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center gap-1 ${
                       isSelected
                         ? isDiet
                           ? 'bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
                           : 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                        : 'bg-[#11142D]/40 text-slate-400 border-white/5 hover:border-white/20'
+                        : 'bg-[#11142D]/40 text-slate-400 border-white/5 opacity-40 cursor-not-allowed'
                     }`}
                   >
                     <span>{day.id}</span>
@@ -246,7 +328,10 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
               })}
             </div>
             <p className="text-[11px] text-slate-500 mt-2">
-              * Seçilen günler danışanın panelindeki takvimle senkronize edilir.
+              {isDiet 
+                ? "* Diyet şablonundaki tanımlı günler (yeşil renkte görünenler) otomatik olarak danışanın takvimine eşitlenir."
+                : "* Seçilen günler danışanın panelindeki takvimle senkronize edilir."
+              }
             </p>
           </div>
 
