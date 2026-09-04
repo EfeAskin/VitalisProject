@@ -1,6 +1,6 @@
 "use client";
 // src/app/expert/marketplace/components/BadgesPanel.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Crown,
   Users,
@@ -15,6 +15,7 @@ import {
   Trophy,
   Store,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 const TIERS = [
@@ -25,9 +26,7 @@ const TIERS = [
   { name: "Elmas Uzman", min: 7000 },
 ];
 
-const CURRENT_POINTS = 1840;
-
-const BADGE_CATEGORIES = [
+const DEFAULT_BADGE_CATEGORIES = [
   {
     id: "clients",
     label: "Danışan Başarıları",
@@ -58,25 +57,88 @@ const BADGE_CATEGORIES = [
   },
 ];
 
-export default function BadgesPanel({ onNavigate }) {
+export default function BadgesPanel({ onNavigate, user, specialistId }) {
   const [filter, setFilter] = useState("all"); // all | earned | locked
+  const [currentUser, setCurrentUser] = useState(user || null);
+  const [badgeCategories, setBadgeCategories] = useState(DEFAULT_BADGE_CATEGORIES);
+  const [userPoints, setUserPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Oturum bilgilerini alma
+  useEffect(() => {
+    if (!user) {
+      const userJson = localStorage.getItem("user");
+      if (userJson) {
+        try {
+          const parsed = JSON.parse(userJson);
+          setCurrentUser(parsed);
+        } catch (e) {
+          console.error("User session parse hatası:", e);
+        }
+      }
+    } else {
+      setCurrentUser(user);
+    }
+  }, [user]);
+
+  // Rozet ve Puan verisini çekme
+  useEffect(() => {
+    fetchBadgesData();
+  }, [currentUser, specialistId]);
+
+  const fetchBadgesData = async () => {
+    setLoading(true);
+    const activeUserId = specialistId || currentUser?.id;
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(activeUserId ? { "X-User-Id": String(activeUserId) } : {}),
+      };
+
+      const res = await fetch("/api/expert/marketplace/badges", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setUserPoints(data.points ?? currentUser?.points ?? 1840);
+        if (Array.isArray(data.categories)) {
+          setBadgeCategories(data.categories);
+        }
+      } else {
+        setUserPoints(currentUser?.points ?? 1840);
+      }
+    } catch (err) {
+      console.error("Badges veri yükleme hatası:", err);
+      setUserPoints(currentUser?.points ?? 1840);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const currentTierIndex = useMemo(() => {
     let idx = 0;
     TIERS.forEach((t, i) => {
-      if (CURRENT_POINTS >= t.min) idx = i;
+      if (userPoints >= t.min) idx = i;
     });
     return idx;
-  }, []);
+  }, [userPoints]);
 
   const currentTier = TIERS[currentTierIndex];
   const nextTier = TIERS[currentTierIndex + 1];
   const progressPct = nextTier
-    ? Math.min(100, ((CURRENT_POINTS - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
+    ? Math.min(100, ((userPoints - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
     : 100;
 
-  const totalBadges = BADGE_CATEGORIES.flatMap((c) => c.badges).length;
-  const earnedBadges = BADGE_CATEGORIES.flatMap((c) => c.badges).filter((b) => b.earned).length;
+  const totalBadges = badgeCategories.flatMap((c) => c.badges).length;
+  const earnedBadges = badgeCategories.flatMap((c) => c.badges).filter((b) => b.earned).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-slate-300 gap-3 font-medium">
+        <Loader2 className="animate-spin text-amber-500" size={24} />
+        <span>Rozet ve seviye verileri yükleniyor...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -103,7 +165,7 @@ export default function BadgesPanel({ onNavigate }) {
 
           <div className="flex-1 max-w-sm w-full">
             <div className="flex justify-between text-[11px] font-heading font-extrabold text-slate-300 mb-2">
-              <span>{CURRENT_POINTS} Puan</span>
+              <span>{userPoints} Puan</span>
               <span className="text-amber-400">
                 {nextTier ? `${nextTier.min} Puan · ${nextTier.name}` : "Maksimum Seviye"}
               </span>
@@ -116,7 +178,7 @@ export default function BadgesPanel({ onNavigate }) {
             </div>
             {nextTier && (
               <p className="text-[10px] font-bold text-slate-400 mt-2">
-                {nextTier.name} seviyesine <span className="text-amber-400">{nextTier.min - CURRENT_POINTS}</span> puan kaldı
+                {nextTier.name} seviyesine <span className="text-amber-400">{nextTier.min - userPoints}</span> puan kaldı
               </p>
             )}
           </div>
@@ -145,7 +207,7 @@ export default function BadgesPanel({ onNavigate }) {
       </div>
 
       {/* Rozet Kategorileri */}
-      {BADGE_CATEGORIES.map((category) => {
+      {badgeCategories.map((category) => {
         const visibleBadges = category.badges.filter((b) => {
           if (filter === "earned") return b.earned;
           if (filter === "locked") return !b.earned;
@@ -166,7 +228,7 @@ export default function BadgesPanel({ onNavigate }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
               {visibleBadges.map((badge) => {
-                const Icon = badge.icon;
+                const Icon = badge.icon || Trophy;
                 return (
                   <div
                     key={badge.id}

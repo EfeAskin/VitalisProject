@@ -7,6 +7,24 @@ class SchemaComparator:
 
     Hiçbir SQL çalıştırmaz.
     Sadece MigrationEngine'in kullanacağı Change List üretir.
+
+    SchemaComparator'a verilen ilk schema "source" kabul edilir.
+
+    Örneğin:
+
+        SchemaComparator(local_schema, neon_schema)
+
+    sonucunda:
+        source = "local"
+
+    ve:
+
+        SchemaComparator(neon_schema, local_schema)
+
+    sonucunda:
+        source = "local"
+
+    ifadesi yine comparator'ın ilk parametresini temsil eder.
     """
 
     def __init__(self, local_schema: dict, neon_schema: dict):
@@ -34,14 +52,27 @@ class SchemaComparator:
 
     def compare_tables(self):
 
-        local_tables = set(self.local.keys())
-        neon_tables = set(self.neon.keys())
+        local_tables = set(
+            self.local.keys()
+        )
 
-        # Local -> Neon
+        neon_tables = set(
+            self.neon.keys()
+        )
 
-        for table in sorted(local_tables - neon_tables):
+        # ------------------------------------------------------
+        # İlk schema'da var, ikinci schema'da yok
+        #
+        # İlk schema kaynak olarak kabul edilir.
+        # ------------------------------------------------------
 
-            logger.info(f"[CREATE TABLE] Neon'da eksik : {table}")
+        for table in sorted(
+            local_tables - neon_tables
+        ):
+
+            logger.info(
+                f"[CREATE TABLE] Neon'da eksik : {table}"
+            )
 
             self.changes.append({
 
@@ -53,11 +84,19 @@ class SchemaComparator:
 
             })
 
-        # Neon -> Local
+        # ------------------------------------------------------
+        # İkinci schema'da var, ilk schema'da yok
+        #
+        # Bu kayıtlar ikinci yönde oluşturulacaktır.
+        # ------------------------------------------------------
 
-        for table in sorted(neon_tables - local_tables):
+        for table in sorted(
+            neon_tables - local_tables
+        ):
 
-            logger.info(f"[CREATE TABLE] Local'da eksik : {table}")
+            logger.info(
+                f"[CREATE TABLE] Local'da eksik : {table}"
+            )
 
             self.changes.append({
 
@@ -75,23 +114,43 @@ class SchemaComparator:
 
     def compare_columns(self):
 
-        common_tables = set(self.local.keys()) & set(self.neon.keys())
+        common_tables = (
+            set(self.local.keys())
+            & set(self.neon.keys())
+        )
 
-        for table in sorted(common_tables):
+        for table in sorted(
+            common_tables
+        ):
 
-            local_columns = self.local[table]["columns"]
-            neon_columns = self.neon[table]["columns"]
+            local_columns = (
+                self.local[table]["columns"]
+            )
 
-            local_names = set(local_columns.keys())
-            neon_names = set(neon_columns.keys())
+            neon_columns = (
+                self.neon[table]["columns"]
+            )
+
+            local_names = set(
+                local_columns.keys()
+            )
+
+            neon_names = set(
+                neon_columns.keys()
+            )
 
             # --------------------------------------------------
             # Local -> Neon
             # --------------------------------------------------
 
-            for column in sorted(local_names - neon_names):
+            for column in sorted(
+                local_names - neon_names
+            ):
 
-                logger.info(f"[ADD COLUMN] Neon : {table}.{column}")
+                logger.info(
+                    f"[ADD COLUMN] Neon : "
+                    f"{table}.{column}"
+                )
 
                 self.changes.append({
 
@@ -111,9 +170,14 @@ class SchemaComparator:
             # Neon -> Local
             # --------------------------------------------------
 
-            for column in sorted(neon_names - local_names):
+            for column in sorted(
+                neon_names - local_names
+            ):
 
-                logger.info(f"[ADD COLUMN] Local : {table}.{column}")
+                logger.info(
+                    f"[ADD COLUMN] Local : "
+                    f"{table}.{column}"
+                )
 
                 self.changes.append({
 
@@ -133,7 +197,9 @@ class SchemaComparator:
             # Ortak kolonlar
             # --------------------------------------------------
 
-            for column in sorted(local_names & neon_names):
+            for column in sorted(
+                local_names & neon_names
+            ):
 
                 self.compare_column_definition(
 
@@ -165,11 +231,16 @@ class SchemaComparator:
 
     ):
 
-        # datatype
+        # ------------------------------------------------------
+        # DATATYPE
+        # ------------------------------------------------------
 
         if local["data_type"] != neon["data_type"]:
 
-            logger.info(f"[MODIFY COLUMN] Type : {table}.{column}")
+            logger.info(
+                f"[MODIFY COLUMN] Type : "
+                f"{table}.{column}"
+            )
 
             self.changes.append({
 
@@ -189,11 +260,16 @@ class SchemaComparator:
 
             return
 
-        # nullable
+        # ------------------------------------------------------
+        # NULLABLE
+        # ------------------------------------------------------
 
         if local["nullable"] != neon["nullable"]:
 
-            logger.info(f"[MODIFY COLUMN] Nullable : {table}.{column}")
+            logger.info(
+                f"[MODIFY COLUMN] Nullable : "
+                f"{table}.{column}"
+            )
 
             self.changes.append({
 
@@ -213,11 +289,16 @@ class SchemaComparator:
 
             return
 
-        # default
+        # ------------------------------------------------------
+        # DEFAULT
+        # ------------------------------------------------------
 
         if local["default"] != neon["default"]:
 
-            logger.info(f"[MODIFY COLUMN] Default : {table}.{column}")
+            logger.info(
+                f"[MODIFY COLUMN] Default : "
+                f"{table}.{column}"
+            )
 
             self.changes.append({
 
@@ -234,3 +315,5 @@ class SchemaComparator:
                 "source": "local"
 
             })
+
+            return

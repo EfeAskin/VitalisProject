@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Check,
   X,
@@ -10,9 +10,130 @@ import {
   Target,
   Inbox,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 
 export default function NewRequests({ requests = [], onAccept, onReject }) {
+  const [fetchedRequests, setFetchedRequests] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  // LocalStorage üzerinden Specialist / User ID'sini alma
+  const getStoredSpecialistId = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const directId =
+        localStorage.getItem("user_id") ||
+        localStorage.getItem("specialist_id") ||
+        localStorage.getItem("id");
+      if (directId) return directId;
+
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const userObj = JSON.parse(userStr);
+        return userObj.id || userObj.user_id || userObj.specialist_id || null;
+      }
+    } catch (e) {
+      console.error("LocalStorage okunurken hata oluştu:", e);
+    }
+    return null;
+  };
+
+  // Parent'tan istek gelmediyse API'den otomatik bekleyen başvuruları çek
+  useEffect(() => {
+    const fetchRequestsIfNeeded = async () => {
+      const specId = getStoredSpecialistId();
+      if (!specId) return;
+
+      setIsLoading(true);
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        let res;
+        try {
+          res = await fetch(`${baseUrl}/api/expert-clients/dashboard/${specId}`);
+        } catch {
+          res = await fetch(`/api/expert-clients/dashboard/${specId}`);
+        }
+
+        if (res && res.ok) {
+          const data = await res.json();
+          const pendingList =
+            data.pending_requests ||
+            data.requests ||
+            data.pending ||
+            (Array.isArray(data) ? data : []);
+          setFetchedRequests(pendingList);
+        }
+      } catch (err) {
+        console.error("Başvurular otomatik çekilirken hata:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!requests || requests.length === 0) {
+      fetchRequestsIfNeeded();
+    }
+  }, [requests]);
+
+  // Props'tan gelen listeyi öncelikli kullan, yoksa fetch edilen listeyi al
+  const dataSource = useMemo(() => {
+    return Array.isArray(requests) && requests.length > 0
+      ? requests
+      : fetchedRequests;
+  }, [requests, fetchedRequests]);
+
+  // Kabul Et Mantığı (Parent callback yoksa API'ye istek atar ve listeden kaldırır)
+  const handleAccept = async (req) => {
+    const reqId = req.request_id || req.id;
+    setActionLoadingId(reqId);
+
+    try {
+      if (typeof onAccept === "function") {
+        await onAccept(req);
+      } else {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        await fetch(`${baseUrl}/api/expert-clients/accept/${reqId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      // Kabul edildikten sonra listeden anında kaldır
+      setFetchedRequests((prev) =>
+        prev.filter((r) => (r.request_id || r.id) !== reqId)
+      );
+    } catch (err) {
+      console.error("Başvuru kabul edilirken hata oluştu:", err);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Reddet Mantığı (Parent callback yoksa API'ye istek atar ve listeden kaldırır)
+  const handleReject = async (reqId) => {
+    setActionLoadingId(reqId);
+
+    try {
+      if (typeof onReject === "function") {
+        await onReject(reqId);
+      } else {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        await fetch(`${baseUrl}/api/expert-clients/reject/${reqId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      // Reddedildikten sonra listeden anında kaldır
+      setFetchedRequests((prev) =>
+        prev.filter((r) => (r.request_id || r.id) !== reqId)
+      );
+    } catch (err) {
+      console.error("Başvuru reddedilirken hata oluştu:", err);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   // Tarih Formatlama Yardımcısı
   const formatDate = (dateStr) => {
     if (!dateStr) return "Yeni";
@@ -31,7 +152,20 @@ export default function NewRequests({ requests = [], onAccept, onReject }) {
     }
   };
 
-  if (!requests || requests.length === 0) {
+  // Yükleme Durumu
+  if (isLoading && (!dataSource || dataSource.length === 0)) {
+    return (
+      <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800/80 rounded-3xl p-12 text-center space-y-4 backdrop-blur-2xl shadow-xl flex flex-col items-center justify-center min-h-[220px]">
+        <Loader2 size={36} className="text-orange-500 animate-spin" />
+        <p className="text-sm font-heading font-bold text-slate-300">
+          Bekleyen Başvurular Yükleniyor...
+        </p>
+      </div>
+    );
+  }
+
+  // Boş Durum
+  if (!dataSource || dataSource.length === 0) {
     return (
       <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800/80 rounded-3xl p-12 text-center space-y-4 backdrop-blur-2xl shadow-xl">
         <div className="w-16 h-16 bg-slate-950 text-slate-500 rounded-2xl border border-slate-800 flex items-center justify-center mx-auto shadow-inner">
@@ -52,7 +186,7 @@ export default function NewRequests({ requests = [], onAccept, onReject }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {requests.map((req) => {
+      {dataSource.map((req) => {
         const reqId = req.request_id || req.id;
         const fullName = `${req.first_name || "Danışan"} ${
           req.last_name || ""
@@ -67,7 +201,9 @@ export default function NewRequests({ requests = [], onAccept, onReject }) {
         const displayMessage =
           cleanMessage.length > 0
             ? cleanMessage
-            : "Birebir koçluk ve antrenman takibi talebi.";
+            : "Birebir koçluk ve danışmanlık talebi.";
+
+        const isProcessing = actionLoadingId === reqId;
 
         return (
           <div
@@ -102,14 +238,14 @@ export default function NewRequests({ requests = [], onAccept, onReject }) {
                       {fullName}
                     </h3>
                     <p className="text-xs font-semibold text-orange-400/90 truncate mt-0.5">
-                      {req.requested_package || "Aylık PT Danışmanlığı"}
+                      {req.requested_package || req.package_name || "Online Danışmanlık"}
                     </p>
                   </div>
                 </div>
 
                 <span className="text-[10px] font-mono font-bold text-slate-400 flex items-center gap-1.5 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0">
                   <Clock size={12} className="text-orange-500" />
-                  {formatDate(req.request_date)}
+                  {formatDate(req.request_date || req.created_at)}
                 </span>
               </div>
 
@@ -179,19 +315,29 @@ export default function NewRequests({ requests = [], onAccept, onReject }) {
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800/60">
               <button
                 type="button"
-                onClick={() => onReject(reqId)}
-                className="py-2.5 px-4 bg-slate-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 font-heading font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all duration-200 border border-slate-800 hover:border-rose-500/30 cursor-pointer"
+                disabled={isProcessing}
+                onClick={() => handleReject(reqId)}
+                className="py-2.5 px-4 bg-slate-950 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 font-heading font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all duration-200 border border-slate-800 hover:border-rose-500/30 cursor-pointer disabled:opacity-50"
               >
-                <X size={15} />
+                {isProcessing ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <X size={15} />
+                )}
                 <span>Reddet</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => onAccept(req)}
-                className="py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-heading font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 cursor-pointer"
+                disabled={isProcessing}
+                onClick={() => handleAccept(req)}
+                className="py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-heading font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 cursor-pointer disabled:opacity-50"
               >
-                <Check size={15} />
+                {isProcessing ? (
+                  <Loader2 size={15} className="animate-spin text-white" />
+                ) : (
+                  <Check size={15} />
+                )}
                 <span>Kabul Et</span>
               </button>
             </div>

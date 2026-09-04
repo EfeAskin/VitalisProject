@@ -36,11 +36,30 @@ function MarketplaceContent() {
     TABS.some((t) => t.id === tabParam) ? tabParam : "showcase"
   );
 
+  const [user, setUser] = useState(null);
+
+  // Aktif oturum açan kullanıcının bilgilerini localStorage'dan dinliyoruz
+  useEffect(() => {
+    const userJson = localStorage.getItem("user");
+    if (userJson) {
+      try {
+        const parsedUser = JSON.parse(userJson);
+        if (parsedUser) {
+          setUser(parsedUser);
+        }
+      } catch (e) {
+        console.error("User session parse hatası:", e);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (TABS.some((t) => t.id === tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
+
+  const currentSpecialistId = user?.id || user?.user_id;
 
   return (
     <div className="min-h-screen text-slate-200 p-2 lg:p-4 space-y-6 font-sans text-sm">
@@ -158,19 +177,19 @@ function MarketplaceContent() {
       </div>
 
       {/* ==========================================================
-          TAB İÇERİKLERİ
+          TAB İÇERİKLERİ (Aktif Kullanıcı Bilgisi İletiliyor)
       ========================================================== */}
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {activeTab === "showcase" && (
-          <ShowcasePanel onNavigate={setActiveTab} />
+          <ShowcasePanel onNavigate={setActiveTab} user={user} specialistId={currentSpecialistId} />
         )}
 
         {activeTab === "badges" && (
-          <BadgesPanel onNavigate={setActiveTab} />
+          <BadgesPanel onNavigate={setActiveTab} user={user} specialistId={currentSpecialistId} />
         )}
 
         {activeTab === "leaderboard" && (
-          <LeaderboardPanel onNavigate={setActiveTab} />
+          <LeaderboardPanel onNavigate={setActiveTab} user={user} specialistId={currentSpecialistId} />
         )}
       </div>
     </div>

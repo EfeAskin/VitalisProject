@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { X, Users, Calendar, Check, Loader2, Send } from 'lucide-react';
+import { X, Users, Calendar, Check, Loader2, Send, Utensils, Dumbbell } from 'lucide-react';
 
 const DAYS_OF_WEEK = [
   { id: 'Pzt', label: 'Pazartesi' },
@@ -13,6 +13,93 @@ const DAYS_OF_WEEK = [
   { id: 'Paz', label: 'Pazar' },
 ];
 
+const mapToDayId = (val) => {
+  if (val === null || val === undefined) return null;
+  const s = String(val).trim().toLowerCase();
+
+  if (s === 'pzt' || s.startsWith('pazartes') || s === 'monday' || s === 'mon' || s === '1') return 'Pzt';
+  if (s === 'sal' || s.startsWith('sal') || s === 'tuesday' || s === 'tue' || s === '2') return 'Sal';
+  if (s === 'çar' || s === 'car' || s.startsWith('çarş') || s.startsWith('cars') || s === 'wednesday' || s === 'wed' || s === '3') return 'Çar';
+  if (s === 'per' || s.startsWith('perş') || s.startsWith('pers') || s === 'thursday' || s === 'thu' || s === '4') return 'Per';
+  if (s === 'cum' || (s.startsWith('cum') && !s.startsWith('cumart')) || s === 'friday' || s === 'fri' || s === '5') return 'Cum';
+  if (s === 'cmt' || s.startsWith('cumart') || s === 'saturday' || s === 'sat' || s === '6') return 'Cmt';
+  if (s === 'paz' || (s.startsWith('pazar') && !s.startsWith('pazartes')) || s === 'sunday' || s === 'sun' || s === '7' || s === '0') return 'Paz';
+
+  const found = DAYS_OF_WEEK.find(d => d.id.toLowerCase() === s || d.label.toLowerCase() === s);
+  return found ? found.id : null;
+};
+
+// Obje içerisindeki gün verilerini derinlemesine (recursive) tarayan yardımcı fonksiyon
+const extractDaysFromTemplate = (tpl) => {
+  if (!tpl) return [];
+
+  const foundDays = [];
+
+  const traverse = (o) => {
+    if (!o || typeof o !== 'object') return;
+
+    if (Array.isArray(o)) {
+      o.forEach(traverse);
+      return;
+    }
+
+    // JSON string parsing kontrolü
+    for (const [key, val] of Object.entries(o)) {
+      let parsedVal = val;
+      if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+        try { parsedVal = JSON.parse(val); } catch (e) {}
+      }
+
+      const keyLower = key.toLowerCase();
+      if (['day', 'day_name', 'day_type', 'day_label', 'days', 'day_types', 'assigned_days', 'daily_plans', 'schedule', 'meals'].includes(keyLower)) {
+        if (typeof parsedVal === 'string' || typeof parsedVal === 'number') {
+          const mapped = mapToDayId(parsedVal);
+          if (mapped) foundDays.push(mapped);
+        } else if (Array.isArray(parsedVal)) {
+          parsedVal.forEach(item => {
+            if (typeof item === 'string' || typeof item === 'number') {
+              const mapped = mapToDayId(item);
+              if (mapped) foundDays.push(mapped);
+            } else if (typeof item === 'object' && item !== null) {
+              const d = item.day || item.day_name || item.day_type || item.name || item.label || item.title || item.key;
+              if (d) {
+                const mapped = mapToDayId(d);
+                if (mapped) foundDays.push(mapped);
+              }
+              traverse(item);
+            }
+          });
+        } else if (typeof parsedVal === 'object' && parsedVal !== null) {
+          traverse(parsedVal);
+        }
+      } else if (typeof parsedVal === 'object' && parsedVal !== null) {
+        traverse(parsedVal);
+      }
+    }
+  };
+
+  traverse(tpl);
+  return [...new Set(foundDays)];
+};
+
+const getAuthHeaders = () => {
+  if (typeof window === "undefined") return { 'Content-Type': 'application/json' };
+
+  let token = localStorage.getItem("token") || localStorage.getItem("access_token");
+  if (!token || token === "null" || token === "undefined") {
+    return { 'Content-Type': 'application/json' };
+  }
+
+  if (token.startsWith("Bearer ")) {
+    token = token.substring(7);
+  }
+
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
 export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate }) {
   const [clients, setClients] = useState([]);
   const [loadingClients, setLoadingClients] = useState(false);
@@ -20,20 +107,32 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
   const [selectedDays, setSelectedDays] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isDiet = Boolean(workoutTemplate?.isDiet);
+
   useEffect(() => {
     if (isOpen) {
       fetchActiveClients();
       setSelectedClients([]);
-      setSelectedDays([]);
+
+      if (isDiet && workoutTemplate) {
+        const detectedDays = extractDaysFromTemplate(workoutTemplate);
+
+        if (detectedDays.length > 0) {
+          setSelectedDays(detectedDays);
+        } else {
+          setSelectedDays(['Pzt']);
+        }
+      } else {
+        setSelectedDays([]);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, workoutTemplate, isDiet]);
 
   const fetchActiveClients = async () => {
     try {
       setLoadingClients(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
       const res = await fetch('/api/expert/my-active-clients', {
-        headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+        headers: getAuthHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,6 +152,7 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
   };
 
   const toggleDaySelection = (dayId) => {
+    if (isDiet) return;
     setSelectedDays(prev => 
       prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
     );
@@ -64,34 +164,56 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
       return;
     }
     if (selectedDays.length === 0) {
-      alert("Lütfen programın uygulanacağı en az bir gün seçin.");
+      alert("Şablonda tanımlı atanacak gün bulunamadı.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-      const res = await fetch('/api/expert/assign-workout', {
+      const headers = getAuthHeaders();
+
+      const payload = {
+        template_id: workoutTemplate?.id,
+        diet_template_id: workoutTemplate?.id,
+        client_ids: selectedClients,
+        assigned_days: selectedDays
+      };
+
+      let primaryUrl = isDiet
+        ? '/api/expert/assign-diet'
+        : '/api/expert/assign-workout';
+
+      let res = await fetch(primaryUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          template_id: workoutTemplate?.id,
-          client_ids: selectedClients,
-          assigned_days: selectedDays
-        })
+        headers: headers,
+        body: JSON.stringify(payload)
       });
 
+      if (!res.ok && isDiet) {
+        const fallbackUrls = ['/api/expert-diet-program/assign', '/api/expert/assign-workout'];
+        for (const url of fallbackUrls) {
+          if (res.ok) break;
+          res = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
       if (res.ok) {
-        alert("Antrenman programı danışan(lar)ın haftalık takvimine başarıyla atandı!");
+        const msg = isDiet
+          ? "Diyet planı danışan(lar)ın haftalık takvimine başarıyla atandı!"
+          : "Antrenman programı danışan(lar)ın haftalık takvimine başarıyla atandı!";
+        alert(msg);
         onClose();
       } else {
-        alert("Atama işlemi sırasında bir hata oluştu.");
+        const errData = await res.json().catch(() => ({}));
+        alert(`Atama hatası: ${errData.detail || "İşlem gerçekleştirilemedi."}`);
       }
     } catch (err) {
       console.error("Atama hatası:", err);
+      alert("Sunucu ile iletişim kurulurken bir hata oluştu.");
     } finally {
       setIsSubmitting(false);
     }
@@ -107,10 +229,17 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#11142D]/50">
           <div>
             <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <Users className="text-orange-500" size={20} /> Danışana Program Ata
+              {isDiet ? (
+                <Utensils className="text-emerald-500" size={20} />
+              ) : (
+                <Dumbbell className="text-orange-500" size={20} />
+              )}
+              {isDiet ? "Danışana Diyet Planı Ata" : "Danışana Program Ata"}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Şablon: <span className="text-orange-400 font-bold">{workoutTemplate?.title}</span>
+              Şablon: <span className={isDiet ? "text-emerald-400 font-bold" : "text-orange-400 font-bold"}>
+                {workoutTemplate?.title || workoutTemplate?.name}
+              </span>
             </p>
           </div>
           <button onClick={onClose} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/5 transition-all">
@@ -128,7 +257,8 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
             </label>
             {loadingClients ? (
               <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
-                <Loader2 size={20} className="animate-spin text-orange-500" /> Danışanlar yükleniyor...
+                <Loader2 size={20} className={`animate-spin ${isDiet ? 'text-emerald-500' : 'text-orange-500'}`} />
+                Danışanlar yükleniyor...
               </div>
             ) : clients.length === 0 ? (
               <div className="text-xs text-slate-400 bg-[#11142D]/40 p-4 rounded-2xl border border-white/5 text-center">
@@ -144,12 +274,18 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
                       onClick={() => toggleClientSelection(client.id)}
                       className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(234,88,12,0.15)] text-white' 
+                          ? isDiet
+                            ? 'bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)] text-white'
+                            : 'bg-orange-500/10 border-orange-500/50 shadow-[0_0_15px_rgba(234,88,12,0.15)] text-white' 
                           : 'bg-[#11142D]/40 border-white/5 hover:border-white/20 text-slate-300'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-600'}`}>
+                        <div className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${
+                          isSelected 
+                            ? isDiet ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-orange-500 border-orange-500 text-white'
+                            : 'border-slate-600'
+                        }`}>
                           {isSelected && <Check size={14} strokeWidth={3} />}
                         </div>
                         <div>
@@ -164,10 +300,10 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
             )}
           </div>
 
-          {/* Gün Seçimi (Haftalık İlerleme Uyumu İçin) */}
+          {/* Gün Seçimi */}
           <div>
             <label className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 block">
-              2. Haftanın Hangi Günleri Yapılacak?
+              2. {isDiet ? "Şablonda Yer Alan Günler (Otomatik Atanır)" : "Haftanın Hangi Günleri Yapılacak?"}
             </label>
             <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
               {DAYS_OF_WEEK.map(day => {
@@ -176,11 +312,14 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
                   <button
                     key={day.id}
                     type="button"
+                    disabled={isDiet}
                     onClick={() => toggleDaySelection(day.id)}
                     className={`py-3 rounded-2xl text-xs font-bold border transition-all flex flex-col items-center gap-1 ${
                       isSelected
-                        ? 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                        : 'bg-[#11142D]/40 text-slate-400 border-white/5 hover:border-white/20'
+                        ? isDiet
+                          ? 'bg-emerald-500 text-white border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                          : 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(234,88,12,0.3)]'
+                        : 'bg-[#11142D]/40 text-slate-400 border-white/5 opacity-40 cursor-not-allowed'
                     }`}
                   >
                     <span>{day.id}</span>
@@ -189,7 +328,10 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
               })}
             </div>
             <p className="text-[11px] text-slate-500 mt-2">
-              * Seçilen günler danışanın panelindeki "Haftalık Antrenman İlerlemesi" takvimiyle senkronize edilir.
+              {isDiet 
+                ? "* Diyet şablonundaki tanımlı günler (yeşil renkte görünenler) otomatik olarak danışanın takvimine eşitlenir."
+                : "* Seçilen günler danışanın panelindeki takvimle senkronize edilir."
+              }
             </p>
           </div>
 
@@ -208,7 +350,11 @@ export default function AssignWorkoutModal({ isOpen, onClose, workoutTemplate })
             type="button"
             disabled={isSubmitting || selectedClients.length === 0 || selectedDays.length === 0}
             onClick={handleAssign}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-orange-500 to-[#EA580C] hover:from-orange-600 hover:to-orange-500 shadow-lg shadow-orange-500/20 disabled:opacity-50 transition-all"
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-lg disabled:opacity-50 transition-all ${
+              isDiet
+                ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 shadow-emerald-500/20'
+                : 'bg-gradient-to-r from-orange-500 to-[#EA580C] hover:from-orange-600 hover:to-orange-500 shadow-orange-500/20'
+            }`}
           >
             {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             Atamayı Tamamla

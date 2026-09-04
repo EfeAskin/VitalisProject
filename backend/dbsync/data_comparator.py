@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+from decimal import Decimal
 from backend.dbsync.logger import logger
 
 
@@ -25,6 +27,187 @@ class DataComparator:
         self.table_order = table_order or []
 
         self.changes = []
+
+    # ==========================================================
+    # VALUE NORMALIZATION
+    # ==========================================================
+
+    def normalize_datetime(
+        self,
+        value
+    ):
+        """
+        timezone-aware datetime değerlerini UTC'ye normalize eder.
+
+        Örnek:
+
+            10:00 +03:00
+            07:00 UTC
+
+        aynı anı gösteriyorsa eşit kabul edilir.
+
+        timezone bilgisi olmayan datetime değerleri değiştirilmez.
+        """
+
+        if not isinstance(
+            value,
+            datetime
+        ):
+            return value
+
+        if value.tzinfo is None:
+
+            return value
+
+        return value.astimezone(
+            timezone.utc
+        )
+
+    # ==========================================================
+    # RECURSIVE VALUE NORMALIZATION
+    # ==========================================================
+
+    def normalize_value(
+        self,
+        value
+    ):
+        """
+        Karşılaştırmadan önce veri tiplerini normalize eder.
+
+        Desteklenen özel durumlar:
+
+        - datetime -> UTC
+        - dict -> recursive normalization
+        - list -> recursive normalization
+        - tuple -> recursive normalization
+        - set -> recursive normalization
+
+        Diğer değerler olduğu gibi bırakılır.
+        """
+
+        # ------------------------------------------------------
+        # DATETIME
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            datetime
+        ):
+
+            return self.normalize_datetime(
+                value
+            )
+
+        # ------------------------------------------------------
+        # DICT
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            dict
+        ):
+
+            return {
+                key: self.normalize_value(
+                    item
+                )
+                for key, item in value.items()
+            }
+
+        # ------------------------------------------------------
+        # LIST
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            list
+        ):
+
+            return [
+                self.normalize_value(
+                    item
+                )
+                for item in value
+            ]
+
+        # ------------------------------------------------------
+        # TUPLE
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            tuple
+        ):
+
+            return tuple(
+                self.normalize_value(
+                    item
+                )
+                for item in value
+            )
+
+        # ------------------------------------------------------
+        # SET
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            set
+        ):
+
+            return {
+                self.normalize_value(
+                    item
+                )
+                for item in value
+            }
+
+        # ------------------------------------------------------
+        # DECIMAL
+        # ------------------------------------------------------
+
+        if isinstance(
+            value,
+            Decimal
+        ):
+
+            return value
+
+        return value
+
+    # ==========================================================
+    # VALUE COMPARISON
+    # ==========================================================
+
+    def values_equal(
+        self,
+        source_value,
+        target_value
+    ):
+        """
+        İki değeri normalize ederek karşılaştırır.
+
+        Özellikle timezone-aware datetime değerlerinde
+        aynı fiziksel zamanı farklı timezone ile gösteren
+        değerleri eşit kabul eder.
+        """
+
+        normalized_source = (
+            self.normalize_value(
+                source_value
+            )
+        )
+
+        normalized_target = (
+            self.normalize_value(
+                target_value
+            )
+        )
+
+        return (
+            normalized_source
+            == normalized_target
+        )
 
     # ==========================================================
     # MAIN
@@ -74,7 +257,9 @@ class DataComparator:
 
         for table in ordered_tables:
 
-            self.compare_table(table)
+            self.compare_table(
+                table
+            )
 
         return self.changes
 
@@ -82,17 +267,24 @@ class DataComparator:
     # TABLE
     # ==========================================================
 
-    def compare_table(self, table):
+    def compare_table(
+        self,
+        table
+    ):
 
         source_table = self.source[table]
+
         target_table = self.target[table]
 
-        pk = source_table["primary_key"]
+        pk = source_table[
+            "primary_key"
+        ]
 
         if pk is None:
 
             logger.warning(
-                f"{table} tablosunda Primary Key bulunamadı."
+                f"{table} tablosunda "
+                "Primary Key bulunamadı."
             )
 
             return
@@ -101,7 +293,9 @@ class DataComparator:
 
             row[pk]: row
 
-            for row in source_table["rows"]
+            for row in source_table[
+                "rows"
+            ]
 
         }
 
@@ -109,7 +303,9 @@ class DataComparator:
 
             row[pk]: row
 
-            for row in target_table["rows"]
+            for row in target_table[
+                "rows"
+            ]
 
         }
 
@@ -187,7 +383,22 @@ class DataComparator:
 
         for column in source_row.keys():
 
-            if source_row[column] != target_row.get(column):
+            source_value = (
+                source_row[column]
+            )
+
+            target_value = (
+                target_row.get(column)
+            )
+
+            # --------------------------------------------------
+            # NORMALIZED COMPARISON
+            # --------------------------------------------------
+
+            if not self.values_equal(
+                source_value,
+                target_value
+            ):
 
                 print(
                     "\n-------------------------"
@@ -200,21 +411,60 @@ class DataComparator:
 
                 print(
                     "SOURCE:",
-                    repr(source_row[column]),
-                    type(source_row[column])
+                    repr(source_value),
+                    type(source_value)
                 )
 
                 print(
                     "TARGET:",
-                    repr(target_row.get(column)),
-                    type(target_row.get(column))
+                    repr(target_value),
+                    type(target_value)
                 )
+
+                # --------------------------------------------------
+                # Normalize edilmiş değerleri de debug amacıyla
+                # gösteriyoruz.
+                # --------------------------------------------------
+
+                normalized_source = (
+                    self.normalize_value(
+                        source_value
+                    )
+                )
+
+                normalized_target = (
+                    self.normalize_value(
+                        target_value
+                    )
+                )
+
+                if (
+                    normalized_source
+                    != source_value
+                    or
+                    normalized_target
+                    != target_value
+                ):
+
+                    print(
+                        "NORMALIZED SOURCE:",
+                        repr(
+                            normalized_source
+                        )
+                    )
+
+                    print(
+                        "NORMALIZED TARGET:",
+                        repr(
+                            normalized_target
+                        )
+                    )
 
                 differences[column] = {
 
-                    "source": source_row[column],
+                    "source": source_value,
 
-                    "target": target_row.get(column)
+                    "target": target_value
 
                 }
 
@@ -248,15 +498,20 @@ class DataComparator:
     def summary(self):
 
         inserts = 0
+
         updates = 0
 
         for change in self.changes:
 
-            if change["action"] == "insert":
+            if change[
+                "action"
+            ] == "insert":
 
                 inserts += 1
 
-            elif change["action"] == "update":
+            elif change[
+                "action"
+            ] == "update":
 
                 updates += 1
 
@@ -266,6 +521,8 @@ class DataComparator:
 
             "update": updates,
 
-            "total": len(self.changes)
+            "total": len(
+                self.changes
+            )
 
         }

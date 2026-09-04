@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 
 // Bileşenlerin İçe Aktarılması
@@ -7,6 +8,7 @@ import DailyTasks from './components/DailyTasks';
 import WaterTracker from './components/WaterTracker';
 import CoachCard from './components/CoachCard';
 import NutritionTracker from './components/NutritionTracker';
+import ClientDietProgram from './components/clientdietprogram';
 import WeeklyWorkout from './components/WeeklyWorkout';
 import WeightChart from './components/WeightChart';
 import UpcomingSession from './components/UpcomingSession';
@@ -14,12 +16,20 @@ import RecommendedPros from './components/RecommendedPros';
 import AIVitalisChat from './components/AIVitalisChat';
 import BodyAnalysisModal from './components/BodyAnalysisModal';
 
+// Yeni Eklenen Estetik Bileşenler
+import CaloriesBurnedCard from './components/CaloriesBurnedCard';
+import DailyStepsCard from './components/DailyStepsCard';
+
 export default function ClientDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Adım girildiğinde Kalori kartının otomatik yenilenmesini sağlayan tetikleyici
+  const [calorieRefreshKey, setCalorieRefreshKey] = useState(0);
 
   const [userData, setUserData] = useState({
+    id: null,
     firstName: "",
     lastName: "",
     role: "client"
@@ -31,11 +41,12 @@ export default function ClientDashboard() {
     const token = localStorage.getItem("access_token");
     
     if (cachedFirst) {
-      setUserData({
+      setUserData(prev => ({
+        ...prev,
         firstName: cachedFirst,
         lastName: cachedLast,
         role: localStorage.getItem("role") || "client"
-      });
+      }));
     }
 
     async function fetchUserData() {
@@ -57,16 +68,19 @@ export default function ClientDashboard() {
 
           const firstName = userObj.first_name || userObj.firstName || "";
           const lastName = userObj.last_name || userObj.lastName || "";
+          const userId = userObj.id || userObj.user_id || null;
 
-          if (firstName) {
+          if (firstName || userId) {
             setUserData({
+              id: userId,
               firstName: firstName,
               lastName: lastName,
               role: userObj.role || "client"
             });
 
-            localStorage.setItem("first_name", firstName);
-            localStorage.setItem("last_name", lastName);
+            if (firstName) localStorage.setItem("first_name", firstName);
+            if (lastName) localStorage.setItem("last_name", lastName);
+            if (userId) localStorage.setItem("user_id", userId);
           }
         }
       } catch (err) {
@@ -133,6 +147,10 @@ export default function ClientDashboard() {
     setRefreshKey(prev => prev + 1);
   };
 
+  const handleStepLogged = () => {
+    setCalorieRefreshKey(prev => prev + 1);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#11142D] flex items-center justify-center">
@@ -154,6 +172,7 @@ export default function ClientDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
+          {/* Sol Kolon */}
           <div className="lg:col-span-3 space-y-6">
             <WelcomeCard name={userData.firstName ? `${userData.firstName} ${userData.lastName}`.trim() : ""} />
             <DailyTasks tasks={tasks} setTasks={setTasks} />
@@ -161,22 +180,34 @@ export default function ClientDashboard() {
             <CoachCard />
           </div>
 
+          {/* Orta Kolon */}
           <div className="lg:col-span-6 space-y-6">
             <NutritionTracker 
               macroData={macroData} 
               setMacroData={setMacroData} 
               onAddKcal={() => {}} 
             />
+
+            <ClientDietProgram clientId={userData.id} />
+
             <WeeklyWorkout workoutProgress={workoutProgress} setWorkoutProgress={setWorkoutProgress} />
+            
+            {/* userId parametresi eklendi */}
             <WeightChart 
+              userId={userData.id}
               weightHistory={weightHistory} 
               onOpenModal={() => setMeasurementModal(true)} 
               refreshKey={refreshKey}
             />
           </div>
 
+          {/* Sağ Kolon */}
           <div className="lg:col-span-3 space-y-6">
             <UpcomingSession />
+
+            <CaloriesBurnedCard refreshTrigger={calorieRefreshKey} />
+            <DailyStepsCard onStepLogged={handleStepLogged} />
+
             <RecommendedPros />
             <AIVitalisChat />
           </div>
@@ -184,7 +215,9 @@ export default function ClientDashboard() {
         </div>
       </main>
 
+      {/* userId parametresi eklendi */}
       <BodyAnalysisModal 
+        userId={userData.id}
         isOpen={measurementModal} 
         onClose={() => setMeasurementModal(false)} 
         onSave={updateMeasurementGraph} 

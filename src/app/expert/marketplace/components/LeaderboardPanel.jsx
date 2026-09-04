@@ -1,6 +1,6 @@
 "use client";
 // src/app/expert/marketplace/components/LeaderboardPanel.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Trophy,
   Medal,
@@ -11,18 +11,8 @@ import {
   Store,
   ChevronRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
-
-const EXPERTS = [
-  { rank: 1, name: "Elif Yıldız", initials: "EY", role: "Diyetisyen", points: 4820, trend: "same" },
-  { rank: 2, name: "Kaan Demir", initials: "KD", role: "PT", points: 4390, trend: "up" },
-  { rank: 3, name: "Zeynep Aksoy", initials: "ZA", role: "Diyetisyen", points: 3980, trend: "up" },
-  { rank: 4, name: "Mert Şahin", initials: "MŞ", role: "PT", points: 3110, trend: "down" },
-  { rank: 5, name: "Ömer Faruk Gürün", initials: "ÖG", role: "PT", points: 1840, trend: "up", isYou: true },
-  { rank: 6, name: "Ayşe Kara", initials: "AK", role: "Diyetisyen", points: 1620, trend: "same" },
-  { rank: 7, name: "Burak Yalçın", initials: "BY", role: "PT", points: 1405, trend: "down" },
-  { rank: 8, name: "Selin Öztürk", initials: "SÖ", role: "Diyetisyen", points: 1120, trend: "up" },
-];
 
 const FILTERS = [
   { id: "all", label: "Tüm Uzmanlar" },
@@ -66,17 +56,122 @@ const PODIUM_STYLE = {
   },
 };
 
-export default function LeaderboardPanel({ onNavigate }) {
+export default function LeaderboardPanel({ onNavigate, user, specialistId }) {
   const [filter, setFilter] = useState("all");
+  const [currentUser, setCurrentUser] = useState(user || null);
+  const [experts, setExperts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Baş harfleri dinamik hesaplama
+  const getInitials = (name) => {
+    if (!name) return "UZ";
+    return name
+      .trim()
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Aktif oturum bilgilerini alma/senkronize etme
+  useEffect(() => {
+    if (!user) {
+      const userJson = localStorage.getItem("user");
+      if (userJson) {
+        try {
+          const parsed = JSON.parse(userJson);
+          setCurrentUser(parsed);
+        } catch (e) {
+          console.error("User session parse hatası:", e);
+        }
+      }
+    } else {
+      setCurrentUser(user);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, [currentUser, specialistId]);
+
+  const fetchLeaderboardData = async () => {
+    setLoading(true);
+    const activeUserId = specialistId || currentUser?.id;
+
+    const fallbackName =
+      currentUser?.full_name ||
+      `${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`.trim() ||
+      "Sen (Aktif Uzman)";
+
+    const fallbackRole = currentUser?.specialization || "PT";
+
+    const defaultExpertsList = [
+      { rank: 1, name: "Elif Yıldız", initials: "EY", role: "Diyetisyen", points: 4820, trend: "same" },
+      { rank: 2, name: "Kaan Demir", initials: "KD", role: "PT", points: 4390, trend: "up" },
+      { rank: 3, name: "Zeynep Aksoy", initials: "ZA", role: "Diyetisyen", points: 3980, trend: "up" },
+      { rank: 4, name: "Mert Şahin", initials: "MŞ", role: "PT", points: 3110, trend: "down" },
+      {
+        rank: 5,
+        name: fallbackName,
+        initials: getInitials(fallbackName),
+        role: fallbackRole,
+        points: currentUser?.points || 1840,
+        trend: "up",
+        isYou: true,
+      },
+      { rank: 6, name: "Ayşe Kara", initials: "AK", role: "Diyetisyen", points: 1620, trend: "same" },
+      { rank: 7, name: "Burak Yalçın", initials: "BY", role: "PT", points: 1405, trend: "down" },
+      { rank: 8, name: "Selin Öztürk", initials: "SÖ", role: "Diyetisyen", points: 1120, trend: "up" },
+    ];
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        ...(activeUserId ? { "X-User-Id": String(activeUserId) } : {}),
+      };
+
+      const res = await fetch("/api/expert/marketplace/leaderboard", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((item) => ({
+            ...item,
+            initials: item.initials || getInitials(item.name),
+            isYou: item.isYou || item.id === activeUserId || item.name === fallbackName,
+          }));
+          setExperts(mapped);
+        } else {
+          setExperts(defaultExpertsList);
+        }
+      } else {
+        setExperts(defaultExpertsList);
+      }
+    } catch (err) {
+      console.error("Leaderboard veri hatası:", err);
+      setExperts(defaultExpertsList);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(
-    () => (filter === "all" ? EXPERTS : EXPERTS.filter((e) => e.role === filter)),
-    [filter]
+    () => (filter === "all" ? experts : experts.filter((e) => e.role === filter)),
+    [filter, experts]
   );
 
   const top3 = filtered.slice(0, 3);
   const rest = filtered.slice(3);
   const podiumOrder = [top3[1], top3[0], top3[2]].filter(Boolean); // 2-1-3 görsel sıra
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24 text-slate-300 gap-3 font-medium">
+        <Loader2 className="animate-spin text-amber-500" size={24} />
+        <span>Sıralama verileri yükleniyor...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

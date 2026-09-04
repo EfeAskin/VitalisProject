@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 # Geliştirdiğimiz tüm router'ları eksiksiz içeri aktarıyoruz
-from backend.routers import auth, shared, user, footer, dietitian, meals, clientprofile, body_analysis, nutrition
+from backend.routers import auth, expertdietprogram, shared, user, footer, dietitian, meals, clientprofile, body_analysis, nutrition
 from backend.routers.water import router as water_router
 from backend.routers import expertprofile
 from backend.routers import expertclient
@@ -13,6 +13,13 @@ from backend.routers import clientmarketplace
 
 from backend.routers import expertprograms
 from backend.routers import expertatama
+from backend.routers import messages
+from backend.routers import tickets
+from backend.routers import appointment 
+from backend.routers import clientprograms
+from backend.routers import client_programs
+from backend.routers import expertdietprogram
+from backend.routers import expertdashboard
 
 # ==========================================
 # 1. FASTAPI UYGULAMA YAPILANDIRMASI
@@ -94,6 +101,17 @@ app.include_router(clientmarketplace.router)
 
 app.include_router(expertprograms.router)
 app.include_router(expertatama.router)
+app.include_router(messages.router)
+app.include_router(messages.expert_router)
+
+app.include_router(tickets.router) 
+app.include_router(appointment.router)
+
+app.include_router(clientprograms.router)  # <-- YENİ EKLENDİ
+app.include_router(client_programs.router) 
+app.include_router(client_programs.workout_router)  # client_programs içindeki /api/client/workout alternatif yönlendiricisi
+app.include_router(expertdietprogram.router)
+app.include_router(expertdashboard.router)
 
 # ==========================================
 # 5. SAĞLIK KONTROLÜ (HEALTH CHECK) VE ANA SAYFA
@@ -117,6 +135,7 @@ def read_root():
             "Dietitian Target Control",
             "Hydration & Meal Tracking",
             "Shared Specialist-Client Dashboard",
-            "Footer Services"
+            "Footer Services",
+            "Messages & Notifications"
         ]
     }

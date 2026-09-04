@@ -1,11 +1,53 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PtClientList from "./components/PtClientList";
 import NewRequests from "./components/NewRequests";
 import ClientDetailView from "./components/ClientDetailView";
 import { Users, UserPlus, FolderOpen, Loader2, ShieldCheck, Sparkles } from "lucide-react";
+
+// LocalStorage ve JWT Token içerisinden kullanıcı ID'sini güvenli bir şekilde çıkartan yardımcı fonksiyon
+const extractUserId = () => {
+  if (typeof window === "undefined") return 0;
+  
+  try {
+    // 1. Öncelik: Token içindeki JWT Payload çözümleme
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+    if (token) {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        const tokenId = payload.id || payload.user_id || payload.sub;
+        if (tokenId && !isNaN(Number(tokenId))) {
+          return Number(tokenId);
+        }
+      }
+    }
+
+    // 2. Öncelik: LocalStorage üzerindeki user nesneleri
+    const userJson = localStorage.getItem("user") || localStorage.getItem("auth_user") || localStorage.getItem("userData");
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      const uid =
+        user?.id ||
+        user?.user_id ||
+        user?.specialist_id ||
+        user?.expert_id ||
+        user?.userId ||
+        user?.user?.id ||
+        (typeof user === "number" || (typeof user === "string" && !isNaN(Number(user))) ? Number(user) : null);
+
+      if (uid && !isNaN(Number(uid))) {
+        return Number(uid);
+      }
+    }
+  } catch (error) {
+    console.error("Kullanıcı ID çıkarma hatası:", error);
+  }
+
+  return 0; // Bulunamadıysa 0 döndürür, backend JWT token ile kendisi tespit eder
+};
 
 function ClientFileContent() {
   const searchParams = useSearchParams();
@@ -14,60 +56,71 @@ function ClientFileContent() {
   const currentTab = searchParams.get("tab") || "list";
   const selectedClientId = searchParams.get("id");
 
-  const [specialistId, setSpecialistId] = useState(4);
-
-  useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        if (user && user.id) {
-          setSpecialistId(user.id);
-        }
-      } catch (e) {
-        console.error("User session parse hatası:", e);
-      }
-    }
-  }, []);
-
+  const [specialistId, setSpecialistId] = useState(null);
   const [clients, setClients] = useState([]);
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // BENZERSİZ (UNIQUE) DANIŞAN SAYISI HESAPLAMA
   const uniqueClientsCount = useMemo(() => {
-    const uniqueIds = new Set(clients.map((c) => String(c.id || c.client_id)));
+    if (!Array.isArray(clients) || clients.length === 0) return 0;
+    const uniqueIds = new Set(
+      clients.map((c) => String(c.id || c.client_id || c.subscription_id))
+    );
     return uniqueIds.size;
   }, [clients]);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/expert-clients/dashboard/${specialistId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setClients(data.active_clients || []);
-          setRequests(data.pending_requests || []);
-        }
-      } catch (error) {
-        console.error("Dashboard verileri çekilirken hata oluştu:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Oturum açan kullanıcının verilerini güvenli ve senkronize çekme
+  const fetchDashboardData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const activeUserId = extractUserId();
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
 
-    if (specialistId) {
-      fetchDashboardData();
+      setSpecialistId(activeUserId);
+
+      // Authorization header eklendi
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // activeUserId 0 olsa dahi istek atılır, backend Authorization token'ından kullanıcıyı doğrular
+      const response = await fetch(`/api/expert-clients/dashboard/${activeUserId || 0}`, {
+        method: "GET",
+        headers: headers
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClients(data.active_clients || []);
+        setRequests(data.pending_requests || []);
+      } else {
+        console.error("Dashboard verileri alınamadı. HTTP Hata Kodu:", response.status);
+      }
+    } catch (error) {
+      console.error("Dashboard verileri çekilirken hata oluştu:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [specialistId]);
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData, currentTab]);
 
   const handleAcceptRequest = async (request) => {
     const reqId = request.request_id || request.id;
     try {
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           request_id: parseInt(reqId, 10),
           action: "accept",
@@ -103,6 +156,7 @@ function ClientFileContent() {
           },
           ...prev
         ]);
+        fetchDashboardData();
       }
     } catch (err) {
       console.error("API kabul isteği hatası:", err);
@@ -111,9 +165,13 @@ function ClientFileContent() {
 
   const handleRejectRequest = async (requestId) => {
     try {
+      const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch("/api/expert-clients/requests/action", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: headers,
         body: JSON.stringify({
           request_id: parseInt(requestId, 10),
           action: "reject"
@@ -122,6 +180,7 @@ function ClientFileContent() {
 
       if (res.ok) {
         setRequests((prev) => prev.filter((r) => (r.request_id || r.id) !== requestId));
+        fetchDashboardData();
       }
     } catch (err) {
       console.error("API reddetme isteği hatası:", err);
@@ -139,7 +198,7 @@ function ClientFileContent() {
   return (
     <div className="relative w-full space-y-8 selection:bg-orange-500 selection:text-white">
 
-      {/* 🚀 ÜST HEADER & TAB NAVİGASYON BARI (Opaklık ve Derinlik Artırıldı) */}
+      {/* 🚀 ÜST HEADER & TAB NAVİGASYON BARI */}
       <div className="relative z-10 bg-[#131738]/95 border border-slate-700/80 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-[0_15px_35px_rgba(0,0,0,0.4)] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         {/* Sol Başlık & İkon Alanı */}
         <div className="flex items-center gap-4">

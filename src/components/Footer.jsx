@@ -22,20 +22,7 @@ export default function Footer() {
   const [stats, setStats] = useState({ active_members: 1250, expert_count: 50, system_uptime: "%99.9" });
 
   // Canlı istatistikleri Neon DB'den çekme
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const res = await fetch('/api/platform/stats');
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data);
-        }
-      } catch (err) {
-        console.error("İstatistikler yüklenemedi:", err);
-      }
-    }
-    fetchStats();
-  }, []);
+
 
   // Bülten Abonelik İşlemi
   const handleSubscribe = async (e) => {

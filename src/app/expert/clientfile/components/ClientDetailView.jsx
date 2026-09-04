@@ -14,7 +14,33 @@ import TargetCalorieModal from "./TargetCalorieModal";
 import ClientAssignedProgramsCard from "./ClientAssignedProgramsCard";
 import ClientWeeklyScheduleCard from "./ClientWeeklyScheduleCard";
 
-// Yerel tarih dizesi oluşturucu (UTC saat dilimi kaymalarını engeller)
+// JWT Token ve Auth Başlıklarını Hazırlayan Yardımcı Fonksiyon
+const getAuthHeaders = () => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  if (typeof window !== "undefined") {
+    let token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("access_token") ||
+      sessionStorage.getItem("token") ||
+      sessionStorage.getItem("access_token");
+
+    if (!token) {
+      const match = document.cookie.match(/(?:^|; )access_token=([^;]*)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+
+    if (token) {
+      const cleanToken = token.replace(/^Bearer\s+/i, "").trim();
+      headers["Authorization"] = `Bearer ${cleanToken}`;
+    }
+  }
+
+  return headers;
+};
+
 const getLocalDateStr = (d) => {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -25,11 +51,17 @@ const getLocalDateStr = (d) => {
 export default function ClientDetailView({
   clientId,
   clients = [],
-  specialistId = 4,
+  specialistId = null,
   onBack,
 }) {
-  const client =
-    clients.find((c) => String(c.id) === String(clientId)) || clients[0] || null;
+  const initialClient =
+    clients.find(
+      (c) =>
+        String(c.id) === String(clientId) ||
+        String(c.client_id) === String(clientId)
+    ) || null;
+
+  const [client, setClient] = useState(initialClient);
 
   const [newNote, setNewNote] = useState("");
   const [notes, setNotes] = useState([]);
@@ -43,21 +75,23 @@ export default function ClientDetailView({
   const [targetCalorieInput, setTargetCalorieInput] = useState("");
 
   // Kilo ve Kalori Hedef Durumları
-  const [targetWeight, setTargetWeight] = useState(client?.target_weight || null);
+  const [targetWeight, setTargetWeight] = useState(
+    initialClient?.target_weight || null
+  );
   const [dailyCalorieTarget, setDailyCalorieTarget] = useState(
-    client?.expert_target_kcal || client?.daily_calories || 2863
+    initialClient?.expert_target_kcal || initialClient?.daily_calories || 2000
   );
   const [isExpertCalorieSet, setIsExpertCalorieSet] = useState(
-    Boolean(client?.expert_target_kcal)
+    Boolean(initialClient?.expert_target_kcal)
   );
 
   // Son 7 Günlük Aktivite Verileri
   const [weeklySummary, setWeeklySummary] = useState([]);
   const [selectedDayIndex, setSelectedDayIndex] = useState(6);
 
-  // Atanan Antrenman Programları State'i
+  // Atanan Antrenman / Diyet Programları State'i
   const [workoutPrograms, setWorkoutPrograms] = useState(
-    client?.workout_programs || client?.programs || []
+    initialClient?.workout_programs || initialClient?.programs || []
   );
 
   // 7 Günlük Kronolojik Gün Oluşturucu
@@ -133,53 +167,95 @@ export default function ClientDetailView({
   };
 
   useEffect(() => {
-    if (!client?.id) return;
-
-    setTargetWeight(client?.target_weight || null);
-    setDailyCalorieTarget(
-      client?.expert_target_kcal || client?.daily_calories || 2863
-    );
-    setIsExpertCalorieSet(Boolean(client?.expert_target_kcal));
+    const targetId = clientId || initialClient?.id || initialClient?.client_id;
+    if (!targetId) {
+      setIsLoadingDetails(false);
+      return;
+    }
 
     const fetchClientDetails = async () => {
       setIsLoadingDetails(true);
+      const headers = getAuthHeaders();
+
       try {
-        const notesRes = await fetch(`/api/expert-clients/${client.id}/notes`);
+        let detailUrl = `/api/expert-clients/client-detail/${targetId}`;
+        if (specialistId && String(specialistId) !== "null") {
+          detailUrl = `/api/expert-clients/client-detail/${specialistId}/${targetId}`;
+        }
+
+        let detailRes = await fetch(detailUrl, {
+          headers,
+          credentials: "include",
+        });
+
+        if (!detailRes.ok && detailUrl.includes(`/${specialistId}/`)) {
+          detailRes = await fetch(`/api/expert-clients/client-detail/${targetId}`, {
+            headers,
+            credentials: "include",
+          });
+        }
+
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          if (detailData?.client_info) {
+            setClient(detailData.client_info);
+            setTargetWeight(detailData.client_info.target_weight || null);
+            setDailyCalorieTarget(
+              detailData.client_info.expert_target_kcal ||
+                detailData.client_info.daily_calorie_target ||
+                detailData.client_info.daily_calories ||
+                2000
+            );
+            setIsExpertCalorieSet(
+              Boolean(detailData.client_info.expert_target_kcal)
+            );
+          }
+          if (detailData?.notes) setNotes(detailData.notes);
+          if (detailData?.assigned_programs) {
+            setWorkoutPrograms(detailData.assigned_programs);
+          }
+        }
+
+        const notesRes = await fetch(`/api/expert-clients/${targetId}/notes`, {
+          headers,
+          credentials: "include",
+        });
         if (notesRes.ok) {
           const notesData = await notesRes.json();
           setNotes(notesData.notes || notesData || []);
-        } else {
-          setNotes(client.notes || []);
         }
 
         const summaryRes = await fetch(
-          `/api/expert-clients/client-daily-summary?client_id=${client.id}&days=7`
+          `/api/expert-clients/client-daily-summary?client_id=${targetId}&days=7`,
+          {
+            headers,
+            credentials: "include",
+          }
         );
         let backendLogs = [];
         if (summaryRes.ok) {
           const summaryData = await summaryRes.json();
           backendLogs = summaryData.days || summaryData || [];
         }
-
         const formattedDays = build7DaysChronological(backendLogs);
         setWeeklySummary(formattedDays);
-
         const todayIdx = formattedDays.findIndex((d) => d.isToday);
         setSelectedDayIndex(todayIdx !== -1 ? todayIdx : 6);
 
-        // Antrenman programlarını çekme/güncelleme
-        try {
-          const progRes = await fetch(
-            `/api/expert-clients/workout-programs?client_id=${client.id}`
-          );
-          if (progRes.ok) {
-            const progData = await progRes.json();
-            setWorkoutPrograms(progData.programs || progData || []);
-          } else {
-            setWorkoutPrograms(client.workout_programs || client.programs || []);
+        const progRes = await fetch(
+          `/api/expert-clients/workout-programs?client_id=${targetId}`,
+          {
+            headers,
+            credentials: "include",
           }
-        } catch {
-          setWorkoutPrograms(client.workout_programs || client.programs || []);
+        );
+        if (progRes.ok) {
+          const progData = await progRes.json();
+          const fetchedProgs =
+            progData.programs || progData.assigned_programs || [];
+          if (fetchedProgs.length > 0) {
+            setWorkoutPrograms(fetchedProgs);
+          }
         }
       } catch (err) {
         console.error("Danışan detay verileri çekilemedi:", err);
@@ -190,23 +266,18 @@ export default function ClientDetailView({
     };
 
     fetchClientDetails();
-  }, [
-    client?.id,
-    client?.target_weight,
-    client?.expert_target_kcal,
-    client?.daily_calories,
-    client?.workout_programs,
-    client?.programs,
-  ]);
+  }, [clientId, specialistId]);
 
-  if (!client) {
+  if (!isLoadingDetails && !client) {
     return (
       <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800/80 rounded-3xl p-12 text-center space-y-6 backdrop-blur-2xl shadow-2xl flex flex-col items-center justify-center">
         <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-[0_0_25px_rgba(245,158,11,0.2)] animate-pulse">
           <AlertCircle className="w-8 h-8" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-lg font-heading font-black text-white">Kayda Ulaşılamadı</h3>
+          <h3 className="text-lg font-heading font-black text-white">
+            Kayda Ulaşılamadı
+          </h3>
           <p className="text-slate-300 font-medium text-xs">
             Seçilen danışan kaydı sistemde bulunamadı veya silinmiş olabilir.
           </p>
@@ -222,12 +293,16 @@ export default function ClientDetailView({
     );
   }
 
-  // Program Silme İşlemi
   const handleDeleteProgram = async (programId) => {
     try {
-      const res = await fetch(`/api/expert-clients/workout-programs/${programId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/expert-clients/workout-programs/${programId}`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+          credentials: "include",
+        }
+      );
       if (res.ok) {
         setWorkoutPrograms((prev) => prev.filter((p) => p.id !== programId));
       } else {
@@ -239,68 +314,87 @@ export default function ClientDetailView({
     }
   };
 
-  // Program Düzenleme Tetikleyicisi
   const handleEditProgram = (program) => {
     console.log("Program düzenleniyor:", program);
   };
 
-  // Yeni Program Atama Tetikleyicisi
   const handleAssignNewProgram = () => {
     console.log("Yeni program atama alanı tetiklendi.");
   };
 
-  // Not Kaydetme
+  // Not Kaydetme (JWT Token & Dinamik Yetkilendirme)
   const handleAddNote = async (e) => {
-    e.preventDefault();
-    if (!newNote.trim() || isSavingNote) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!newNote.trim() || isSavingNote) return null;
 
     setIsSavingNote(true);
+    const targetClientId = client?.id || client?.client_id || clientId;
+
     const notePayload = {
-      specialist_id: specialistId,
-      client_id: parseInt(client.id),
+      client_id: parseInt(targetClientId),
       note_text: newNote,
+      text: newNote,
     };
 
+    if (specialistId && String(specialistId) !== "null") {
+      notePayload.specialist_id = parseInt(specialistId);
+    }
+
     try {
-      const res = await fetch(`/api/expert-clients/${client.id}/notes`, {
+      const res = await fetch(`/api/expert-clients/${targetClientId}/notes`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(notePayload),
       });
 
       if (res.ok) {
         const savedNote = await res.json();
         const createdNoteObj = savedNote.note || savedNote;
-        setNotes((prev) => [
-          {
-            id: createdNoteObj.id || `temp-${Date.now()}`,
-            created_at: "Bugün",
-            note_text: newNote,
-            author: "Uzman PT",
-          },
-          ...prev,
-        ]);
+        
+        const formattedNewNote = {
+          id: createdNoteObj.id || `note-${Date.now()}`,
+          created_at: createdNoteObj.created_at || "Bugün",
+          date: createdNoteObj.date || createdNoteObj.created_at || "Bugün",
+          note_text: createdNoteObj.note_text || createdNoteObj.text || newNote,
+          text: createdNoteObj.note_text || createdNoteObj.text || newNote,
+          author_name: createdNoteObj.author_name || createdNoteObj.author || "Uzman",
+          author: createdNoteObj.author_name || createdNoteObj.author || "Uzman",
+          author_role: createdNoteObj.author_role || createdNoteObj.role || "",
+          role: createdNoteObj.author_role || createdNoteObj.role || "",
+        };
+
+        setNotes((prev) => [formattedNewNote, ...prev]);
         setNewNote("");
+        return formattedNewNote;
       } else {
-        alert("Not kaydedilirken sunucu hatası oluştu.");
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.detail || "Not kaydedilirken sunucu hatası oluştu.");
+        return null;
       }
     } catch (err) {
       console.error("Not kaydetme hatası:", err);
+      alert("Bağlantı hatası: Not kaydedilemedi.");
+      return null;
     } finally {
       setIsSavingNote(false);
     }
   };
 
-  // Hedef Kilo Güncelleme
   const handleSaveTargetWeight = async () => {
     const parsedVal = parseFloat(targetWeightInput);
     if (isNaN(parsedVal)) return;
 
+    const targetClientId = client?.id || client?.client_id || clientId;
     try {
       const res = await fetch("/api/expert-clients/set-target-weight", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_id: client.id, target_weight: parsedVal }),
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          client_id: targetClientId,
+          target_weight: parsedVal,
+        }),
       });
 
       if (res.ok) {
@@ -315,17 +409,18 @@ export default function ClientDetailView({
     }
   };
 
-  // Günlük Kalori Hedefi Güncelleme
   const handleSaveDailyCalorie = async () => {
     const parsedVal = parseInt(targetCalorieInput, 10);
     if (isNaN(parsedVal)) return;
 
+    const targetClientId = client?.id || client?.client_id || clientId;
     try {
       const res = await fetch("/api/expert-clients/set-target-calorie", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
-          client_id: client.id,
+          client_id: targetClientId,
           expert_target_kcal: parsedVal,
         }),
       });
@@ -345,10 +440,8 @@ export default function ClientDetailView({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300 relative">
-      {/* HEADER */}
       <ClientHeader client={client} onBack={onBack} />
 
-      {/* YÜKLENİYOR BİLDİRİMİ */}
       {isLoadingDetails ? (
         <div className="flex flex-col items-center justify-center p-12 gap-3 bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-slate-800/80 shadow-2xl text-slate-300">
           <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400 animate-pulse">
@@ -360,13 +453,9 @@ export default function ClientDetailView({
         </div>
       ) : (
         <>
-          {/* PROFİL & METRİKLER & AKTİVİTE & PROGRAM DÜZENİ */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* SOL KOLON: Profil Kartı & Atanan Programlar Kartı */}
             <div className="lg:col-span-1 space-y-6">
               <ClientProfileCard client={client} />
-              
-              {/* COMPONENT 1: Aktif Programlar (Sil/Düzenle/Yeni Ata) */}
               <ClientAssignedProgramsCard
                 programs={workoutPrograms}
                 onDeleteProgram={handleDeleteProgram}
@@ -375,7 +464,6 @@ export default function ClientDetailView({
               />
             </div>
 
-            {/* SAĞ KOLON: Metrikler & Haftalık Tracker & Haftalık Antrenman Programı */}
             <div className="lg:col-span-3 space-y-6">
               <ClientMetricsCards
                 client={client}
@@ -383,7 +471,9 @@ export default function ClientDetailView({
                 dailyCalorieTarget={dailyCalorieTarget}
                 isExpertCalorieSet={isExpertCalorieSet}
                 onOpenWeightModal={() => {
-                  setTargetWeightInput(targetWeight ? String(targetWeight) : "");
+                  setTargetWeightInput(
+                    targetWeight ? String(targetWeight) : ""
+                  );
                   setIsWeightModalOpen(true);
                 }}
                 onOpenCalorieModal={() => {
@@ -401,17 +491,16 @@ export default function ClientDetailView({
                 dailyCalorieTarget={dailyCalorieTarget}
               />
 
-              {/* COMPONENT 2: Haftalık Antrenman Programı & Günlük Hareket Detayları */}
               <ClientWeeklyScheduleCard weeklyPrograms={workoutPrograms} />
             </div>
           </div>
         </>
       )}
 
-      {/* ABONELİKLER VE ALINAN HİZMETLER */}
-      <ClientSubscriptionsManager clientId={client.id} client={client} />
+      {client?.id && (
+        <ClientSubscriptionsManager clientId={client.id} client={client} />
+      )}
 
-      {/* UZMAN NOTLARI */}
       <ClientNotesSection
         notes={notes}
         newNote={newNote}
@@ -420,7 +509,6 @@ export default function ClientDetailView({
         onAddNote={handleAddNote}
       />
 
-      {/* MODALLAR */}
       <TargetWeightModal
         isOpen={isWeightModalOpen}
         onClose={() => setIsWeightModalOpen(false)}

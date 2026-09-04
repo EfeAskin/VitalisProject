@@ -1,8 +1,7 @@
 import json
-
+from typing import List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 
 from backend.database import get_db_connection
@@ -20,27 +19,52 @@ router = APIRouter(
 # ============================================================
 
 class AssignWorkoutRequest(BaseModel):
-    template_id: int
-    client_ids: List[int]
-    assigned_days: List[str]
+    template_id: Optional[int] = Field(default=None, description="Şablon ID")
+    diet_template_id: Optional[int] = Field(default=None, description="Diyet Şablon ID")
+    client_ids: Optional[List[int]] = Field(default=None, description="Danışan ID listesi")
+    client_id: Optional[int] = Field(default=None, description="Tekil danışan ID'si")
+    assigned_days: List[str] = Field(default_factory=list, description="Seçilen uygulama günleri")
 
 
 # ============================================================
 # HELPER
 # ============================================================
 
-def get_current_user_id(current_user):
+def map_to_day_id(val: Any) -> Optional[str]:
+    """
+    Gelen gün ifadesini standart 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz' formatına dönüştürür.
+    """
+    if not val:
+        return None
+    s = str(val).strip().lower()
+    if s == 'pzt' or s.startswith('pazartesi'):
+        return 'Pzt'
+    if s == 'sal' or s.startswith('salı') or s.startswith('sali'):
+        return 'Sal'
+    if s == 'çar' or s == 'car' or s.startswith('çarşamba') or s.startswith('carsamba'):
+        return 'Çar'
+    if s == 'per' or s.startswith('perşembe') or s.startswith('persembe'):
+        return 'Per'
+    if s == 'cum' or s == 'cuma':
+        return 'Cum'
+    if s == 'cmt' or s.startswith('cumartesi'):
+        return 'Cmt'
+    if s == 'paz' or s.startswith('pazar'):
+        return 'Paz'
+    return None
+
+
+def get_current_user_id(current_user) -> int:
     """
     auth.py içerisindeki get_current_user fonksiyonundan dönen
-    kullanıcı nesnesinden kullanıcı ID'sini güvenli şekilde alır.
+    kullanıcı nesnesinden kullanıcı ID'sini güvenli şekilde ve tamsayı olarak alır.
     """
+    user_id = None
 
     if isinstance(current_user, dict):
         user_id = current_user.get("id")
-
     elif isinstance(current_user, (tuple, list)):
         user_id = current_user[0] if current_user else None
-
     else:
         user_id = getattr(current_user, "id", None)
 
@@ -50,7 +74,13 @@ def get_current_user_id(current_user):
             detail="Oturum açmış kullanıcı doğrulanamadı."
         )
 
-    return user_id
+    try:
+        return int(user_id)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Kullanıcı kimlik formatı geçersiz."
+        )
 
 
 # ============================================================
@@ -60,31 +90,20 @@ def get_current_user_id(current_user):
 @router.get("/my-active-clients")
 def get_my_active_clients(
     current_user=Depends(
-        RoleChecker(["trainer", "dietitian"])
+        RoleChecker(["trainer", "dietitian", "TRAINER", "DIETITIAN"])
     ),
     db=Depends(get_db_connection)
 ):
     """
     Giriş yapan uzmana aktif olarak abone olan danışanları getirir.
-
-    Aynı danışanın aynı uzman altında birden fazla aktif
-    specialist_subscriptions kaydı varsa:
-
-    - Danışan yalnızca bir kez gösterilir.
-    - En son oluşturulan aktif abonelik kullanılır.
-    - Eski/rejected/inactive kayıtlar gösterilmez.
     """
 
     cursor = None
 
     try:
-        current_user_id = get_current_user_id(
-            current_user
-        )
+        current_user_id = get_current_user_id(current_user)
 
-        cursor = db.cursor(
-            cursor_factory=RealDictCursor
-        )
+        cursor = db.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute(
             """
@@ -126,12 +145,10 @@ def get_my_active_clients(
             (current_user_id,)
         )
 
-        clients = cursor.fetchall()
-
+        clients = cursor.fetchall() or []
         formatted_clients = []
 
         for client in clients:
-
             full_name = (
                 f"{client.get('first_name') or ''} "
                 f"{client.get('last_name') or ''}"
@@ -149,41 +166,22 @@ def get_my_active_clients(
             formatted_clients.append({
                 "id": client["id"],
                 "full_name": full_name,
-                "goal": (
-                    client.get("goal")
-                    or "Formu Korumak"
-                ),
-                "package": (
-                    client.get("package_name")
-                    or "Aylık PT Danışmanlığı"
-                ),
+                "goal": client.get("goal") or "Formu Korumak",
+                "package": client.get("package_name") or "Aylık PT Danışmanlığı",
                 "program_name": prog_names
             })
 
-        return {
-            "clients": formatted_clients
-        }
+        return {"clients": formatted_clients}
 
     except HTTPException:
         raise
-
     except Exception as e:
-
-        print(
-            f"[Expert Assignment] "
-            f"Active clients error: {e}"
-        )
-
+        print(f"[Expert Assignment] Active clients error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=(
-                "Aktif danışanlar yüklenirken "
-                "bir hata oluştu."
-            )
+            detail="Aktif danışanlar yüklenirken bir hata oluştu."
         )
-
     finally:
-
         if cursor:
             cursor.close()
 
@@ -196,218 +194,135 @@ def get_my_active_clients(
 def assign_workout_to_clients(
     data: AssignWorkoutRequest,
     current_user=Depends(
-        RoleChecker(["trainer", "dietitian"])
+        RoleChecker(["trainer", "dietitian", "TRAINER", "DIETITIAN"])
     ),
     db=Depends(get_db_connection)
 ):
     """
-    Seçilen antrenman şablonunu giriş yapan uzmanın
-    aktif danışanlarına atar.
-
-    İşlemler:
-
-    1. Giriş yapan uzman doğrulanır.
-    2. Workout template bulunur.
-    3. Template'in trainer_id değeri giriş yapan uzmanla
-       karşılaştırılır.
-    4. Seçilen client_id değerlerinin gerçekten bu uzmana
-       aktif aboneliği olduğu kontrol edilir.
-    5. workout_programs kayıtları oluşturulur.
-    6. İlgili specialist_subscriptions kayıtlarının
-       program_name alanına yeni program dizi olarak eklenir.
-    7. Tüm işlemler başarılıysa commit edilir.
-    8. Herhangi bir hata olursa rollback yapılır.
+    Seçilen antrenman şablonunu giriş yapan uzmanın aktif danışanlarına atar.
     """
 
     cursor = None
 
     try:
+        current_user_id = get_current_user_id(current_user)
 
-        current_user_id = get_current_user_id(
-            current_user
-        )
+        raw_client_ids = []
+        if data.client_ids and isinstance(data.client_ids, list):
+            raw_client_ids.extend(data.client_ids)
+        if data.client_id is not None:
+            raw_client_ids.append(data.client_id)
 
-        # ====================================================
-        # REQUEST VALIDATION
-        # ====================================================
-
-        if not data.client_ids:
-
+        if not raw_client_ids:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="En az bir danışan seçilmelidir."
             )
 
         if not data.assigned_days:
-
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="En az bir antrenman günü seçilmelidir."
             )
 
-        # Aynı danışanın request içerisinde birden
-        # fazla kez gönderilmesini engelle.
-        client_ids = list(
-            dict.fromkeys(data.client_ids)
-        )
+        client_ids = []
+        for cid in raw_client_ids:
+            try:
+                val = int(cid)
+                if val not in client_ids:
+                    client_ids.append(val)
+            except (ValueError, TypeError):
+                continue
 
-        cursor = db.cursor(
-            cursor_factory=RealDictCursor
-        )
+        if not client_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Geçersiz danışan ID'si gönderildi."
+            )
 
-        # ====================================================
-        # GET WORKOUT TEMPLATE
-        # ====================================================
+        template_id = data.template_id or data.diet_template_id
+        if not template_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Şablon ID bilgisi eksik."
+            )
+
+        cursor = db.cursor(cursor_factory=RealDictCursor)
 
         cursor.execute(
             """
-            SELECT
-                id,
-                trainer_id,
-                name
+            SELECT id, trainer_id, name
             FROM workout_templates
             WHERE id = %s
             """,
-            (data.template_id,)
+            (template_id,)
         )
 
         template = cursor.fetchone()
-
         if not template:
-
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Antrenman şablonu bulunamadı."
             )
 
-        template_trainer_id = template.get(
-            "trainer_id"
-        )
+        raw_template_trainer_id = template.get("trainer_id")
+        template_trainer_id = None
+        if raw_template_trainer_id is not None:
+            try:
+                template_trainer_id = int(raw_template_trainer_id)
+            except (ValueError, TypeError):
+                template_trainer_id = None
 
-        # ====================================================
-        # TEMPLATE OWNERSHIP CHECK
-        # ====================================================
-
-        if template_trainer_id != current_user_id:
-
+        if template_trainer_id is not None and template_trainer_id != current_user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Bu antrenman şablonunu kullanma "
-                    "yetkiniz bulunmamaktadır."
-                )
+                detail="Bu antrenman şablonunu kullanma yetkiniz bulunmamaktadır."
             )
 
-        template_name = (
-            template.get("name")
-            or "Antrenman Programı"
-        )
-
-        trainer_id = template_trainer_id
-
-        # ====================================================
-        # PROGRAM DETAILS
-        # ====================================================
+        template_name = template.get("name") or "Antrenman Programı"
+        trainer_id = template_trainer_id or current_user_id
 
         program_details = {
             "assigned_days": data.assigned_days,
             "template_name": template_name
         }
-
-        program_details_json = json.dumps(
-            program_details,
-            ensure_ascii=False
-        )
-
-        # ====================================================
-        # VERIFY ACTIVE SUBSCRIPTIONS
-        # ====================================================
+        program_details_json = json.dumps(program_details, ensure_ascii=False)
 
         cursor.execute(
             """
-            SELECT DISTINCT
-                ss.client_id
+            SELECT DISTINCT ss.client_id
             FROM specialist_subscriptions ss
-            WHERE
-                ss.specialist_id = %s
-                AND ss.status = 'active'
-                AND ss.client_id = ANY(%s)
+            WHERE ss.specialist_id = %s
+              AND ss.status = 'active'
+              AND ss.client_id = ANY(%s)
             """,
-            (
-                current_user_id,
-                client_ids
-            )
+            (current_user_id, client_ids)
         )
 
-        active_subscription_rows = cursor.fetchall()
-
+        active_subscription_rows = cursor.fetchall() or []
         active_client_ids = {
-            row["client_id"]
+            int(row["client_id"])
             for row in active_subscription_rows
+            if row.get("client_id") is not None
         }
 
-        unauthorized_client_ids = [
-            client_id
-            for client_id in client_ids
-            if client_id not in active_client_ids
-        ]
-
+        unauthorized_client_ids = [cid for cid in client_ids if cid not in active_client_ids]
         if unauthorized_client_ids:
-
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=(
-                    "Seçilen danışanlardan bazıları "
-                    "bu uzmana aktif olarak abone değil."
-                )
+                detail="Seçilen danışanlardan bazıları bu uzmana aktif olarak abone değil."
             )
 
-        # ====================================================
-        # ASSIGN WORKOUT
-        # ====================================================
-
         assigned_count = 0
-
-        for client_id in client_ids:
-
-            # ------------------------------------------------
-            # WORKOUT PROGRAM
-            # ------------------------------------------------
-
+        for cid in client_ids:
             cursor.execute(
                 """
                 INSERT INTO workout_programs
-                (
-                    client_id,
-                    trainer_id,
-                    template_id,
-                    program_details,
-                    status,
-                    created_at,
-                    updated_at
-                )
-                VALUES
-                (
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    'active',
-                    NOW(),
-                    NOW()
-                )
+                (client_id, trainer_id, template_id, program_details, status, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, 'active', NOW(), NOW())
                 """,
-                (
-                    client_id,
-                    trainer_id,
-                    data.template_id,
-                    program_details_json
-                )
+                (cid, trainer_id, template_id, program_details_json)
             )
-
-            # ------------------------------------------------
-            # SPECIALIST SUBSCRIPTION (ARRAY APPEND)
-            # ------------------------------------------------
 
             cursor.execute(
                 """
@@ -415,65 +330,238 @@ def assign_workout_to_clients(
                 SET
                     program_name = CASE
                         WHEN program_name IS NULL THEN ARRAY[%s]::text[]
-                        WHEN NOT (%s = ANY(program_name)) THEN ARRAY_APPEND(program_name, %s)
+                        WHEN NOT (%s = ANY(program_name::text[])) THEN ARRAY_APPEND(program_name::text[], %s)
                         ELSE program_name
                     END,
                     updated_at = NOW()
-                WHERE
-                    client_id = %s
-                    AND specialist_id = %s
-                    AND status = 'active'
+                WHERE client_id = %s
+                  AND specialist_id = %s
+                  AND status = 'active'
                 """,
-                (
-                    template_name,
-                    template_name,
-                    template_name,
-                    client_id,
-                    current_user_id
-                )
+                (template_name, template_name, template_name, cid, current_user_id)
             )
-
             assigned_count += 1
-
-        # ====================================================
-        # COMMIT
-        # ====================================================
 
         db.commit()
 
         return {
             "success": True,
-            "message": (
-                f"Antrenman {assigned_count} danışana "
-                "başarıyla atandı."
-            ),
+            "message": f"Antrenman {assigned_count} danışana başarıyla atandı.",
             "assigned_days": data.assigned_days,
             "program_name": template_name
         }
 
     except HTTPException:
-
-        db.rollback()
+        if db:
+            db.rollback()
         raise
-
     except Exception as e:
-
-        db.rollback()
-
-        print(
-            f"[Expert Assignment] "
-            f"Workout assignment error: {e}"
-        )
-
+        if db:
+            db.rollback()
+        print(f"[Expert Assignment] Workout assignment error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=(
-                "Antrenman ataması sırasında "
-                "bir hata oluştu."
-            )
+            detail="Antrenman ataması sırasında bir hata oluştu."
         )
-
     finally:
+        if cursor:
+            cursor.close()
 
+
+# ============================================================
+# ASSIGN DIET
+# ============================================================
+
+# ============================================================
+# ASSIGN DIET
+# ============================================================
+
+@router.post("/assign-diet")
+def assign_diet_to_clients(
+    data: AssignWorkoutRequest,
+    current_user=Depends(
+        RoleChecker(["dietitian", "DIETITIAN", "trainer", "TRAINER"])
+    ),
+    db=Depends(get_db_connection)
+):
+    """
+    Seçilen diyet şablonunu tüm öğün ve gün detaylarıyla birlikte
+    uzmanın aktif danışanlarına atar.
+    """
+    cursor = None
+
+    try:
+        current_user_id = get_current_user_id(current_user)
+
+        raw_client_ids = []
+        if data.client_ids and isinstance(data.client_ids, list):
+            raw_client_ids.extend(data.client_ids)
+        if data.client_id is not None:
+            raw_client_ids.append(data.client_id)
+
+        if not raw_client_ids:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="En az bir danışan seçilmelidir."
+            )
+
+        client_ids = list(set([int(cid) for cid in raw_client_ids if str(cid).isdigit()]))
+
+        diet_template_id = data.diet_template_id or data.template_id
+        if not diet_template_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Diyet şablonu ID'si eksik."
+            )
+
+        cursor = db.cursor(cursor_factory=RealDictCursor)
+
+        # 1. Diyet Şablonunu ve Öğün Detaylarını (day_types) Çek
+        cursor.execute(
+            """
+            SELECT id, dietitian_id, title, goal, day_types, 
+                   target_calories, target_protein_g, target_carbs_g, target_fat_g, general_notes
+            FROM diet_templates
+            WHERE id = %s
+            """,
+            (diet_template_id,)
+        )
+        diet_template = cursor.fetchone()
+
+        if not diet_template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Diyet şablonu bulunamadı."
+            )
+
+        # 2. Yetki Kontrolü
+        template_dietitian_id = diet_template.get("dietitian_id")
+        if template_dietitian_id is not None and int(template_dietitian_id) != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Bu diyet şablonunu kullanma yetkiniz bulunmamaktadır."
+            )
+
+        # 3. Danışanların Aktif Abonelik Kontrolü
+        cursor.execute(
+            """
+            SELECT DISTINCT ss.client_id
+            FROM specialist_subscriptions ss
+            WHERE ss.specialist_id = %s
+              AND ss.status = 'active'
+              AND ss.client_id = ANY(%s)
+            """,
+            (current_user_id, client_ids)
+        )
+        active_subscription_rows = cursor.fetchall() or []
+        active_client_ids = {int(row["client_id"]) for row in active_subscription_rows if row.get("client_id")}
+
+        unauthorized_client_ids = [cid for cid in client_ids if cid not in active_client_ids]
+        if unauthorized_client_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Seçilen danışanlardan bazıları bu uzmana aktif olarak abone değil."
+            )
+
+        # 4. JSON verilerini (day_types, general_notes) Güvenli Parse Et
+        day_types = diet_template.get("day_types")
+        if isinstance(day_types, str):
+            try:
+                day_types = json.loads(day_types)
+            except Exception:
+                day_types = []
+        elif day_types is None:
+            day_types = []
+
+        general_notes = diet_template.get("general_notes")
+        if isinstance(general_notes, str):
+            try:
+                general_notes = json.loads(general_notes)
+            except Exception:
+                general_notes = []
+
+        # Atanacak günlerin tespiti (Pzt, Sal vb.)
+        assigned_days = data.assigned_days if data.assigned_days else []
+        if not assigned_days and isinstance(day_types, list):
+            for dt in day_types:
+                day_name = dt.get("name") or dt.get("day") if isinstance(dt, dict) else str(dt)
+                mapped = map_to_day_id(day_name)
+                if mapped and mapped not in assigned_days:
+                    assigned_days.append(mapped)
+
+        if not assigned_days:
+            assigned_days = ["Pzt"]
+
+        # 5. Tam program_details Objesini Oluştur (Eski sistemdeki deneme diet 4 formatı ile birebir aynı)
+        program_details = {
+            "template_id": diet_template["id"],
+            "template_title": diet_template.get("title") or "Diyet Planı",
+            "goal": diet_template.get("goal") or "Sağlıklı Beslenme",
+            "target_calories": diet_template.get("target_calories") or 0,
+            "target_protein_g": float(diet_template.get("target_protein_g") or 0),
+            "target_carbs_g": float(diet_template.get("target_carbs_g") or 0),
+            "target_fat_g": float(diet_template.get("target_fat_g") or 0),
+            "assigned_days": assigned_days,
+            "day_types": day_types,
+            "general_notes": general_notes,
+            "assignment_notes": None,
+            "start_date": None
+        }
+
+        program_details_json = json.dumps(program_details, ensure_ascii=False)
+
+        # 6. Veritabanına Ekleme
+        assigned_count = 0
+        for cid in client_ids:
+            cursor.execute(
+                """
+                INSERT INTO nutrition_programs
+                (client_id, dietitian_id, diet_template_id, program_details, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, NOW(), NOW())
+                """,
+                (cid, current_user_id, diet_template_id, program_details_json)
+            )
+
+            template_title = diet_template.get("title") or "Diyet Planı"
+            cursor.execute(
+                """
+                UPDATE specialist_subscriptions
+                SET
+                    program_name = CASE
+                        WHEN program_name IS NULL THEN ARRAY[%s]::text[]
+                        WHEN NOT (%s = ANY(program_name::text[])) THEN ARRAY_APPEND(program_name::text[], %s)
+                        ELSE program_name
+                    END,
+                    updated_at = NOW()
+                WHERE client_id = %s
+                  AND specialist_id = %s
+                  AND status = 'active'
+                """,
+                (template_title, template_title, template_title, cid, current_user_id)
+            )
+            assigned_count += 1
+
+        db.commit()
+
+        return {
+            "success": True,
+            "message": f"Diyet planı {assigned_count} danışana başarıyla atandı.",
+            "assigned_days": assigned_days,
+            "program_name": diet_template.get("title")
+        }
+
+    except HTTPException:
+        if db:
+            db.rollback()
+        raise
+    except Exception as e:
+        if db:
+            db.rollback()
+        print(f"[Expert Assignment] Diet assignment error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Diyet ataması sırasında bir hata oluştu: {str(e)}"
+        )
+    finally:
         if cursor:
             cursor.close()
